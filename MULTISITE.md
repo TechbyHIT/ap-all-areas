@@ -196,10 +196,14 @@ sudo bash deploy/site-add.sh \
   --domain site-b.com \
   --repo https://github.com/TechbyHIT/ap-all-areas.git
 
-sudo nano /srv/sites/site-b/shared/.env      # DATABASE_URL, NEXT_PUBLIC_SITE_URL
 sudo bash deploy/site-deploy.sh site-b
-sudo certbot --nginx -d site-b.com -d www.site-b.com
+sudo bash deploy/site-tls.sh site-b --email you@example.com
 ```
+
+`site-tls.sh` requests only the names that currently resolve. Let's Encrypt
+rejects the whole order if any requested name returns NXDOMAIN, so a `www` alias
+that was never added to DNS would otherwise fail the apex domain too. Re-run it
+after adding the missing record to fold the alias in.
 
 ### The database is optional
 
@@ -293,6 +297,7 @@ Other commands:
 | `deploy/build-artifact.sh` | Build once, deploy the same bundle to many sites |
 | `deploy/disk-audit.sh` | Find what is using disk |
 | `deploy/disk-cleanup.sh` | Reclaim it |
+| `deploy/site-tls.sh` | Issue TLS, skipping names that do not resolve |
 | `deploy/emergency-502.sh` | Triage and recover when every site is down |
 
 ---

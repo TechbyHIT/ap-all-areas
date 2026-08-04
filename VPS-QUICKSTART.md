@@ -76,13 +76,33 @@ settles at roughly 600 MB.
 
 ## 7. DNS and TLS
 
-Point `hiranayaenterprises.in` and `www` at the VPS IP, wait for DNS to resolve,
-then:
+Add both records at your DNS provider:
+
+| Type | Name | Value |
+|---|---|---|
+| A | `@` | your VPS IP |
+| CNAME | `www` | `hiranayaenterprises.in` |
+
+The `www` record matters. Let's Encrypt rejects the **entire** order if any
+requested name returns NXDOMAIN, so a missing `www` record fails the apex domain
+along with it. Check both resolve before continuing:
 
 ```bash
-curl -I http://hiranayaenterprises.in     # must reach nginx first
-certbot --nginx -d hiranayaenterprises.in -d www.hiranayaenterprises.in
+getent hosts hiranayaenterprises.in
+getent hosts www.hiranayaenterprises.in
+curl -I http://hiranayaenterprises.in     # expect 200, not 502
 ```
+
+Then:
+
+```bash
+bash deploy/site-tls.sh hiranaya-enterprises --email you@example.com
+```
+
+It verifies `nginx -t` first (certbot aborts on a bad config), requests only the
+names that resolve, and enables the HTTP-to-HTTPS redirect. If `www` is not ready
+yet it issues for the apex alone and tells you how to add `www` afterwards — just
+re-run the same command once the record exists.
 
 ## 8. Verify
 

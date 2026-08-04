@@ -125,13 +125,21 @@ if [ "$WITH_NGINX" = 1 ]; then
 fi
 
 log "Registered '$SLUG' on port $PORT"
+
+# Warn now rather than letting certbot fail later: Let's Encrypt rejects the
+# whole order when one requested name returns NXDOMAIN.
+for host in $DOMAIN $ALIASES; do
+  [ -n "$host" ] || continue
+  dns_resolves "$host" || warn "$host does not resolve yet — add its DNS record before requesting TLS"
+done
+
 cat <<EOF
 
 Next steps:
 
-  1. Fill in secrets:   $ENV_FILE
-  2. First deploy:      sudo bash deploy/site-deploy.sh $SLUG
-  3. TLS:               sudo certbot --nginx -d $DOMAIN${ALIASES:+ -d $ALIASES}
+  1. Review env:    $ENV_FILE  (DATABASE_URL only needed for /admin)
+  2. Deploy:        sudo bash deploy/site-deploy.sh $SLUG
+  3. TLS:           sudo bash deploy/site-tls.sh $SLUG
 
 Fleet: $(list_slugs | wc -l | tr -d ' ') site(s) registered, next free port $(next_free_port)
 EOF

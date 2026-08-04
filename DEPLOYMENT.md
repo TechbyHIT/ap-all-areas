@@ -172,6 +172,7 @@ Avoid Docker/`containerd` growth; project-folder caches are easy to delete.
 | `deploy/site-deploy.sh` | Build → release → health check → rollback → prune |
 | `deploy/site-list.sh` | Fleet status: port, PM2 state, HTTP, disk |
 | `deploy/site-import.sh` | Adopt an existing site into the registry layout |
+| `deploy/site-tls.sh` | Issue TLS, requesting only names that resolve |
 | `deploy/site-remove.sh` | Stop a site, optionally reclaim its disk |
 | `deploy/deploy-all.sh` | Sequential fleet redeploy |
 | `deploy/build-artifact.sh` | Build once, deploy to many sites |

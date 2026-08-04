@@ -164,6 +164,40 @@ remote_has_branch() {
   git ls-remote --exit-code --heads "$1" "$2" >/dev/null 2>&1
 }
 
+# True when a hostname has an A or AAAA record. Let's Encrypt fails the whole
+# order if any requested name does not resolve, so unresolvable aliases have to
+# be left out rather than passed to certbot.
+dns_resolves() {
+  local host="$1"
+  if command -v getent >/dev/null 2>&1; then
+    getent hosts "$host" >/dev/null 2>&1 && return 0
+  fi
+  if command -v dig >/dev/null 2>&1; then
+    [ -n "$(dig +short "$host" A 2>/dev/null)$(dig +short "$host" AAAA 2>/dev/null)" ] &&
+      return 0
+  fi
+  if command -v host >/dev/null 2>&1; then
+    host "$host" >/dev/null 2>&1 && return 0
+  fi
+  return 1
+}
+
+# Echoes "-d name" for the site's domain and every alias that resolves.
+# Requires DOMAIN and ALIASES from load_site.
+certbot_domain_flags() {
+  local args="-d $DOMAIN" alias
+  # shellcheck disable=SC2086
+  for alias in $ALIASES; do
+    [ -n "$alias" ] || continue
+    if dns_resolves "$alias"; then
+      args="$args -d $alias"
+    else
+      warn "$alias has no DNS record — excluding it from the certificate" >&2
+    fi
+  done
+  printf '%s' "$args"
+}
+
 # Reload nginx, showing the test output when it fails. Hiding it leaves the
 # operator with "review config" and nothing to review.
 nginx_reload() {
