@@ -8,11 +8,13 @@ import {
   getTelLink,
   getWhatsAppLink,
 } from "@/config/business";
-import { NAV_LOCATIONS } from "@/config/navigation";
+import {
+  NAV_LOCATIONS,
+  NAV_SERVICES,
+} from "@/config/navigation";
 import { ROUTES } from "@/config/routes";
 import { MobileNav } from "@/components/navigation/MobileNav";
 import { NavDropdown } from "@/components/navigation/NavDropdown";
-import { ServicesMegaMenu } from "@/components/navigation/ServicesMegaMenu";
 import { Button } from "@/components/ui/Button";
 
 export function HeaderClient() {
@@ -76,7 +78,11 @@ export function HeaderClient() {
             >
               Home
             </Link>
-            <ServicesMegaMenu />
+            <NavDropdown
+              label="Services"
+              href={ROUTES.services}
+              items={[...NAV_SERVICES]}
+            />
             <NavDropdown
               label="Locations"
               href={ROUTES.locations}

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   MAIN_NAV,
   NAV_LOCATIONS,
-  NAV_SERVICE_CATEGORIES,
+  NAV_SERVICES,
 } from "@/config/navigation";
 import { ROUTES } from "@/config/routes";
 
@@ -150,40 +150,13 @@ export function MobileNav({
           {MAIN_NAV.map((item) => {
             if (item.label === "Services") {
               return (
-                <li key={item.href} className="mb-2">
-                  <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                    All services
-                  </p>
-                  <ul>
-                    {NAV_SERVICE_CATEGORIES.map((category) => (
-                      <ExpandableGroup
-                        key={category.title}
-                        label={category.title}
-                        items={[
-                          ...(category.href
-                            ? [
-                                {
-                                  label: `All ${category.title}`,
-                                  href: category.href,
-                                },
-                              ]
-                            : []),
-                          ...category.links,
-                        ]}
-                        onNavigate={onClose}
-                      />
-                    ))}
-                    <li>
-                      <Link
-                        href={ROUTES.services}
-                        className="block min-h-12 rounded-lg px-3 py-3 text-base font-semibold text-[var(--primary-700)] hover:bg-[var(--accent-50)]"
-                        onClick={onClose}
-                      >
-                        View all services
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
+                <ExpandableGroup
+                  key={item.href}
+                  label="Services"
+                  items={NAV_SERVICES}
+                  onNavigate={onClose}
+                  defaultOpen
+                />
               );
             }
             if (item.label === "Locations") {
