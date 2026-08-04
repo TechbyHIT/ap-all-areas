@@ -145,3 +145,33 @@ render_template() {
 }
 
 pm2_app_exists() { pm2 describe "$1" >/dev/null 2>&1; }
+
+# The default branch of a remote, e.g. "master". Hardcoding "main" makes the
+# first clone fail on any repo that predates that convention.
+detect_default_branch() {
+  local repo="$1"
+  git ls-remote --symref "$repo" HEAD 2>/dev/null |
+    sed -n 's|^ref: refs/heads/\([^[:space:]]*\).*|\1|p' | head -1
+}
+
+remote_has_branch() {
+  git ls-remote --exit-code --heads "$1" "$2" >/dev/null 2>&1
+}
+
+# Reload nginx, showing the test output when it fails. Hiding it leaves the
+# operator with "review config" and nothing to review.
+nginx_reload() {
+  local out
+  command -v nginx >/dev/null 2>&1 || {
+    warn "nginx is not installed"
+    return 1
+  }
+  if out="$(nginx -t 2>&1)"; then
+    systemctl reload nginx 2>/dev/null ||
+      warn "config is valid but 'systemctl reload nginx' failed"
+    return 0
+  fi
+  warn "nginx -t failed, so nginx was NOT reloaded. Its output:"
+  printf '%s\n' "$out" | sed 's/^/      /'
+  return 1
+}

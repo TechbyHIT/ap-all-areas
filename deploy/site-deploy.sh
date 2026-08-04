@@ -98,6 +98,18 @@ else
   [ -n "$REPO" ] || die "no REPO in $(site_conf "$SLUG") — pass --artifact instead"
   require_cmd git
 
+  # A registry entry written before the remote was checked can name a branch
+  # that does not exist. Correct it here rather than failing the clone.
+  if ! remote_has_branch "$REPO" "$BRANCH"; then
+    DETECTED="$(detect_default_branch "$REPO")"
+    [ -n "$DETECTED" ] || die "branch '$BRANCH' not found on $REPO and no default branch reported"
+    warn "branch '$BRANCH' does not exist on the remote — using '$DETECTED'"
+    BRANCH="$DETECTED"
+    if sed -i "s|^BRANCH=.*|BRANCH=$DETECTED|" "$(site_conf "$SLUG")" 2>/dev/null; then
+      info "updated BRANCH in $(site_conf "$SLUG")"
+    fi
+  fi
+
   if [ -d "$BUILD/.git" ]; then
     log "Updating checkout ($BRANCH)"
     git -C "$BUILD" remote set-url origin "$REPO"

@@ -13,6 +13,7 @@ SLUG=""
 DOMAIN=""
 REPO=""
 BRANCH="main"
+BRANCH_EXPLICIT=0
 ALIASES=""
 PORT=""
 WITH_NGINX=1
@@ -33,6 +34,7 @@ while [ $# -gt 0 ]; do
     ;;
   --branch)
     BRANCH="$2"
+    BRANCH_EXPLICIT=1
     shift 2
     ;;
   --aliases)
@@ -66,6 +68,15 @@ fi
 
 CONF="$(site_conf "$SLUG")"
 [ -f "$CONF" ] && die "site '$SLUG' already registered at $CONF"
+
+# Ask the remote which branch it actually uses rather than assuming "main".
+if [ "$BRANCH_EXPLICIT" = 0 ] && [ -n "$REPO" ] && command -v git >/dev/null 2>&1; then
+  DETECTED="$(detect_default_branch "$REPO")"
+  if [ -n "$DETECTED" ]; then
+    [ "$DETECTED" != "$BRANCH" ] && info "remote default branch is '$DETECTED'"
+    BRANCH="$DETECTED"
+  fi
+fi
 
 mkdir -p "$AP_REGISTRY"
 [ -n "$PORT" ] || PORT="$(next_free_port)"
@@ -107,11 +118,7 @@ if [ "$WITH_NGINX" = 1 ]; then
     render_template "$AP_DEPLOY_DIR/nginx-site.conf.template" "$VHOST" \
       "SLUG=$SLUG" "DOMAIN=$DOMAIN" "ALIASES=$ALIASES" "PORT=$PORT"
     ln -sfn "$VHOST" "$AP_NGINX_ENABLED/$SLUG.conf"
-    if nginx -t 2>/dev/null; then
-      systemctl reload nginx 2>/dev/null || warn "could not reload nginx"
-    else
-      warn "nginx -t failed — vhost written but not reloaded. Run: nginx -t"
-    fi
+    nginx_reload || info "the site will still work once the config error above is fixed"
   else
     warn "$AP_NGINX_AVAILABLE not found — skipping nginx config"
   fi

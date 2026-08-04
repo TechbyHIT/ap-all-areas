@@ -121,7 +121,7 @@ types_hash_max_size 4096;
 # sites, per-site Next.js caching plus immutable asset headers is the safer
 # trade-off. Enable it only with a hard max_size.
 EOF
-  nginx -t 2>/dev/null && systemctl reload nginx || warn "nginx -t failed, review config"
+  nginx_reload || true
 else
   warn "nginx not installed — apt install nginx"
 fi

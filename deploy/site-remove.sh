@@ -29,7 +29,7 @@ fi
 if [ -L "$AP_NGINX_ENABLED/$SLUG.conf" ] || [ -f "$AP_NGINX_ENABLED/$SLUG.conf" ]; then
   log "Disabling nginx vhost"
   rm -f "$AP_NGINX_ENABLED/$SLUG.conf"
-  nginx -t 2>/dev/null && systemctl reload nginx 2>/dev/null || warn "reload nginx manually"
+  nginx_reload || true
 fi
 
 if [ "$PURGE" = 1 ]; then
