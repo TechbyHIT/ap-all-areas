@@ -3,6 +3,9 @@
 Extends [DEPLOYMENT.md](./DEPLOYMENT.md) (Option 2: PM2 + standalone Node, no
 Docker) from one site to a fleet, on a **200 GB disk**.
 
+> Just want the commands for `hiranayaenterprises.in`? See
+> **[VPS-QUICKSTART.md](./VPS-QUICKSTART.md)**.
+
 The design goal is a hard ceiling per site. A site that has just been deployed
 occupies **~350–600 MB** and cannot grow past roughly **1 GB** without a cleanup
 run reclaiming it. That is what makes 50 sites fit in ~30 GB instead of filling
