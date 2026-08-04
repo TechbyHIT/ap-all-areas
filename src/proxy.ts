@@ -6,6 +6,22 @@ import {
   matchServiceInCityPrettyPath,
 } from "@/lib/routing/pretty-money-urls";
 
+/**
+ * Clone the request URL for an *internal* rewrite.
+ *
+ * Behind nginx, `X-Forwarded-Proto: https` makes `request.nextUrl` report
+ * https. Next then treats the rewrite as an external proxy to
+ * `https://localhost:<PORT>`, but the Node process only speaks plain HTTP —
+ * every rewritten page fails with EPROTO "wrong version number". Force http
+ * so the hop stays on the loopback listener.
+ */
+function internalUrl(request: NextRequest, pathname: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  url.protocol = "http:";
+  return url;
+}
+
 /** Next.js 16+ network proxy (replaces deprecated middleware convention). */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -23,9 +39,9 @@ export function proxy(request: NextRequest) {
   // Keyword × geo money URLs (safety nets / grills / etc. in areas)
   const keywordPretty = matchKeywordInGeoPrettyPath(pathname);
   if (keywordPretty) {
-    const url = request.nextUrl.clone();
-    url.pathname = keywordPretty.rewritePath;
-    return NextResponse.rewrite(url);
+    return NextResponse.rewrite(
+      internalUrl(request, keywordPretty.rewritePath),
+    );
   }
 
   // Core /{service}-in-{city}/ → city×service canonical
@@ -38,9 +54,7 @@ export function proxy(request: NextRequest) {
 
   const areaPretty = matchAreaMoneyPrettyPath(pathname);
   if (areaPretty) {
-    const url = request.nextUrl.clone();
-    url.pathname = areaPretty.rewritePath;
-    return NextResponse.rewrite(url);
+    return NextResponse.rewrite(internalUrl(request, areaPretty.rewritePath));
   }
 
   const internalKeyword = pathname.match(
