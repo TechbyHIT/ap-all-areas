@@ -4,7 +4,15 @@
  *
  * Usage: node scripts/prepare-standalone.mjs
  */
-import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+} from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -49,4 +57,46 @@ if (existsSync(prismaSrc)) {
   console.log("Copied src/generated/prisma → standalone (Prisma client)");
 }
 
+/**
+ * Source maps are never loaded at runtime. Tracing sometimes copies them into
+ * standalone; deleting them is the safest per-release win without touching
+ * anything Node resolves.
+ */
+function stripSourceMaps(dir) {
+  let removed = 0;
+  const stack = [dir];
+  while (stack.length) {
+    const current = stack.pop();
+    let entries;
+    try {
+      entries = readdirSync(current);
+    } catch {
+      continue;
+    }
+    for (const name of entries) {
+      const full = join(current, name);
+      let st;
+      try {
+        st = statSync(full);
+      } catch {
+        continue;
+      }
+      if (st.isDirectory()) {
+        stack.push(full);
+        continue;
+      }
+      if (!name.endsWith(".map")) continue;
+      try {
+        unlinkSync(full);
+        removed += 1;
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  return removed;
+}
+
+const stripped = stripSourceMaps(standalone);
+console.log(`Stripped ${stripped} source map files from standalone`);
 console.log("Standalone prepare complete. Start with: npm run start:standalone");

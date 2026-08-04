@@ -14,7 +14,7 @@ import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { INITIAL_SERVICES } from "@/data/initial-services";
-import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
+import { prerenderAreas, prerenderCities } from "@/config/prerender";
 import { buildAreaPageContent } from "@/data/location-page-content";
 import {
   getAreaBySlugs,
@@ -38,8 +38,8 @@ type PageProps = {
 };
 
 export async function generateStaticParams() {
-  return HIGH_PRIORITY_CITY_AREAS.flatMap((city) =>
-    city.areas.map((area) => ({
+  return prerenderCities().flatMap((city) =>
+    prerenderAreas(city).map((area) => ({
       locationSlug: city.citySlug,
       areaSlug: area.slug,
     })),

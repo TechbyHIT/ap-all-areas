@@ -75,5 +75,11 @@ server {
         proxy_set_header Connection "";
         proxy_read_timeout 60s;
         proxy_next_upstream error timeout http_502 http_503;
+        # Small buffers: Next HTML is typically tens of KB after the prerender
+        # seed; large defaults waste RAM across 50 vhosts for no gain.
+        proxy_buffering on;
+        proxy_buffers 8 16k;
+        proxy_buffer_size 16k;
+        proxy_busy_buffers_size 32k;
     }
 }

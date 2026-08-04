@@ -399,9 +399,11 @@ To start the whole fleet at 3008 instead, set `AP_PORT_BASE=3008` in
 
 Those ports must stay private. Only nginx is public:
 
-- Every app binds `HOSTNAME=127.0.0.1` (set in the PM2 ecosystem), so
-  3000–3200 are not reachable from the internet even if the firewall allows
-  them. Do not change this to `0.0.0.0`.
+- Every app binds `HOSTNAME=localhost` (set in the PM2 ecosystem), so
+  3000–3200 stay on loopback. Do not change this to `0.0.0.0`, and do not
+  set it to `127.0.0.1` either — Next.js middleware normalizes loopback to
+  the string `localhost`, and a mismatch makes every `rewrite()` look like an
+  external HTTPS proxy against the plain-HTTP port (`EPROTO`).
 - In the Hostinger firewall, open **only 80, 443 and SSH**. If 3000+ are open
   from an earlier setup, close them — otherwise every site is reachable at
   `http://<vps-ip>:3001`, bypassing TLS, and Google can index the bare IP.
@@ -411,6 +413,32 @@ Those ports must stay private. Only nginx is public:
 If you are on Hostinger **shared** hosting rather than a VPS, none of this
 applies — there is no PM2 and no root, and 50 Next.js sites are not possible.
 This tooling assumes a VPS (KVM plan) with root access.
+
+## Smallest practical footprint (50+ SEO sites)
+
+The binding constraint is **prerendered HTML**, not `node_modules` or Docker.
+
+| Lever | What it does | SEO impact |
+| --- | --- | --- |
+| `PRERENDER_*` seed (`src/config/prerender.ts`) | Only 2 cities × 8 areas (+ keyword seed) are baked at build time | None — `dynamicParams` + ISR serve the long tail; sitemap still lists URLs |
+| Cap city/area link matrices | Stops ~200 anchors being duplicated into every HTML file | One extra hop via city hub |
+| `HOSTNAME=localhost` | Keeps middleware rewrites internal (no EPROTO) | None |
+| WebP-only images | Faster first encode on a shared VPS | Slightly larger images than AVIF |
+| Strip `*.map` in prepare-standalone | Removes source maps from the release | None |
+| `AP_KEEP_RELEASES=2`, `AP_CACHE_MAX_MB=256` | Caps rollback copies and ISR/image cache | None |
+
+Override the seed without a code change:
+
+```bash
+# /etc/ap-sites/config or shared/.env
+PRERENDER_CITY_LIMIT=2
+PRERENDER_AREA_LIMIT=8
+PRERENDER_KEYWORD_LIMIT=8
+```
+
+Target unit cost after a clean deploy: **~150–400 MB disk, ~80–150 MB RAM** per site.
+At that size, 50 sites fit a 200 GB / 16 GB RAM VPS with headroom. A site that
+prerenders hundreds of thousands of pages will not.
 
 ## Capacity on 200 GB
 

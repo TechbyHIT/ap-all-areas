@@ -25,7 +25,7 @@ import {
   INITIAL_SERVICE_MAP,
   INITIAL_SERVICES,
 } from "@/data/initial-services";
-import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
+import { prerenderAreas, prerenderCities } from "@/config/prerender";
 import { getAreaLocalFact } from "@/data/area-local-facts";
 import { buildAreaServiceContent } from "@/data/location-page-content";
 import { getAreaServiceFaqs } from "@/data/service-faqs";
@@ -71,9 +71,13 @@ function toProcessSteps(items: readonly string[]) {
   });
 }
 
+/**
+ * Seed only — full matrix stays live via `dynamicParams` + ISR.
+ * Uncapped SSG of area×service is what balloons standalone to multi-GB.
+ */
 export async function generateStaticParams() {
-  return HIGH_PRIORITY_CITY_AREAS.flatMap((city) =>
-    city.areas.flatMap((area) =>
+  return prerenderCities().flatMap((city) =>
+    prerenderAreas(city).flatMap((area) =>
       Object.keys(INITIAL_SERVICE_MAP).map((serviceSlug) => ({
         locationSlug: city.citySlug,
         slug: area.slug,

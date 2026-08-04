@@ -128,7 +128,10 @@ else
   log "Installing dependencies"
   (
     cd "$BUILD"
-    npm ci --no-audit --no-fund --prefer-offline
+    if ! npm ci --no-audit --no-fund --prefer-offline; then
+      warn "npm ci failed (lock drift) — falling back to npm install"
+      npm install --no-audit --no-fund
+    fi
   )
 
   if [ "$SKIP_MIGRATE" = 0 ]; then
@@ -165,8 +168,23 @@ else
     export NODE_ENV=production
     export NEXT_TELEMETRY_DISABLED=1
     export NODE_OPTIONS="--max-old-space-size=$AP_NODE_MAX_OLD_SPACE"
+    # SSG seed caps — override in shared/.env or /etc/ap-sites/config.
+    # Millions of URLs stay live via dynamicParams; only the seed is on disk.
+    export PRERENDER_CITY_LIMIT="${PRERENDER_CITY_LIMIT:-2}"
+    export PRERENDER_AREA_LIMIT="${PRERENDER_AREA_LIMIT:-8}"
+    export PRERENDER_KEYWORD_LIMIT="${PRERENDER_KEYWORD_LIMIT:-8}"
+    info "prerender seed: cities=$PRERENDER_CITY_LIMIT areas=$PRERENDER_AREA_LIMIT keywords=$PRERENDER_KEYWORD_LIMIT"
     npm run build
-    npm run prepare:standalone
+    # Some repos name this prepare:standalone, others build:standalone.
+    if ! npm run prepare:standalone --if-present; then
+      if ! npm run build:standalone --if-present; then
+        if [ -f scripts/prepare-standalone.mjs ]; then
+          node scripts/prepare-standalone.mjs
+        else
+          die "no prepare:standalone / build:standalone script after next build"
+        fi
+      fi
+    fi
   )
 
   [ -f "$BUILD/.next/standalone/server.js" ] ||
@@ -174,6 +192,8 @@ else
 
   log "Promoting build to $RELEASE"
   mv "$BUILD/.next/standalone" "$RELEASE"
+  # Defence in depth: strip any .map files prepare-standalone missed.
+  find "$RELEASE" -type f -name '*.map' -delete 2>/dev/null || true
 fi
 
 # ------------------------------------------------------------- wire up release
@@ -242,13 +262,14 @@ fi
 # ---------------------------------------------------------------------- prune
 log "Pruning build artifacts"
 rm -rf "$BUILD/.next"
+# Turbopack / SWC scratch left beside the checkout.
+rm -rf "$BUILD/.turbo" "$BUILD/.swc" 2>/dev/null || true
 if [ "$KEEP_NODE_MODULES" = 0 ]; then
   # ~700 MB-1.5 GB per site. The release bundle carries its own traced deps, so
   # nothing at runtime needs this. `npm ci` restores it on the next deploy.
   rm -rf "$BUILD/node_modules"
   info "removed build/node_modules (use --keep-node-modules for faster rebuilds)"
 fi
-
 LIVE="$(readlink -f "$CURRENT")"
 KEEP_OTHERS=$((AP_KEEP_RELEASES - 1))
 [ "$KEEP_OTHERS" -lt 0 ] && KEEP_OTHERS=0

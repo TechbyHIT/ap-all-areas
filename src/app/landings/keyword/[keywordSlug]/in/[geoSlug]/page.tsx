@@ -6,6 +6,11 @@ import { getIntentHeroImage, getServiceMedia } from "@/config/design";
 import { ROUTES } from "@/config/routes";
 import { KEYWORD_INTENT_MAP, KEYWORD_INTENTS } from "@/data/keyword-intents";
 import { buildKeywordGeoContent } from "@/data/keyword-page-content";
+import {
+  PRERENDER_AREA_LIMIT,
+  PRERENDER_KEYWORD_LIMIT,
+  prerenderCities,
+} from "@/config/prerender";
 import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 import { INITIAL_SERVICE_MAP } from "@/data/initial-services";
 import { findScaleLocality, pathKeywordInGeo } from "@/lib/seo/url-matrix";
@@ -85,12 +90,12 @@ export async function generateStaticParams() {
   const params: Array<{ keywordSlug: string; geoSlug: string }> = [];
   const p0Keywords = KEYWORD_INTENTS.filter((k) => k.priority === 0).slice(
     0,
-    12,
+    PRERENDER_KEYWORD_LIMIT,
   );
-  for (const city of HIGH_PRIORITY_CITY_AREAS.slice(0, 2)) {
+  for (const city of prerenderCities()) {
     for (const keyword of p0Keywords) {
       params.push({ keywordSlug: keyword.slug, geoSlug: city.citySlug });
-      for (const area of city.areas.slice(0, 6)) {
+      for (const area of city.areas.slice(0, PRERENDER_AREA_LIMIT)) {
         params.push({ keywordSlug: keyword.slug, geoSlug: area.slug });
       }
     }

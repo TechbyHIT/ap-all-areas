@@ -18,11 +18,17 @@ AP_ROOT="${AP_ROOT:-/srv/sites}"
 AP_REGISTRY="${AP_REGISTRY:-/etc/ap-sites/sites.d}"
 AP_PORT_BASE="${AP_PORT_BASE:-3000}"
 AP_PORT_MAX="${AP_PORT_MAX:-3200}"
-# Releases kept per site. Each standalone release is ~200-350 MB, so on a
-# 200 GB disk with 50 sites keep this at 2 (or 1 if space gets tight).
+# Releases kept per site. With the prerender seed capped, a release is
+# ~150-400 MB. Default 2 = live + one rollback. Set to 1 on a tight disk.
 AP_KEEP_RELEASES="${AP_KEEP_RELEASES:-2}"
 # Cap for a site's runtime .next/cache (ISR + optimised images), in MB.
-AP_CACHE_MAX_MB="${AP_CACHE_MAX_MB:-512}"
+# Long-tail SEO pages fill this on demand; 256 MB is enough for hot pages
+# without letting one site's image cache crowd out the fleet.
+AP_CACHE_MAX_MB="${AP_CACHE_MAX_MB:-256}"
+# Build-time SSG seed (see src/config/prerender.ts). Dynamic URLs stay live.
+PRERENDER_CITY_LIMIT="${PRERENDER_CITY_LIMIT:-2}"
+PRERENDER_AREA_LIMIT="${PRERENDER_AREA_LIMIT:-8}"
+PRERENDER_KEYWORD_LIMIT="${PRERENDER_KEYWORD_LIMIT:-8}"
 AP_NGINX_DIR="${AP_NGINX_DIR:-/etc/nginx}"
 AP_NGINX_AVAILABLE="${AP_NGINX_AVAILABLE:-$AP_NGINX_DIR/sites-available}"
 AP_NGINX_ENABLED="${AP_NGINX_ENABLED:-$AP_NGINX_DIR/sites-enabled}"
