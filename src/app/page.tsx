@@ -1,69 +1,81 @@
-import Image from "next/image";
+import type { Metadata } from "next";
+import { HomeAllServices } from "@/components/home/HomeAllServices";
+import { HomeCombos } from "@/components/home/HomeCombos";
+import { HomeFinalCta } from "@/components/home/HomeFinalCta";
+import { HomeGallery } from "@/components/home/HomeGallery";
+import { HomeHeroPremium } from "@/components/home/HomeHeroPremium";
+import { HomeLocations } from "@/components/home/HomeLocations";
+import { HomeMaterials } from "@/components/home/HomeMaterials";
+import { HomePricing } from "@/components/home/HomePricing";
+import { HomeProcess } from "@/components/home/HomeProcess";
+import { HomeReviews } from "@/components/home/HomeReviews";
+import { HomeServicesBento } from "@/components/home/HomeServicesBento";
+import { HomeTrustStrip } from "@/components/home/HomeTrustStrip";
+import { HomeWhyChoose } from "@/components/home/HomeWhyChoose";
+import { FAQSection } from "@/components/sections/FAQSection";
+import { LinkDirectory } from "@/components/sections/LinkDirectory";
+import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
+import { INITIAL_SERVICES } from "@/data/initial-services";
+import { SERVICE_DIRECTORY } from "@/data/service-directory";
+import { HOMEPAGE_CONTENT } from "@/data/static-page-content";
+import { KEYWORD_INTENT_MAP } from "@/data/keyword-intents";
+import { ROUTES } from "@/config/routes";
+import { buildCanonicalUrl } from "@/lib/routing/paths";
+import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
+import { staticPageIndexability } from "@/lib/seo/page-indexability";
 
-export default function Home() {
+const SUB_SERVICE_DIRECTORY = INITIAL_SERVICES.map((service) => ({
+  title: service.name,
+  href: ROUTES.service(service.slug),
+  links: service.subServices.map((sub) => ({
+    label: sub.name,
+    href: KEYWORD_INTENT_MAP[sub.slug]
+      ? ROUTES.keywordInGeo(sub.slug, "visakhapatnam")
+      : ROUTES.service(service.slug),
+  })),
+}));
+
+export const metadata: Metadata = generatePageMetadata({
+  title:
+    "Invisible Grills & Balcony Safety Nets in Andhra Pradesh | Hiranya Enterprises",
+  metaDescription:
+    "Balcony safety nets, invisible grills, pigeon nets, sports nets and cloth hangers across Visakhapatnam, Vijayawada, Guntur, Tirupati, Rajahmundry, Kakinada, Nellore, Kurnool and Anantapur. Photo estimate · measured quote.",
+  canonicalUrl: buildCanonicalUrl("/"),
+  ...staticPageIndexability(true),
+});
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="home-shell">
+      <FaqJsonLd faqs={HOMEPAGE_CONTENT.faqs} />
+      <HomeHeroPremium />
+      <HomeTrustStrip />
+      <HomeServicesBento />
+      <HomeAllServices />
+      <HomeWhyChoose />
+      <HomeMaterials />
+      <HomeProcess />
+      <HomeGallery />
+      <HomeLocations />
+      <HomePricing />
+      <HomeReviews />
+      <HomeCombos />
+      <LinkDirectory
+        title="Complete service directory"
+        description="Browse every service category across Andhra Pradesh—invisible grills, balcony nets, bird protection, sports nets, cloth hangers and more."
+        categories={SERVICE_DIRECTORY}
+      />
+      <LinkDirectory
+        title="All sub-services"
+        description="Every specialised installation type we offer—linked for local search across Andhra Pradesh."
+        categories={SUB_SERVICE_DIRECTORY}
+      />
+      <FAQSection
+        title="Frequently asked installation questions"
+        subtitle="Practical answers before you send photos or book a measurement discussion."
+        items={HOMEPAGE_CONTENT.faqs}
+      />
+      <HomeFinalCta />
     </div>
   );
 }

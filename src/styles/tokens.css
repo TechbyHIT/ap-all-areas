@@ -1,0 +1,299 @@
+/**
+ * Hiranya Enterprises — Enterprise design tokens
+ * Theme: Sapphire Blue + Graphite + Champagne Gold
+ * Components consume semantic tokens only.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* —— Primary Blue (enterprise) —— */
+  --primary-50: #eef4ff;
+  --primary-100: #dbe7ff;
+  --primary-200: #bfd3ff;
+  --primary-300: #93b4ff;
+  --primary-400: #608bff;
+  --primary-500: #3b6ef6;
+  --primary-600: #1d4ed8;
+  --primary-700: #1e40af;
+  --primary-800: #1e3a8a;
+  --primary-900: #1e3a6e;
+  --primary-950: #0f172a;
+
+  /* —— Dark Navy —— */
+  --secondary-50: #f8fafc;
+  --secondary-100: #f1f5f9;
+  --secondary-200: #e2e8f0;
+  --secondary-300: #cbd5e1;
+  --secondary-400: #94a3b8;
+  --secondary-500: #64748b;
+  --secondary-600: #475569;
+  --secondary-700: #334155;
+  --secondary-800: #1e293b;
+  --secondary-900: #0f172a;
+  --secondary-950: #0b1220;
+
+  /* —— Premium Gold (sparing: badges / highlights) —— */
+  --accent-50: #fbf7ef;
+  --accent-100: #f5ecd6;
+  --accent-200: #ead7a8;
+  --accent-300: #dcbc70;
+  --accent-400: #d4a84b;
+  --accent-500: #c9972b;
+  --accent-600: #a67a1f;
+  --accent-700: #7d561f;
+  --accent-800: #68461f;
+  --accent-900: #583b1e;
+  --accent-950: #321f0d;
+
+  /* —— Neutral / Gray —— */
+  --neutral-50: #f8f9fb;
+  --neutral-100: #f1f3f6;
+  --neutral-200: #e3e7ee;
+  --neutral-300: #cdd4df;
+  --neutral-400: #9aa6b8;
+  --neutral-500: #6b788c;
+  --neutral-600: #516074;
+  --neutral-700: #3f4b5c;
+  --neutral-800: #2c3441;
+  --neutral-900: #1a2029;
+  --neutral-950: #0d1117;
+
+  --gray-50: var(--neutral-50);
+  --gray-100: var(--neutral-100);
+  --gray-200: var(--neutral-200);
+  --gray-300: var(--neutral-300);
+  --gray-400: var(--neutral-400);
+  --gray-500: var(--neutral-500);
+  --gray-600: var(--neutral-600);
+  --gray-700: var(--neutral-700);
+  --gray-800: var(--neutral-800);
+  --gray-900: var(--neutral-900);
+  --gray-950: var(--neutral-950);
+
+  /* —— Status —— */
+  --success: #16a34a;
+  --success-soft: #e8f8ef;
+  --warning: #b45309;
+  --warning-soft: #fff7ed;
+  --danger: #c02828;
+  --danger-soft: #fef2f2;
+  --info: var(--primary-600);
+  --info-soft: var(--primary-50);
+
+  /* —— WhatsApp (conversion accent) —— */
+  --whatsapp: #16a34a;
+  --whatsapp-dark: #15803d;
+  --whatsapp-soft: #edfcf3;
+
+  /* —— Semantic surfaces —— */
+  --color-bg-page: #f8fafc;
+  --color-bg-subtle: #eef4ff;
+  --color-bg-muted: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-overlay: rgb(15 23 42 / 0.5);
+  --color-surface-glass: rgb(255 255 255 / 0.88);
+  --color-card: #ffffff;
+  --color-card-hover: #f8fafc;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #f8fafc;
+  --color-border: #dce4ee;
+  --color-border-strong: #cbd5e1;
+  --color-border-interactive: color-mix(in srgb, var(--primary-500) 45%, var(--neutral-300));
+  --color-link: var(--primary-700);
+  --color-link-hover: var(--primary-800);
+  --color-focus: var(--primary-500);
+  --color-selection: color-mix(in srgb, var(--primary-400) 32%, white);
+  --color-disabled: var(--neutral-300);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  /* Legacy aliases (existing components) */
+  --background: var(--color-bg-page);
+  --foreground: var(--color-text-primary);
+  --muted: var(--color-bg-muted);
+  --muted-foreground: var(--color-text-secondary);
+  --surface: var(--color-surface);
+  --surface-elevated: var(--color-surface-raised);
+  --overlay: var(--color-surface-overlay);
+  --glass: var(--color-surface-glass);
+  --glass-border: rgb(255 255 255 / 0.55);
+  --card: var(--color-card);
+  --card-muted: var(--color-bg-subtle);
+  --border: var(--color-border);
+  --border-strong: var(--color-border-strong);
+  --hover: var(--neutral-100);
+  --pressed: var(--neutral-200);
+  --focus-ring: var(--color-focus);
+  --disabled: var(--color-disabled);
+  --disabled-foreground: var(--neutral-500);
+
+  --brand: var(--primary-600);
+  --brand-dark: var(--primary-700);
+  --brand-soft: var(--primary-50);
+  --gold: var(--accent-500);
+  --gold-dark: var(--accent-600);
+  --accent-foreground: #ffffff;
+  --accent-dark: var(--accent-600);
+
+  /* —— Spacing —— */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-32: 8rem;
+  --space-40: 10rem;
+  --space-48: 12rem;
+  --space-64: 16rem;
+
+  /* —— Radius —— */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+  --radius-full: 9999px;
+  --radius: var(--radius-lg);
+
+  /* —— Elevation —— */
+  --shadow-soft: 0 1px 2px rgb(16 33 73 / 0.04);
+  --shadow-medium: 0 6px 20px rgb(16 33 73 / 0.07);
+  --shadow-large: 0 16px 40px rgb(16 33 73 / 0.1);
+  --shadow-card: 0 1px 2px rgb(16 33 73 / 0.04), 0 0 0 1px rgb(16 33 73 / 0.02);
+  --shadow-interactive: 0 4px 14px rgb(26 86 216 / 0.22);
+  --shadow-floating: 0 18px 48px rgb(16 33 73 / 0.14);
+  --shadow-dropdown: 0 12px 32px rgb(16 33 73 / 0.12);
+  --shadow-mega: 0 20px 50px rgb(16 33 73 / 0.14);
+  --shadow-header: 0 1px 0 rgb(16 33 73 / 0.06);
+  --shadow-modal: 0 28px 70px rgb(16 33 73 / 0.2);
+  --shadow-glass: 0 10px 30px rgb(16 33 73 / 0.06);
+  --shadow-glow: 0 0 0 4px rgb(47 116 240 / 0.16);
+  --shadow-focus: 0 0 0 3px rgb(47 116 240 / 0.28);
+  --shadow-inset: inset 0 1px 2px rgb(16 33 73 / 0.06);
+
+  /* —— Typography —— */
+  --font-sans: var(--font-body), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-face), var(--font-body), sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --text-micro: clamp(0.6875rem, 0.66rem + 0.12vw, 0.75rem);
+  --text-caption: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --text-body: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --text-body-lg: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --text-h5: clamp(1.1875rem, 1.1rem + 0.4vw, 1.375rem);
+  --text-h4: clamp(1.375rem, 1.2rem + 0.7vw, 1.625rem);
+  --text-h3: clamp(1.625rem, 1.3rem + 1.2vw, 2.125rem);
+  --text-h2: clamp(1.875rem, 1.4rem + 1.8vw, 2.625rem);
+  --text-h1: clamp(2.25rem, 1.55rem + 2.6vw, 3.5rem);
+  --text-display: clamp(2.5rem, 1.65rem + 3.2vw, 4rem);
+  --text-hero: clamp(2.625rem, 1.7rem + 3.6vw, 4.5rem);
+
+  --leading-tight: 1.12;
+  --leading-snug: 1.3;
+  --leading-normal: 1.65;
+  --leading-relaxed: 1.75;
+  --tracking-tight: -0.025em;
+  --tracking-wide: 0.1em;
+
+  /* —— Layout —— */
+  --container-sm: 40rem;
+  --container-md: 48rem;
+  --container-lg: 64rem;
+  --container-xl: 80rem;
+  --container-2xl: 90rem;
+  --container-3xl: 100rem;
+  --container-4xl: 120rem;
+  --container: var(--container-xl);
+  --prose-width: 42rem;
+  --header-height: 4.5rem;
+  --section-y-compact: clamp(2rem, 1.5rem + 1.5vw, 3rem);
+  --section-y: clamp(3.25rem, 2.5rem + 2.5vw, 5.5rem);
+  --section-y-spacious: clamp(4.5rem, 3rem + 4vw, 7rem);
+  --section-y-immersive: clamp(5rem, 3.5rem + 5vw, 8.5rem);
+  --grid-gap: var(--space-6);
+
+  /* —— Motion —— */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 140ms;
+  --duration-base: 220ms;
+  --duration-slow: 340ms;
+
+  /* —— Z —— */
+  --z-header: 40;
+  --z-dropdown: 50;
+  --z-fab: 45;
+  --z-modal: 60;
+  --z-toast: 70;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg-page: #0f141c;
+  --color-bg-subtle: #161d28;
+  --color-bg-muted: #1c2433;
+  --color-surface: #161d28;
+  --color-surface-raised: #1f2836;
+  --color-surface-overlay: rgb(0 0 0 / 0.64);
+  --color-surface-glass: rgb(22 29 40 / 0.86);
+  --color-card: #161d28;
+  --color-card-hover: #1f2836;
+  --color-text-primary: #f2f5f9;
+  --color-text-secondary: #a4b0c2;
+  --color-text-muted: #7d8a9e;
+  --color-text-inverse: #0f141c;
+  --color-border: rgb(255 255 255 / 0.1);
+  --color-border-strong: rgb(255 255 255 / 0.16);
+  --color-border-interactive: color-mix(in srgb, var(--primary-400) 40%, transparent);
+  --color-link: var(--primary-300);
+  --color-link-hover: var(--primary-200);
+  --color-focus: var(--primary-400);
+  --color-selection: color-mix(in srgb, var(--primary-500) 45%, black);
+
+  --background: var(--color-bg-page);
+  --foreground: var(--color-text-primary);
+  --muted: var(--color-bg-muted);
+  --muted-foreground: var(--color-text-secondary);
+  --surface: var(--color-surface);
+  --surface-elevated: var(--color-surface-raised);
+  --overlay: var(--color-surface-overlay);
+  --glass: var(--color-surface-glass);
+  --glass-border: rgb(255 255 255 / 0.08);
+  --card: var(--color-card);
+  --card-muted: var(--color-bg-subtle);
+  --border: var(--color-border);
+  --border-strong: var(--color-border-strong);
+  --hover: rgb(255 255 255 / 0.05);
+  --pressed: rgb(255 255 255 / 0.09);
+  --brand-soft: rgb(47 116 240 / 0.14);
+  --focus-ring: var(--color-focus);
+
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-medium: 0 8px 24px rgb(0 0 0 / 0.35);
+  --shadow-large: 0 18px 48px rgb(0 0 0 / 0.45);
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.04);
+  --shadow-interactive: 0 4px 16px rgb(47 116 240 / 0.28);
+  --shadow-header: 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+  }
+}

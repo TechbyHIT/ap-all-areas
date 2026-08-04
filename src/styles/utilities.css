@@ -1,0 +1,54 @@
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .ds-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .ds-cluster {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+  }
+
+  .ds-center {
+    margin-inline: auto;
+    max-width: var(--prose-width);
+  }
+
+  /* Full-bleed without 100vw scrollbar jump on PC */
+  .ds-full-bleed {
+    width: 100%;
+    margin-inline: 0;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  @supports (width: 100dvw) {
+    .ds-full-bleed {
+      margin-left: -50dvw;
+      margin-right: -50dvw;
+      width: 100dvw;
+      max-width: 100dvw;
+    }
+  }
+
+  .content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 720px;
+  }
+}

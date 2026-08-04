@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SK Invisible Grills — Andhra Pradesh Programmatic SEO Website
 
-## Getting Started
+Production-ready Next.js programmatic SEO platform for invisible grills, safety nets, sports nets and cloth drying hangers across Andhra Pradesh.
 
-First, run the development server:
+## Technology Stack
+
+- Next.js 16 App Router, React 19, TypeScript (strict)
+- Tailwind CSS 4
+- PostgreSQL + Prisma ORM 7
+- Zod validation, Vitest, Playwright, ESLint, Prettier
+
+## Quick Start
 
 ```bash
+cd divya-safe-web
+cp .env.example .env
+# Configure DATABASE_URL with your PostgreSQL connection
+
+npm install
+npm run db:push      # Create database schema
+npm run db:seed      # Seed services, districts, locations
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Key Commands
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run typecheck` | TypeScript check |
+| `npm run test` | Unit tests |
+| `npm run db:seed` | Seed AP districts, services, locations |
+| `npm run pages:create -- --type=service-location --limit=1000` | Create page records |
+| `npm run pages:publish -- --batch-size=500` | Publish approved pages |
+| `npm run pages:count` | Page count summary |
+| `npm run seo:audit` | SEO audit report |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+- `src/app/` — App Router pages and API routes
+- `src/components/` — UI, layout, sections, forms
+- `src/config/` — Business, SEO, navigation configuration
+- `src/data/` — Seed data (services, AP districts, areas)
+- `src/lib/` — Prisma, SEO, schema, publishing logic
+- `prisma/` — Database schema and seed
+- `scripts/` — Publishing and audit scripts
 
-To learn more about Next.js, take a look at the following resources:
+## Before Production
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Replace `[BUSINESS_NAME]`, address, email placeholders in `src/config/business.ts`
+2. **Correct phone number** — current draft `807484593` has 9 digits; must be 10 digits for Call/WhatsApp links
+3. Configure `NEXT_PUBLIC_SITE_URL` and analytics IDs
+4. Run migrations and seed against production PostgreSQL
+5. Review and publish pages in controlled batches
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Documentation
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See also: `ARCHITECTURE.md`, `SEO_ARCHITECTURE.md`, `PUBLISHING_WORKFLOW.md`

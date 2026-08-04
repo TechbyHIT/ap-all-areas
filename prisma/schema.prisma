@@ -1,0 +1,420 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  legalName   String?
+  description String?
+  websiteUrl  String?
+  phone       String
+  whatsapp    String
+  email       String?
+  street      String?
+  city        String?
+  district    String?
+  state       String   @default("Andhra Pradesh")
+  postalCode  String?
+  country     String   @default("India")
+  latitude    Float?
+  longitude   Float?
+  phoneVerified Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ServiceCategory {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  services  Service[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Service {
+  id                   String          @id @default(cuid())
+  slug                 String          @unique
+  name                 String
+  shortName            String
+  categoryId           String
+  category             ServiceCategory @relation(fields: [categoryId], references: [id])
+  publicationStatus    String          @default("draft")
+  allowIndexing        Boolean         @default(false)
+  summary              String          @default("")
+  introduction         String          @default("")
+  detailedDescription  String          @default("")
+  customerProblems     String[]        @default([])
+  benefits             String[]        @default([])
+  features             String[]        @default([])
+  applications         String[]        @default([])
+  materials            String[]        @default([])
+  specifications       String[]        @default([])
+  installationSteps    String[]        @default([])
+  safetyInformation    String[]        @default([])
+  maintenanceTips      String[]        @default([])
+  pricingFactors       String[]        @default([])
+  suitablePropertyTypes String[]       @default([])
+  primaryKeywords      String[]        @default([])
+  secondaryKeywords    String[]        @default([])
+  customerQuestions    String[]        @default([])
+  searchIntents        String[]        @default([])
+  relatedServiceIds    String[]        @default([])
+  heroImage            String          @default("")
+  galleryImages        String[]        @default([])
+  contentReviewed      Boolean         @default(false)
+  qualityScore         Int             @default(0)
+  subServices          SubService[]
+  pages                Page[]
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@index([publicationStatus])
+  @@index([allowIndexing])
+}
+
+model SubService {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serviceId])
+}
+
+model Location {
+  id                   String     @id @default(cuid())
+  slug                 String     @unique
+  name                 String
+  locationType         String
+  parentId             String?
+  parent               Location?  @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children             Location[] @relation("LocationHierarchy")
+  state                String     @default("Andhra Pradesh")
+  district             String?
+  aliases              String[]   @default([])
+  publicationStatus    String     @default("draft")
+  allowIndexing        Boolean    @default(false)
+  isServed             Boolean    @default(false)
+  introduction         String     @default("")
+  localDescription     String     @default("")
+  nearbyLocationIds    String[]   @default([])
+  landmarkIds          String[]   @default([])
+  propertyTypes        String[]   @default([])
+  localCharacteristics String[]   @default([])
+  serviceDemandNotes   String[]   @default([])
+  verifiedLocalFacts   String[]   @default([])
+  latitude             Float?
+  longitude            Float?
+  localDataVerified    Boolean    @default(false)
+  contentReviewed      Boolean    @default(false)
+  qualityScore         Int        @default(0)
+  areas                Area[]
+  pages                Page[]
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  @@index([locationType])
+  @@index([parentId])
+  @@index([publicationStatus])
+  @@index([allowIndexing])
+  @@index([isServed])
+  @@index([district])
+}
+
+model Area {
+  id                String   @id @default(cuid())
+  slug              String
+  name              String
+  locationId        String
+  location          Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  publicationStatus String   @default("draft")
+  allowIndexing     Boolean  @default(false)
+  isServed          Boolean  @default(false)
+  introduction      String   @default("")
+  localDescription  String   @default("")
+  localDataVerified Boolean  @default(false)
+  contentReviewed   Boolean  @default(false)
+  qualityScore      Int      @default(0)
+  pages             Page[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([locationId, slug])
+  @@index([locationId])
+  @@index([allowIndexing])
+}
+
+model Landmark {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  name       String
+  locationId String?
+  latitude   Float?
+  longitude  Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model PropertyType {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  name              String
+  description       String   @default("")
+  suitableServices  String[] @default([])
+  publicationStatus String   @default("draft")
+  allowIndexing     Boolean  @default(false)
+  pages             Page[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Problem {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  name              String
+  description       String   @default("")
+  recommendedServices String[] @default([])
+  publicationStatus String   @default("draft")
+  allowIndexing     Boolean  @default(false)
+  pages             Page[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Page {
+  id                   String        @id @default(cuid())
+  path                 String        @unique
+  slug                 String
+  pageType             String
+  title                String
+  metaDescription      String
+  h1                   String
+  canonicalUrl         String        @unique
+  openGraphTitle       String        @default("")
+  openGraphDescription String        @default("")
+  openGraphImage       String        @default("")
+  openGraphImageAlt    String        @default("")
+  twitterTitle         String        @default("")
+  twitterDescription   String        @default("")
+  serviceId            String?
+  service              Service?      @relation(fields: [serviceId], references: [id])
+  locationId           String?
+  location             Location?     @relation(fields: [locationId], references: [id])
+  areaId               String?
+  area                 Area?         @relation(fields: [areaId], references: [id])
+  propertyTypeId       String?
+  propertyType         PropertyType? @relation(fields: [propertyTypeId], references: [id])
+  problemId            String?
+  problem              Problem?      @relation(fields: [problemId], references: [id])
+  publicationStatus    String        @default("draft")
+  allowIndexing        Boolean       @default(false)
+  contentReviewed      Boolean       @default(false)
+  localDataVerified    Boolean       @default(false)
+  qualityScore         Int           @default(0)
+  similarityScore      Float         @default(0)
+  wordCount            Int           @default(0)
+  minimumRequiredWordCount Int       @default(700)
+  hasUniqueMetadata    Boolean       @default(false)
+  hasUniqueContent     Boolean       @default(false)
+  hasValidCanonical    Boolean       @default(false)
+  hasInternalLinks     Boolean       @default(false)
+  hasValidSchema       Boolean       @default(false)
+  crawlPriority        String        @default("low")
+  sitemapGroup         String?
+  lastContentChangeAt  DateTime?
+  publishedAt          DateTime?
+  lastReviewedAt       DateTime?
+  content              PageContent?
+  faqs                 FAQ[]
+  internalLinksFrom    InternalLink[] @relation("LinkFrom")
+  internalLinksTo      InternalLink[] @relation("LinkTo")
+  sitemapEntries       SitemapEntry[]
+  audits               PageAudit[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@index([pageType])
+  @@index([publicationStatus])
+  @@index([allowIndexing])
+  @@index([serviceId])
+  @@index([locationId])
+  @@index([areaId])
+  @@index([qualityScore])
+  @@index([crawlPriority])
+  @@index([updatedAt])
+  @@index([sitemapGroup])
+}
+
+model PageContent {
+  id        String   @id @default(cuid())
+  pageId    String   @unique
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  sections  Json     @default("[]")
+  modules   Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContentModule {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  moduleType String
+  title     String
+  content   String
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FAQ {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageId])
+}
+
+model BlogCategory {
+  id        String     @id @default(cuid())
+  slug      String     @unique
+  name      String
+  posts     BlogPost[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Author {
+  id        String     @id @default(cuid())
+  slug      String     @unique
+  name      String
+  bio       String     @default("")
+  posts     BlogPost[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model BlogPost {
+  id                String       @id @default(cuid())
+  slug              String       @unique
+  title             String
+  excerpt           String       @default("")
+  content           String       @default("")
+  categoryId        String?
+  category          BlogCategory? @relation(fields: [categoryId], references: [id])
+  authorId          String?
+  author            Author?      @relation(fields: [authorId], references: [id])
+  publicationStatus String       @default("draft")
+  allowIndexing     Boolean      @default(false)
+  reviewedAt        DateTime?
+  publishedAt       DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([publicationStatus])
+  @@index([allowIndexing])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String   @default("")
+  serviceSlug String?
+  locationSlug String?
+  images      String[] @default([])
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  name        String
+  location    String   @default("")
+  serviceSlug String?
+  content     String
+  rating      Int?
+  verified    Boolean  @default(false)
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Redirect {
+  id         String   @id @default(cuid())
+  fromPath   String   @unique
+  toPath     String
+  statusCode Int      @default(301)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model InternalLink {
+  id         String   @id @default(cuid())
+  fromPageId String
+  toPageId   String
+  anchorText String
+  fromPage   Page     @relation("LinkFrom", fields: [fromPageId], references: [id], onDelete: Cascade)
+  toPage     Page     @relation("LinkTo", fields: [toPageId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([fromPageId, toPageId, anchorText])
+  @@index([fromPageId])
+  @@index([toPageId])
+}
+
+model SitemapEntry {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  group     String
+  lastmod   DateTime @default(now())
+  priority  Float    @default(0.5)
+  createdAt DateTime @default(now())
+
+  @@index([group])
+  @@index([pageId])
+}
+
+model PageAudit {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  auditType String
+  severity  String
+  message   String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([pageId])
+  @@index([auditType])
+  @@index([resolved])
+}
+
+model PublishingBatch {
+  id          String   @id @default(cuid())
+  name        String
+  batchSize   Int
+  pageType    String?
+  status      String   @default("pending")
+  pagesCount  Int      @default(0)
+  publishedBy String?
+  log         Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -1,0 +1,24 @@
+@media print {
+  .ds-surface-glass,
+  .ds-scroll-progress,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+    font-size: 12pt;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #444;
+  }
+
+  .ds-card {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}
