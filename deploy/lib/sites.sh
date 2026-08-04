@@ -23,8 +23,9 @@ AP_PORT_MAX="${AP_PORT_MAX:-3200}"
 AP_KEEP_RELEASES="${AP_KEEP_RELEASES:-2}"
 # Cap for a site's runtime .next/cache (ISR + optimised images), in MB.
 AP_CACHE_MAX_MB="${AP_CACHE_MAX_MB:-512}"
-AP_NGINX_AVAILABLE="${AP_NGINX_AVAILABLE:-/etc/nginx/sites-available}"
-AP_NGINX_ENABLED="${AP_NGINX_ENABLED:-/etc/nginx/sites-enabled}"
+AP_NGINX_DIR="${AP_NGINX_DIR:-/etc/nginx}"
+AP_NGINX_AVAILABLE="${AP_NGINX_AVAILABLE:-$AP_NGINX_DIR/sites-available}"
+AP_NGINX_ENABLED="${AP_NGINX_ENABLED:-$AP_NGINX_DIR/sites-enabled}"
 AP_NODE_MAX_OLD_SPACE="${AP_NODE_MAX_OLD_SPACE:-2048}"
 # Builds are serialised through this lock: 50 parallel `next build` runs will
 # OOM any VPS.

@@ -119,19 +119,44 @@ EOF
 # ----------------------------------------------------------------------- nginx
 if command -v nginx >/dev/null 2>&1; then
   log "Tuning nginx for many vhosts"
-  mkdir -p /etc/nginx/conf.d
-  # Default bucket/hash sizes overflow somewhere around 30-40 server_names.
-  cat >/etc/nginx/conf.d/00-ap-sites.conf <<'EOF'
-# Managed by deploy/server-setup.sh — sized for 50+ vhosts.
-server_names_hash_bucket_size 128;
-server_names_hash_max_size 2048;
-proxy_headers_hash_bucket_size 128;
-types_hash_max_size 4096;
+  mkdir -p "$AP_NGINX_DIR/conf.d"
+  AP_NGINX_TUNING="$AP_NGINX_DIR/conf.d/00-ap-sites.conf"
 
-# Shared proxy cache is deliberately NOT enabled here: on a 200 GB disk with 50
-# sites, per-site Next.js caching plus immutable asset headers is the safer
-# trade-off. Enable it only with a hard max_size.
-EOF
+  # Remove our own file first so it is not counted as a prior definition.
+  rm -f "$AP_NGINX_TUNING"
+
+  # True when a directive is already set, uncommented, anywhere in the config.
+  # nginx treats a second definition of these as a fatal error, and Ubuntu ships
+  # types_hash_max_size in nginx.conf.
+  nginx_directive_set() {
+    grep -rhE "^[[:space:]]*$1[[:space:]]+" \
+      "$AP_NGINX_DIR/nginx.conf" "$AP_NGINX_DIR/conf.d" "$AP_NGINX_ENABLED" \
+      2>/dev/null | grep -q .
+  }
+
+  {
+    echo "# Managed by deploy/server-setup.sh — sized for 50+ vhosts."
+    echo "#"
+    echo "# A shared proxy cache is deliberately not enabled: on a 200 GB disk"
+    echo "# with 50 sites, per-site Next.js caching plus immutable asset headers"
+    echo "# is the safer trade-off. Enable one only with a hard max_size."
+    echo
+    # Default bucket/hash sizes overflow somewhere around 30-40 server_names.
+    for pair in \
+      "server_names_hash_bucket_size 128" \
+      "server_names_hash_max_size 2048" \
+      "proxy_headers_hash_bucket_size 128" \
+      "types_hash_max_size 4096"; do
+      directive="${pair%% *}"
+      if nginx_directive_set "$directive"; then
+        echo "# $directive is already set elsewhere — not overriding"
+      else
+        echo "$pair;"
+      fi
+    done
+  } >"$AP_NGINX_TUNING"
+
+  info "wrote $AP_NGINX_TUNING"
   nginx_reload || true
 else
   warn "nginx not installed — apt install nginx"
