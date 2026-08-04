@@ -150,7 +150,7 @@ One registry file per site is the only thing you edit to add a site.
 /etc/ap-sites/
   config                     fleet-wide settings (AP_ROOT, port range, limits)
   sites.d/<slug>.env         DOMAIN, ALIASES, PORT, REPO, BRANCH, MAX_MEMORY
-  ecosystem.multisite.cjs    PM2 config generated from sites.d — never edited
+  ecosystem.multisite.config.cjs   PM2 config from sites.d — never edited
 
 /srv/sites/<slug>/
   build/                     shallow checkout; .next + node_modules pruned after build
@@ -341,7 +341,7 @@ To start the whole fleet at 3008 instead, set `AP_PORT_BASE=3008` in
 
 Those ports must stay private. Only nginx is public:
 
-- Every app binds `HOSTNAME=127.0.0.1` (set in `ecosystem.multisite.cjs`), so
+- Every app binds `HOSTNAME=127.0.0.1` (set in the PM2 ecosystem), so
   3000–3200 are not reachable from the internet even if the firewall allows
   them. Do not change this to `0.0.0.0`.
 - In the Hostinger firewall, open **only 80, 443 and SSH**. If 3000+ are open
@@ -442,5 +442,5 @@ Rollback is the previous release:
 ```bash
 ls -t /srv/sites/<slug>/releases        # pick the one before current
 sudo ln -sfn /srv/sites/<slug>/releases/<ts> /srv/sites/<slug>/current
-sudo pm2 reload /etc/ap-sites/ecosystem.multisite.cjs --only <slug> --update-env
+sudo pm2 reload /etc/ap-sites/ecosystem.multisite.config.cjs --only <slug> --update-env
 ```

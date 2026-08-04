@@ -1,19 +1,25 @@
 /**
  * PM2 config for the whole fleet, generated from the site registry.
  *
+ * The `.config.cjs` suffix is required, not cosmetic: PM2 decides whether an
+ * argument is a config file or a script by matching the filename against
+ * `.json` / `.yml` / `.yaml` / `.config.js` / `.config.cjs` / `.config.mjs`.
+ * Named anything else, `pm2 start` runs this file as an app instead of reading
+ * it, which starts nothing and leaves a stray process named after the file.
+ *
  * One file per site in $AP_REGISTRY (default /etc/ap-sites/sites.d/<slug>.env):
  *
  *   DOMAIN=example.com
  *   ALIASES=www.example.com
  *   PORT=3001
- *   REPO=git@github.com:you/repo.git
- *   BRANCH=main
+ *   REPO=https://github.com/you/repo.git
+ *   BRANCH=master
  *   MAX_MEMORY=300M
  *
  * Adding a site is therefore one new file — this config never needs editing.
  *
- *   pm2 start  /etc/ap-sites/ecosystem.multisite.cjs
- *   pm2 reload /etc/ap-sites/ecosystem.multisite.cjs --only <slug> --update-env
+ *   pm2 start  /etc/ap-sites/ecosystem.multisite.config.cjs
+ *   pm2 reload /etc/ap-sites/ecosystem.multisite.config.cjs --only <slug> --update-env
  */
 const fs = require("node:fs");
 const path = require("node:path");

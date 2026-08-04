@@ -69,13 +69,18 @@ site_conf() { printf '%s/%s.env' "$AP_REGISTRY" "$1"; }
 
 # The PM2 ecosystem is installed to /etc/ap-sites by server-setup.sh so that it
 # does not depend on any single site's checkout. Fall back to the repo copy.
+#
+# The filename must keep its `.config.cjs` suffix: PM2 identifies config files by
+# name, and anything else is executed as a script instead of being read.
+AP_ECOSYSTEM_NAME="ecosystem.multisite.config.cjs"
+
 ecosystem_path() {
   if [ -n "${AP_ECOSYSTEM:-}" ]; then
     printf '%s' "$AP_ECOSYSTEM"
-  elif [ -f /etc/ap-sites/ecosystem.multisite.cjs ]; then
-    printf '/etc/ap-sites/ecosystem.multisite.cjs'
+  elif [ -f "/etc/ap-sites/$AP_ECOSYSTEM_NAME" ]; then
+    printf '/etc/ap-sites/%s' "$AP_ECOSYSTEM_NAME"
   else
-    printf '%s/ecosystem.multisite.cjs' "$AP_DEPLOY_DIR"
+    printf '%s/%s' "$AP_DEPLOY_DIR" "$AP_ECOSYSTEM_NAME"
   fi
 }
 

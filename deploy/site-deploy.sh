@@ -190,6 +190,8 @@ mv -Tf "$CURRENT.tmp" "$CURRENT"
 
 # ------------------------------------------------------------------------ pm2
 ECO="$(ecosystem_path)"
+[ -f "$ECO" ] || die "PM2 ecosystem not found at $ECO — run deploy/server-setup.sh"
+
 log "Reloading PM2 from $ECO"
 if pm2_app_exists "$SLUG"; then
   pm2 reload "$ECO" --only "$SLUG" --update-env
@@ -198,11 +200,24 @@ else
 fi
 pm2 save >/dev/null 2>&1 || warn "pm2 save failed"
 
+# If PM2 did not read the file as config it will have run it as a script, so no
+# app called $SLUG exists and the health check below would fail for a reason
+# that has nothing to do with the app.
+if ! pm2_app_exists "$SLUG"; then
+  warn "PM2 has no process named '$SLUG' after starting $ECO"
+  info "PM2 identifies config files by name; the path must end in .config.cjs"
+  stray="$(basename "$ECO" .cjs)"
+  pm2 describe "$stray" >/dev/null 2>&1 &&
+    info "it started the config file as an app instead: pm2 delete $stray"
+  die "PM2 did not start '$SLUG' — fix the above and re-run"
+fi
+
 # --------------------------------------------------------------- health check
 log "Health check on http://127.0.0.1:$PORT/"
 HEALTHY=0
-for attempt in $(seq 1 20); do
-  if curl -fsS -o /dev/null -m 10 "http://127.0.0.1:$PORT/"; then
+# -s without -S so a connection refused during startup does not print 20 times.
+for attempt in $(seq 1 30); do
+  if curl -fs -o /dev/null -m 10 "http://127.0.0.1:$PORT/" 2>/dev/null; then
     HEALTHY=1
     info "healthy after ${attempt}s"
     break
@@ -220,6 +235,7 @@ if [ "$HEALTHY" = 0 ]; then
     rm -rf "$RELEASE"
   fi
   info "logs: pm2 logs $SLUG --lines 100"
+  info "port: ss -ltnp | grep :$PORT"
   exit 1
 fi
 

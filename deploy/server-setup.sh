@@ -36,9 +36,20 @@ else
   info "already present, leaving as-is"
 fi
 
-log "Installing PM2 ecosystem to /etc/ap-sites/ecosystem.multisite.cjs"
-install -m 644 "$AP_DEPLOY_DIR/ecosystem.multisite.cjs" \
-  /etc/ap-sites/ecosystem.multisite.cjs
+log "Installing PM2 ecosystem to /etc/ap-sites/$AP_ECOSYSTEM_NAME"
+install -m 644 "$AP_DEPLOY_DIR/$AP_ECOSYSTEM_NAME" "/etc/ap-sites/$AP_ECOSYSTEM_NAME"
+
+# Earlier versions installed this as ecosystem.multisite.cjs, a name PM2 runs as
+# a script rather than reading as config. Remove it and the stray app it created.
+if [ -f /etc/ap-sites/ecosystem.multisite.cjs ]; then
+  log "Removing the misnamed ecosystem.multisite.cjs left by an earlier setup"
+  rm -f /etc/ap-sites/ecosystem.multisite.cjs
+  if pm2 describe ecosystem.multisite >/dev/null 2>&1; then
+    pm2 delete ecosystem.multisite >/dev/null 2>&1 &&
+      info "deleted the stray 'ecosystem.multisite' PM2 process"
+    pm2 save >/dev/null 2>&1 || true
+  fi
+fi
 
 log "Installing deploy scripts to /opt/ap-deploy"
 mkdir -p /opt/ap-deploy/lib
