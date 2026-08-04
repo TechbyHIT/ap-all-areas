@@ -2,10 +2,10 @@
 # Site: __SLUG__  ->  127.0.0.1:__PORT__
 
 upstream __SLUG___upstream {
-    # Match PM2 HOSTNAME=localhost. Binding Next to 127.0.0.1 breaks middleware
-    # rewrites (EPROTO); binding localhost can be IPv6-only on some hosts, so
-    # nginx must use the same name rather than 127.0.0.1.
-    server localhost:__PORT__;
+    # PM2 sets HOSTNAME=localhost. On Ubuntu that often binds Next to IPv6
+    # [::1] only — nginx to 127.0.0.1 then gets connection refused and every
+    # request is a 502. Pin the upstream to the same address Next listens on.
+    server [::1]:__PORT__;
     keepalive 32;
 }
 
