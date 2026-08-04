@@ -57,12 +57,25 @@ few MB/s, and the usual reasons are:
   `log: ["query"]` writes every SQL statement,
 - **`next dev` running in production** instead of the standalone server.
 
-Confirm which process it is before deleting anything:
+Identify the writer before deleting anything. Run this **while the disk is
+climbing** — it samples the kernel's per-process I/O counters and ranks
+processes by MB/s alongside the directories that grew:
 
 ```bash
-sudo lsof -nP +L1 | sort -k7 -n | tail          # deleted files still held open
-pm2 status                                      # look at the restart counter
-pm2 logs <app> --lines 50                       # see what it repeats
+sudo bash deploy/find-write-leak.sh --duration 120
+```
+
+Matching the top writer against the directory that grew names the cause: a file
+under `.pm2/logs` means a logging loop, `.next/cache/images` means Next.js is
+transcoding images on demand (high CPU with steady writes is the signature), and
+`/var/lib/docker` means leftover layers. It also lists deleted-but-open files,
+whose space `rm` cannot reclaim.
+
+Supporting detail:
+
+```bash
+pm2 status                       # restart counter
+pm2 logs <app> --lines 50        # what it repeats
 du -sh ~/.pm2/logs/* | sort -h | tail
 ```
 
@@ -296,6 +309,7 @@ Other commands:
 | `deploy/site-remove.sh <slug> [--purge]` | Stop a site; `--purge` reclaims its disk |
 | `deploy/build-artifact.sh` | Build once, deploy the same bundle to many sites |
 | `deploy/disk-audit.sh` | Find what is using disk |
+| `deploy/find-write-leak.sh` | Find which process is writing, and where |
 | `deploy/disk-cleanup.sh` | Reclaim it |
 | `deploy/site-tls.sh` | Issue TLS, skipping names that do not resolve |
 | `deploy/emergency-502.sh` | Triage and recover when every site is down |

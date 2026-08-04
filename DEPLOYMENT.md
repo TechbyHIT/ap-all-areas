@@ -177,6 +177,7 @@ Avoid Docker/`containerd` growth; project-folder caches are easy to delete.
 | `deploy/deploy-all.sh` | Sequential fleet redeploy |
 | `deploy/build-artifact.sh` | Build once, deploy to many sites |
 | `deploy/disk-audit.sh` | Find what is consuming disk |
+| `deploy/find-write-leak.sh` | Rank processes by disk writes to find a leak |
 | `deploy/disk-cleanup.sh` | Reclaim it (safe / aggressive tiers) |
 | `deploy/emergency-502.sh` | Triage + recover when every site returns 502 |
 | `deploy/ecosystem.multisite.config.cjs` | PM2 apps generated from the registry |
