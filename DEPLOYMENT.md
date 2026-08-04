@@ -177,5 +177,6 @@ Avoid Docker/`containerd` growth; project-folder caches are easy to delete.
 | `deploy/build-artifact.sh` | Build once, deploy to many sites |
 | `deploy/disk-audit.sh` | Find what is consuming disk |
 | `deploy/disk-cleanup.sh` | Reclaim it (safe / aggressive tiers) |
+| `deploy/emergency-502.sh` | Triage + recover when every site returns 502 |
 | `deploy/ecosystem.multisite.cjs` | PM2 apps generated from the registry |
 | `deploy/nginx-site.conf.template` | vhost template used by `site-add.sh` |

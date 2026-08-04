@@ -66,12 +66,12 @@ flock -w 7200 9 || die "another site build has held the lock for 2h — investig
 log "Deploying $SLUG ($DOMAIN) on port $PORT"
 
 # A failed build mid-way can fill the disk; bail out early instead.
-FREE_MB="$(df -Pm "$DIR" | awk 'NR==2 {print $4}')"
+FREE_MB="$(df -Pm "$DIR" | awk 'NR==2 {print $(NF-2)}')"
 info "free space: ${FREE_MB} MB"
 if [ "$FREE_MB" -lt 4000 ]; then
   warn "under 4 GB free — running safe cleanup first"
   bash "$AP_DEPLOY_DIR/disk-cleanup.sh" || true
-  FREE_MB="$(df -Pm "$DIR" | awk 'NR==2 {print $4}')"
+  FREE_MB="$(df -Pm "$DIR" | awk 'NR==2 {print $(NF-2)}')"
   [ "$FREE_MB" -lt 2500 ] && die "still only ${FREE_MB} MB free — free space before deploying"
 fi
 

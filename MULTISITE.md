@@ -92,6 +92,53 @@ it nightly.
 
 ---
 
+## Every site returning 502 Bad Gateway
+
+A 502 means nginx is running but the Node process behind it is not answering.
+When it happens to *every* site at once, it is one shared cause, not seven
+separate ones. Run:
+
+```bash
+sudo bash deploy/emergency-502.sh          # diagnose, changes nothing
+sudo bash deploy/emergency-502.sh --fix    # free space and restart the stack
+```
+
+It checks the five things that take down a whole box together and prints a
+ranked verdict: disk full, OOM kills, PM2 crash loops, nothing listening on
+3000+, and PostgreSQL being down. It works before migrating to the registry
+layout, so it is safe to run on the current server as-is.
+
+The usual chain, and the reason 502s and the sawtooth graph appear together:
+
+1. Something writes logs at a few MB/s and fills the disk.
+2. At 100%, **PostgreSQL stops itself** rather than corrupt its WAL.
+3. Every site fails on its first query and crashes on boot.
+4. PM2 restarts them, each crash logs a stack trace, which fills the disk
+   faster — and every site serves 502 throughout.
+5. Eventually a process dies hard, its file handle is released, ~170 GB comes
+   back at once, and the cycle restarts.
+
+**Truncate, do not delete.** While a process holds a log file open, `rm` frees
+nothing — the space stays locked until that process exits. Emptying the file in
+place returns it immediately:
+
+```bash
+: > /root/.pm2/logs/<app>-error.log     # correct
+rm /root/.pm2/logs/<app>-error.log      # frees nothing while the app is running
+```
+
+`--fix` buys hours, not a cure. The disk refills until the write loop is fixed:
+
+```bash
+pm2 status                     # the app with a huge restart count is the loop
+pm2 logs <app> --lines 100     # the error it repeats on every boot
+```
+
+It is nearly always a missing or wrong `DATABASE_URL`, a migration that never
+ran, or a port already in use. Fix that, then run `server-setup.sh` so that if
+it ever recurs, `pm2-logrotate` caps the damage at megabytes instead of the
+whole disk.
+
 ## Layout
 
 One registry file per site is the only thing you edit to add a site.
@@ -178,6 +225,7 @@ Other commands:
 | `deploy/build-artifact.sh` | Build once, deploy the same bundle to many sites |
 | `deploy/disk-audit.sh` | Find what is using disk |
 | `deploy/disk-cleanup.sh` | Reclaim it |
+| `deploy/emergency-502.sh` | Triage and recover when every site is down |
 
 ---
 

@@ -137,7 +137,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 30 3 * * * root /opt/ap-deploy/disk-cleanup.sh >> /var/log/ap-sites-cleanup.log 2>&1
 
 # Every 30 min: if the disk is over 85% full, run the aggressive tier.
-*/30 * * * * root [ "$(df -P / | awk 'NR==2 {print $5+0}')" -ge 85 ] && /opt/ap-deploy/disk-cleanup.sh --aggressive >> /var/log/ap-sites-cleanup.log 2>&1
+*/30 * * * * root [ "$(df -P / | awk 'NR==2 {gsub(/%/,"",$(NF-1)); print $(NF-1)+0}')" -ge 85 ] && /opt/ap-deploy/disk-cleanup.sh --aggressive >> /var/log/ap-sites-cleanup.log 2>&1
 EOF
 chmod 644 /etc/cron.d/ap-sites
 

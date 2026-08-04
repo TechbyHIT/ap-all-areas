@@ -65,4 +65,4 @@ if [ "$SHOW_SIZE" = 1 ] && [ "$count" -gt 0 ]; then
   info "total site disk: $((total_mb / 1024)) GB (avg $((total_mb / count)) MB per site)"
 fi
 info "next free port: $(next_free_port)"
-df -h / | awk 'NR==2 {printf "    disk /: %s used of %s (%s), %s free\n", $3, $2, $5, $4}'
+df -h / | awk 'NR==2 {printf "    disk /: %s used of %s (%s), %s free\n", $(NF-3), $(NF-4), $(NF-1), $(NF-2)}'

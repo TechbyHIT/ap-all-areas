@@ -76,4 +76,4 @@ log "Deployed $OK/$TOTAL"
   warn "failed:$FAILED"
   exit 1
 }
-df -h / | awk 'NR==2 {printf "    disk /: %s free of %s\n", $4, $2}'
+df -h / | awk 'NR==2 {printf "    disk /: %s free of %s\n", $(NF-2), $(NF-4)}'

@@ -29,7 +29,8 @@ done
 
 RECLAIMED_MB=0
 
-before_free_mb() { df -Pm / | awk 'NR==2 {print $4}'; }
+# Available column is NF-2: the mount point is last, capacity second to last.
+before_free_mb() { df -Pm / | awk 'NR==2 {print $(NF-2)}'; }
 FREE_BEFORE="$(before_free_mb)"
 
 # drop <path> [reason]
