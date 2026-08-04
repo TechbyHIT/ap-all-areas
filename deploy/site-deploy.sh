@@ -56,7 +56,13 @@ RELEASE="$RELEASES/$STAMP"
 PREVIOUS="$(readlink -f "$CURRENT" 2>/dev/null || true)"
 
 mkdir -p "$BUILD" "$RELEASES" "$SHARED/logs" "$SHARED/cache"
-[ -f "$SHARED/.env" ] || die "missing $SHARED/.env — create it before deploying"
+# The public pages are built from src/data, so a site with no database needs no
+# env at all. Create an empty file so the env plumbing below stays uniform.
+[ -f "$SHARED/.env" ] || {
+  warn "no $SHARED/.env — deploying without one (fine unless you use /admin)"
+  : >"$SHARED/.env"
+  chmod 600 "$SHARED/.env"
+}
 
 # Only one build at a time: concurrent `next build` runs will OOM the box.
 mkdir -p "$(dirname "$AP_BUILD_LOCK")"
@@ -120,9 +126,12 @@ else
       # shellcheck disable=SC1091
       . "$SHARED/.env"
       set +a
-      [ -n "${DATABASE_URL:-}" ] || die "DATABASE_URL not set in $SHARED/.env"
 
-      if [ -d "$BUILD/prisma/migrations" ]; then
+      if [ -z "${DATABASE_URL:-}" ]; then
+        log "No DATABASE_URL — skipping schema setup"
+        info "the public site does not query the database; /admin and the"
+        info "scripts/ tools are the only things that need one"
+      elif [ -d "$BUILD/prisma/migrations" ]; then
         log "Applying database migrations"
         npx prisma migrate deploy
       else

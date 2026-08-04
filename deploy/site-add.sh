@@ -90,9 +90,12 @@ if [ ! -f "$ENV_FILE" ]; then
   log "Creating $ENV_FILE"
   cat >"$ENV_FILE" <<EOF
 # Runtime env for $SLUG. PM2 loads this on start/reload.
-# Fill in before the first deploy.
-DATABASE_URL=
 NEXT_PUBLIC_SITE_URL=https://$DOMAIN
+
+# Optional. The public pages are built from src/data and never query the
+# database — only /admin and the scripts/ tools do. Leave DATABASE_URL unset
+# unless you need them.
+# DATABASE_URL=postgresql://user:pass@localhost:5432/dbname?connection_limit=3
 EOF
   chmod 600 "$ENV_FILE"
 fi

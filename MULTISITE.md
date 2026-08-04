@@ -201,40 +201,48 @@ sudo bash deploy/site-deploy.sh site-b
 sudo certbot --nginx -d site-b.com -d www.site-b.com
 ```
 
-### shared/.env is not optional
+### The database is optional
 
-`shared/.env` needs two lines at minimum:
+Only two files in `src/` touch Prisma: `src/lib/prisma.ts` and
+`src/app/admin/page.tsx`. Every public page is built from the TypeScript data in
+`src/data`, through helpers like `src/lib/data/locations.ts` that just filter
+arrays. So a site can be deployed with **no PostgreSQL and no `DATABASE_URL`**,
+and `site-deploy.sh` skips the schema step when it is absent.
+
+Postgres is needed for exactly two things:
+
+- the `/admin` dashboard, which the vhost blocks by default,
+- the tools in `scripts/` (`db:seed`, `pages:create`, the audits), which plan and
+  track content but do not serve it.
+
+`src/lib/prisma.ts` therefore connects on **first property access**, not at
+import time. That matters: the earlier eager version threw `DATABASE_URL is not
+set` while the module was being imported, so the process died before it could
+listen, nginx had no upstream, every request was a 502, and PM2 restarted it
+forever — writing a stack trace each time, which is what filled the disk. The
+lazy client means a missing variable can only fail an actual query.
+
+`shared/.env` is created for you with one line:
 
 ```
-DATABASE_URL=postgresql://user:pass@localhost:5432/dbname?connection_limit=3
 NEXT_PUBLIC_SITE_URL=https://your-domain.in
 ```
 
-`DATABASE_URL` is mandatory, and skipping it does not degrade gracefully — it
-takes the whole site down. `src/lib/prisma.ts` builds the client at **module
-load**:
+It is inlined at build time and drives canonical tags and sitemaps, so changing
+it means rebuilding, not just restarting.
 
-```ts
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-```
-
-and `createPrismaClient()` throws `DATABASE_URL is not set`. That happens while
-the module is being imported, so the process dies before it ever listens on its
-port. nginx then has no upstream, every request is a 502, and PM2 restarts the
-process forever — writing a stack trace each time, which is what fills the disk.
-A missing `.env` is the single most common cause of the sawtooth-plus-502
-pattern described above.
-
-`NEXT_PUBLIC_SITE_URL` is inlined at build time and drives canonical tags and
-sitemaps. Getting it wrong means re-building, not just restarting.
-
-Optional:
+Everything else is optional:
 
 | Variable | Why |
 |---|---|
-| `ADMIN_SECRET` | Only if you use `/admin`. See the warning below |
+| `DATABASE_URL` | Only for `/admin` and the `scripts/` tools |
+| `ADMIN_SECRET` | Only if you expose `/admin`. See the warning below |
 | `REVALIDATION_SECRET` | Only if you call `POST /api/revalidate` |
 | `NEXT_PUBLIC_GTM_ID`, `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_CLARITY_ID` | Analytics |
+
+Dropping Postgres also removes the fleet's hardest scaling limit: with no
+database there are no connection pools, so the `max_connections` ceiling that
+would otherwise cap you around 50 sites disappears entirely.
 
 **`/admin` is blocked by nginx by default** (`return 404` in the vhost template)
 because leaving it to the app is unsafe: `src/proxy.ts` only checks the secret
@@ -377,8 +385,10 @@ are.** Plan for those too:
   reservation. For low-traffic sites, `instances: 1` and `exec_mode: "fork"`
   (the default here) is correct — never use cluster mode across a fleet this
   size.
-- **Postgres connections.** Prisma opens a pool per process. 50 sites at the
-  default pool size will blow past `max_connections`. Pin it explicitly in each
+- **Postgres connections** — only if you actually use a database. With
+  `DATABASE_URL` unset this does not apply at all, which is the recommended
+  setup. If you do enable it, Prisma opens a pool per process and 50 sites at
+  the default size will blow past `max_connections`, so pin it in each
   `shared/.env`:
 
   ```
