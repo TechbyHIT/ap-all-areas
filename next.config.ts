@@ -10,7 +10,13 @@ const nextConfig: NextConfig = {
   },
 
   images: {
-    formats: ["image/avif", "image/webp"],
+    /*
+      WebP only. AVIF compresses ~20% smaller but is far slower to encode, and
+      every size in deviceSizes is encoded on the first request for it. On a VPS
+      shared with other sites that shows up as images that take seconds to
+      appear until the cache fills.
+    */
+    formats: ["image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60 * 60 * 24 * 30,

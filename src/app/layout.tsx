@@ -8,6 +8,7 @@ import { FloatingCTA } from "@/components/layout/FloatingCTA";
 import { Header } from "@/components/layout/Header";
 import { SkipToContent } from "@/components/layout/SkipToContent";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { BlogTeaser } from "@/components/sections/BlogTeaser";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
@@ -71,6 +72,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-[var(--color-bg-page)] font-sans text-[var(--color-text-primary)]">
         <JsonLd data={[organizationSchema(), webSiteSchema()]} />
         <SkipToContent />
+        <ScrollToTop />
         <ScrollProgress />
         <Header />
         <main id="main-content" className="flex-1">
