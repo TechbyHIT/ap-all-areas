@@ -104,8 +104,15 @@ for (const slug of registrySlugs()) {
       ...loadEnvFile(path.join(siteRoot, "shared", ".env")),
       NODE_ENV: "production",
       PORT: String(site.PORT),
-      // nginx talks to the app over loopback only.
-      HOSTNAME: site.HOSTNAME || "127.0.0.1",
+      // Must be the string "localhost", not "127.0.0.1". Next.js middleware
+      // rewrites any loopback host to "localhost" in request.url, then only
+      // keeps a rewrite internal when that origin matches the server bind
+      // address exactly. Binding to 127.0.0.1 makes every NextResponse.rewrite
+      // look external, so Next proxies to https://localhost:<PORT> using the
+      // X-Forwarded-Proto from nginx — and the plain-HTTP listener answers
+      // with EPROTO "wrong version number". nginx can still proxy_pass to
+      // 127.0.0.1; that connects to the same loopback socket.
+      HOSTNAME: site.HOSTNAME || "localhost",
     },
   });
 }
