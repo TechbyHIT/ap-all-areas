@@ -98,7 +98,7 @@ Then reclaim:
 ```bash
 sudo bash deploy/disk-cleanup.sh --dry-run      # see it first
 sudo bash deploy/disk-cleanup.sh                # safe tier
-sudo bash deploy/disk-cleanup.sh --aggressive   # + node_modules, npm cache, docker prune
+sudo bash deploy/disk-cleanup.sh --aggressive   # + build node_modules, npm cache, docker prune
 ```
 
 The safe tier only removes things that are regenerated: build caches, releases

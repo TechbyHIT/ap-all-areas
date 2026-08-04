@@ -160,14 +160,16 @@ drop /var/cache/apt/archives "apt package cache"
 
 # ------------------------------------------------------------------ aggressive
 if [ "$AGGRESSIVE" = 1 ]; then
-  log "AGGRESSIVE: node_modules — restored by npm ci on the next deploy"
-  for base in "$AP_ROOT" /var/www /srv/sites; do
-    [ -d "$base" ] || continue
-    while IFS= read -r nm; do
-      # Never touch the node_modules bundled inside a live standalone release.
-      case "$nm" in */current/* | */releases/*) continue ;; esac
-      drop "$nm" "rebuildable"
-    done < <(find "$base" -maxdepth 4 -type d -name node_modules -prune 2>/dev/null)
+  log "AGGRESSIVE: node_modules left in fleet build dirs — restored by npm ci"
+  # Deliberately limited to build directories inside the fleet layout. A
+  # standalone bundle boots from its own .next/standalone/node_modules, and Node
+  # resolves upward from there into the project root, so a site outside this
+  # layout needs both and deleting either stops it booting on the next restart.
+  # site-deploy.sh already prunes the build dir after promoting a release, so
+  # this only catches leftovers from an interrupted deploy.
+  for nm in "$AP_ROOT"/*/build/node_modules /srv/sites/*/build/node_modules; do
+    [ -d "$nm" ] || continue
+    drop "$nm" "rebuildable"
   done
 
   log "AGGRESSIVE: package manager caches"
