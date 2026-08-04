@@ -73,6 +73,22 @@ for base in "$AP_ROOT" /var/www /srv/sites; do
     < <(find "$base" -maxdepth 4 -type d \( -name '.turbo' -o -name '.swc' \) 2>/dev/null)
 done
 
+# ------------------------------------------------- recursive standalone bundles
+# A standalone bundle nested inside another one is always a build artifact: an
+# older prepare-standalone script copied the destination into itself, so each
+# build wrapped the previous copy in another layer. Only the outermost bundle is
+# ever served, and one site here grew to 84 GB this way while every other tier
+# reported nothing to clean. -prune stops find from walking the whole chain once
+# it has matched the shallowest layer.
+log "Recursively nested standalone bundles (never served)"
+for base in "$AP_ROOT" /var/www /srv/sites /root; do
+  [ -d "$base" ] || continue
+  while IFS= read -r nested; do
+    drop "$nested" "nested standalone bundle"
+  done < <(find "$base" -maxdepth 8 -type d \
+    -path '*/.next/standalone/.next/standalone' -prune -print 2>/dev/null)
+done
+
 # ------------------------------------------------------------ stale releases
 log "Stale releases (keeping $AP_KEEP_RELEASES per site)"
 # The live release is always kept, so only KEEP_OTHERS non-live ones are held

@@ -106,6 +106,15 @@ beyond `AP_KEEP_RELEASES`, runtime caches above `AP_CACHE_MAX_MB`, rotated logs
 and week-old temp files. It is safe to run against a live fleet, and cron runs
 it nightly.
 
+It also removes **nested standalone bundles** — a `.next/standalone` found inside
+another `.next/standalone`. That only happens when a `prepare-standalone` script
+copies its destination into itself, and then every build adds another layer. It
+is worth checking for explicitly because the outer bundle stays a normal size, so
+nothing looks wrong until the disk fills: one site on this fleet reached 84 GB of
+nested copies while every other cleanup tier reported nothing to reclaim. Only
+the outermost bundle is ever served, so the nested ones are safe to delete while
+the site is live.
+
 ### Automatic recovery
 
 `disk-guard.sh` runs every 15 minutes from cron and escalates only as far as it
