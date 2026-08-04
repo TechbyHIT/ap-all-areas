@@ -53,6 +53,17 @@ server {
         access_log off;
     }
 
+    # /admin is blocked here rather than in the app, because src/proxy.ts skips
+    # its auth check entirely when ADMIN_SECRET is unset — an empty env var
+    # leaves the admin pages open to the public.
+    #
+    # To use admin: set ADMIN_SECRET in shared/.env, delete this block, reload.
+    # To use admin from one office IP: replace `deny all` with
+    #   allow 203.0.113.4;  deny all;
+    location /admin {
+        return 404;
+    }
+
     location / {
         proxy_pass http://__SLUG___upstream;
         proxy_http_version 1.1;

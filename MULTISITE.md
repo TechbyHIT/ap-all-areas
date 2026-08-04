@@ -198,17 +198,47 @@ sudo bash deploy/site-deploy.sh site-b
 sudo certbot --nginx -d site-b.com -d www.site-b.com
 ```
 
-Required in `shared/.env` before the first deploy:
+### shared/.env is not optional
+
+`shared/.env` needs two lines at minimum:
+
+```
+DATABASE_URL=postgresql://user:pass@localhost:5432/dbname?connection_limit=3
+NEXT_PUBLIC_SITE_URL=https://your-domain.in
+```
+
+`DATABASE_URL` is mandatory, and skipping it does not degrade gracefully — it
+takes the whole site down. `src/lib/prisma.ts` builds the client at **module
+load**:
+
+```ts
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+```
+
+and `createPrismaClient()` throws `DATABASE_URL is not set`. That happens while
+the module is being imported, so the process dies before it ever listens on its
+port. nginx then has no upstream, every request is a 502, and PM2 restarts the
+process forever — writing a stack trace each time, which is what fills the disk.
+A missing `.env` is the single most common cause of the sawtooth-plus-502
+pattern described above.
+
+`NEXT_PUBLIC_SITE_URL` is inlined at build time and drives canonical tags and
+sitemaps. Getting it wrong means re-building, not just restarting.
+
+Optional:
 
 | Variable | Why |
 |---|---|
-| `DATABASE_URL` | Postgres connection. Add `?connection_limit=3` on a large fleet |
-| `NEXT_PUBLIC_SITE_URL` | Canonical URLs and sitemaps. Inlined at build time |
-| `ADMIN_SECRET` | **`/admin` is unauthenticated unless this is set** to something other than `change-me-in-production` (see `src/proxy.ts`) |
-| `REVALIDATION_SECRET` | Guards `POST /api/revalidate` |
+| `ADMIN_SECRET` | Only if you use `/admin`. See the warning below |
+| `REVALIDATION_SECRET` | Only if you call `POST /api/revalidate` |
+| `NEXT_PUBLIC_GTM_ID`, `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_CLARITY_ID` | Analytics |
 
-Analytics IDs (`NEXT_PUBLIC_GTM_ID`, `NEXT_PUBLIC_GA_ID`,
-`NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_CLARITY_ID`) are optional.
+**`/admin` is blocked by nginx by default** (`return 404` in the vhost template)
+because leaving it to the app is unsafe: `src/proxy.ts` only checks the secret
+`if (expected && expected !== "change-me-in-production")`, so an unset
+`ADMIN_SECRET` skips authentication altogether and exposes all seven admin
+pages. If you need admin later, set `ADMIN_SECRET`, remove the `location /admin`
+block from the vhost and reload nginx.
 
 This project has no `prisma/migrations/` directory — the schema is tracked with
 `prisma db push`. `site-deploy.sh` detects that and pushes the schema instead of
@@ -285,6 +315,18 @@ Ports are allocated from 3000 upwards (`AP_PORT_BASE=3000`), one per site:
 `site-a` 3000, `site-b` 3001, and so on up to `AP_PORT_MAX=3200`.
 `site-add.sh` picks the next free one by checking both the registry and the
 listening sockets, so you never assign them by hand.
+
+To pin a specific port, pass `--port`. This app's `package.json` uses 3008 for
+`dev` and `start`, so keeping the production port the same is convenient:
+
+```bash
+sudo bash deploy/site-add.sh --slug hiranaya-enterprises \
+  --domain hiranayaenterprises.in --port 3008 --repo <url>
+```
+
+A pinned port is recorded in the registry, so later sites skip it automatically.
+To start the whole fleet at 3008 instead, set `AP_PORT_BASE=3008` in
+`/etc/ap-sites/config`.
 
 Those ports must stay private. Only nginx is public:
 

@@ -163,6 +163,28 @@ for f in /root/.pm2/logs/*error*.log "$AP_ROOT"/*/shared/logs/error.log; do
   tail -n 6 "$f" 2>/dev/null | sed 's/^/      /'
 done
 
+# Known fatal boot errors. These throw at module load, so the process dies
+# before it can listen, and PM2 restarts it forever.
+scan_logs() { # pattern
+  grep -lh "$1" /root/.pm2/logs/*error*.log "$AP_ROOT"/*/shared/logs/error.log 2>/dev/null | head -3
+}
+
+if [ -n "$(scan_logs 'DATABASE_URL is not set')" ]; then
+  add_verdict "An app is throwing 'DATABASE_URL is not set'. src/lib/prisma.ts builds the client at module load, so a missing .env kills the process on boot before it can listen — every request is a 502 and every restart writes a stack trace. Create shared/.env with DATABASE_URL."
+fi
+if [ -n "$(scan_logs 'ECONNREFUSED')" ]; then
+  add_verdict "An app cannot reach its database (ECONNREFUSED). Check that Postgres is running and that the host and port in DATABASE_URL are right."
+fi
+if [ -n "$(scan_logs 'EADDRINUSE')" ]; then
+  add_verdict "Port already in use (EADDRINUSE). Two PM2 apps are configured on the same PORT, so one of them can never start."
+fi
+if [ -n "$(scan_logs 'password authentication failed')" ]; then
+  add_verdict "Postgres rejected the credentials in DATABASE_URL."
+fi
+if [ -n "$(scan_logs 'ENOSPC')" ]; then
+  add_verdict "An app hit ENOSPC — it could not write because the disk was full."
+fi
+
 # --------------------------------------------------------------- verdict
 hr "VERDICT"
 if [ "${#VERDICT[@]}" -eq 0 ]; then
