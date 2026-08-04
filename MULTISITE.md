@@ -106,6 +106,35 @@ beyond `AP_KEEP_RELEASES`, runtime caches above `AP_CACHE_MAX_MB`, rotated logs
 and week-old temp files. It is safe to run against a live fleet, and cron runs
 it nightly.
 
+### Automatic recovery
+
+`disk-guard.sh` runs every 15 minutes from cron and escalates only as far as it
+has to, so a filling disk is handled before anyone notices:
+
+| `/` usage | What it does |
+| --- | --- |
+| under 80% | nothing, and prints nothing |
+| 80% | safe cleanup |
+| 90% | adds the aggressive tier |
+| 95% | empties live log files in place and vacuums the journal to 100 MB |
+
+The 95% tier exists because `rm` cannot reclaim space inside a file that a
+process still holds open — a crash-looping app can fill a disk that `du` reports
+as nearly empty. Emptying the file in place with `: > file` is what actually
+returns the space.
+
+If it is still above 95% after all three tiers, it exits non-zero and tells you
+to run `find-write-leak.sh`, because at that point something is writing faster
+than cleanup can delete and the fix is to stop the writer.
+
+Check what it has been doing, and try it by hand without deleting anything:
+
+```bash
+tail -40 /var/log/ap-sites-cleanup.log
+sudo bash deploy/disk-guard.sh --dry-run
+sudo bash deploy/disk-guard.sh --warn 70    # lower the bar to force a pass
+```
+
 ---
 
 ## Every site returning 502 Bad Gateway
@@ -194,8 +223,8 @@ This is the part that prevents a repeat of the 200 GB. It:
 - adds **logrotate** rules for nginx and per-site logs (size-capped, not just daily),
 - raises `server_names_hash_bucket_size` — nginx fails to start past roughly
   30–40 vhosts without this,
-- installs a **nightly cleanup cron** plus a guard that runs the aggressive tier
-  whenever the disk crosses 85%,
+- installs a **nightly cleanup cron** plus `disk-guard.sh` every 15 minutes,
+  which escalates through the cleanup tiers once the disk passes 80%,
 - copies the scripts to `/opt/ap-deploy` so cron does not depend on a checkout,
 - prints the commands to remove Docker if it is still installed.
 
@@ -311,6 +340,7 @@ Other commands:
 | `deploy/disk-audit.sh` | Find what is using disk |
 | `deploy/find-write-leak.sh` | Find which process is writing, and where |
 | `deploy/disk-cleanup.sh` | Reclaim it |
+| `deploy/disk-guard.sh` | Reclaim it automatically once the disk starts filling |
 | `deploy/site-tls.sh` | Issue TLS, skipping names that do not resolve |
 | `deploy/emergency-502.sh` | Triage and recover when every site is down |
 
@@ -454,7 +484,7 @@ on the server at all.
 | Weekly | `bash deploy/site-list.sh` — check for `stopped` or `down` |
 | Disk looks off | `sudo bash deploy/disk-audit.sh` |
 | Before adding sites in bulk | `sudo bash deploy/disk-cleanup.sh --aggressive` |
-| Nightly | automatic (`/etc/cron.d/ap-sites`) |
+| Disk filling up | automatic — `disk-guard.sh` every 15 min (`/etc/cron.d/ap-sites`) |
 
 Rollback is the previous release:
 

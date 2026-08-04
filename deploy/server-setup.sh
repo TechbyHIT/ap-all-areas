@@ -172,8 +172,11 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 # Nightly safe cleanup: build caches, stale releases, oversized runtime caches.
 30 3 * * * root /opt/ap-deploy/disk-cleanup.sh >> /var/log/ap-sites-cleanup.log 2>&1
 
-# Every 30 min: if the disk is over 85% full, run the aggressive tier.
-*/30 * * * * root [ "$(df -P / | awk 'NR==2 {gsub(/%/,"",$(NF-1)); print $(NF-1)+0}')" -ge 85 ] && /opt/ap-deploy/disk-cleanup.sh --aggressive >> /var/log/ap-sites-cleanup.log 2>&1
+# Every 15 min: escalate through the cleanup tiers, but only if the disk is
+# filling. The thresholds live inside disk-guard.sh rather than in this line,
+# because cron treats '%' as a field separator and a df/awk check inlined here
+# silently stops at the first one.
+*/15 * * * * root /opt/ap-deploy/disk-guard.sh >> /var/log/ap-sites-cleanup.log 2>&1
 EOF
 chmod 644 /etc/cron.d/ap-sites
 
@@ -208,7 +211,9 @@ cat <<EOF
 
 Registry : /etc/ap-sites/sites.d/
 Sites    : $AP_ROOT/<slug>/
-Commands : /opt/ap-deploy/{site-add,site-deploy,site-list,site-remove,deploy-all,disk-audit,disk-cleanup}.sh
+Commands : /opt/ap-deploy/{site-add,site-deploy,site-list,site-remove,deploy-all,disk-audit,disk-cleanup,disk-guard}.sh
+Auto     : nightly safe cleanup at 03:30, and disk-guard.sh every 15 min which
+           escalates through the cleanup tiers once / passes 80% full
 
 Next:
   sudo bash /opt/ap-deploy/disk-audit.sh          # find the current 200 GB
