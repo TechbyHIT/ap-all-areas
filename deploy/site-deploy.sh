@@ -114,7 +114,6 @@ else
   )
 
   if [ "$SKIP_MIGRATE" = 0 ]; then
-    log "Applying database migrations"
     (
       cd "$BUILD"
       set -a
@@ -122,7 +121,16 @@ else
       . "$SHARED/.env"
       set +a
       [ -n "${DATABASE_URL:-}" ] || die "DATABASE_URL not set in $SHARED/.env"
-      npx prisma migrate deploy
+
+      if [ -d "$BUILD/prisma/migrations" ]; then
+        log "Applying database migrations"
+        npx prisma migrate deploy
+      else
+        # This project tracks the schema with `db push` rather than migration
+        # files, so `migrate deploy` would abort with no migrations found.
+        log "No prisma/migrations — syncing schema with db push"
+        npx prisma db push --skip-generate
+      fi
     )
   fi
 

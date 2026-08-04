@@ -191,12 +191,39 @@ This is the part that prevents a repeat of the 200 GB. It:
 sudo bash deploy/site-add.sh \
   --slug site-b \
   --domain site-b.com \
-  --repo git@github.com:you/repo.git
+  --repo https://github.com/TechbyHIT/ap-all-areas.git
 
 sudo nano /srv/sites/site-b/shared/.env      # DATABASE_URL, NEXT_PUBLIC_SITE_URL
 sudo bash deploy/site-deploy.sh site-b
 sudo certbot --nginx -d site-b.com -d www.site-b.com
 ```
+
+Required in `shared/.env` before the first deploy:
+
+| Variable | Why |
+|---|---|
+| `DATABASE_URL` | Postgres connection. Add `?connection_limit=3` on a large fleet |
+| `NEXT_PUBLIC_SITE_URL` | Canonical URLs and sitemaps. Inlined at build time |
+| `ADMIN_SECRET` | **`/admin` is unauthenticated unless this is set** to something other than `change-me-in-production` (see `src/proxy.ts`) |
+| `REVALIDATION_SECRET` | Guards `POST /api/revalidate` |
+
+Analytics IDs (`NEXT_PUBLIC_GTM_ID`, `NEXT_PUBLIC_GA_ID`,
+`NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_CLARITY_ID`) are optional.
+
+This project has no `prisma/migrations/` directory — the schema is tracked with
+`prisma db push`. `site-deploy.sh` detects that and pushes the schema instead of
+running `migrate deploy`, which would abort with no migrations found. Seeding
+and page generation are separate one-time steps after the first deploy:
+
+```bash
+cd /srv/sites/<slug>/build
+npm run db:seed
+npm run pages:create -- --type=service-location --limit=1000
+npm run pages:publish -- --batch-size=500
+```
+
+Those need `node_modules`, so either run them before the prune or deploy with
+`--keep-node-modules` the first time.
 
 `site-add.sh` allocates the next free port (checking both the registry and
 listening sockets), creates the directory layout, writes the registry entry and

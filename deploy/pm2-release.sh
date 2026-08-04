@@ -9,9 +9,14 @@ cd "$ROOT"
 echo "==> Install deps"
 npm ci
 
-echo "==> Prisma generate + migrate"
+echo "==> Prisma generate + schema sync"
 npx prisma generate
-npx prisma migrate deploy
+if [ -d prisma/migrations ]; then
+  npx prisma migrate deploy
+else
+  # No migration files in this project; the schema is tracked with db push.
+  npx prisma db push --skip-generate
+fi
 
 echo "==> Build standalone"
 npm run build
