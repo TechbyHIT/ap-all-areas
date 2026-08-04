@@ -1,0 +1,68 @@
+# Managed by deploy/site-add.sh — regenerating a site overwrites this file.
+# Site: __SLUG__  ->  127.0.0.1:__PORT__
+
+upstream __SLUG___upstream {
+    server 127.0.0.1:__PORT__;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __DOMAIN__ __ALIASES__;
+
+    # certbot inserts the 443 block and the HTTP->HTTPS redirect here.
+
+    client_max_body_size 12m;
+
+    # Per-site logs, size-capped by /etc/logrotate.d/ap-sites.
+    access_log /var/log/nginx/__SLUG__.access.log;
+    error_log  /var/log/nginx/__SLUG__.error.log warn;
+
+    gzip on;
+    gzip_proxied any;
+    gzip_comp_level 5;
+    gzip_min_length 256;
+    gzip_types text/plain text/css application/json application/javascript
+               application/x-javascript text/xml application/xml
+               application/xml+rss text/javascript image/svg+xml;
+
+    # Immutable hashed assets: cache hard, and do not log them. On a 50-site box
+    # static-asset access logs are a large share of log volume.
+    location /_next/static/ {
+        proxy_pass http://__SLUG___upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Connection "";
+        access_log off;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    location /images/ {
+        proxy_pass http://__SLUG___upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Connection "";
+        access_log off;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    location = /favicon.ico {
+        proxy_pass http://__SLUG___upstream;
+        proxy_set_header Host $host;
+        access_log off;
+    }
+
+    location / {
+        proxy_pass http://__SLUG___upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "";
+        proxy_read_timeout 60s;
+        proxy_next_upstream error timeout http_502 http_503;
+    }
+}

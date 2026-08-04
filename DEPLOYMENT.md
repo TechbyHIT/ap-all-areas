@@ -3,6 +3,11 @@
 **Stack:** Node.js + PM2 + nginx  
 **Why:** Same Next.js app, less Docker overhead, easier disk cleanup than `containerd`.
 
+> Running more than a couple of sites on one VPS? Use
+> **[MULTISITE.md](./MULTISITE.md)** instead. It replaces the manual steps below
+> with a site registry and scripts that cap disk per site, which is what makes
+> 50 sites fit on a 200 GB disk.
+
 | | Docker | PM2 (no Docker) |
 |---|---|---|
 | Disk per site | ~1–1.5 GB | ~800 MB–1 GB |
@@ -97,6 +102,13 @@ npm run pm2:stop
 
 Each site = own project folder + own PM2 app + own nginx `server` block.
 
+For anything past two or three sites, do not manage this by hand — see
+**[MULTISITE.md](./MULTISITE.md)**, where `deploy/site-add.sh` allocates the port,
+writes the registry entry and generates the vhost, and `deploy/site-deploy.sh`
+prunes the build afterwards so each site stays under ~1 GB.
+
+Manual version, for a single extra site:
+
 1. Clone/build each site under e.g. `/var/www/site-a`, `/var/www/site-b`
 2. In each `ecosystem.config.cjs` (or one combined file), set:
    - unique `name`
@@ -149,3 +161,21 @@ Avoid Docker/`containerd` growth; project-folder caches are easy to delete.
 | `ecosystem.config.cjs` | PM2 process(es), PORT / HOSTNAME |
 | `deploy/nginx-site.conf.example` | nginx reverse proxy template |
 | `deploy/pm2-release.sh` | VPS release helper |
+
+### Fleet tooling (see [MULTISITE.md](./MULTISITE.md))
+
+| File | Role |
+|---|---|
+| `deploy/lib/sites.sh` | Shared config, site registry, port allocation |
+| `deploy/server-setup.sh` | One-time setup: log rotation caps, cron, nginx tuning |
+| `deploy/site-add.sh` | Register a site, allocate a port, write the vhost |
+| `deploy/site-deploy.sh` | Build → release → health check → rollback → prune |
+| `deploy/site-list.sh` | Fleet status: port, PM2 state, HTTP, disk |
+| `deploy/site-import.sh` | Adopt an existing site into the registry layout |
+| `deploy/site-remove.sh` | Stop a site, optionally reclaim its disk |
+| `deploy/deploy-all.sh` | Sequential fleet redeploy |
+| `deploy/build-artifact.sh` | Build once, deploy to many sites |
+| `deploy/disk-audit.sh` | Find what is consuming disk |
+| `deploy/disk-cleanup.sh` | Reclaim it (safe / aggressive tiers) |
+| `deploy/ecosystem.multisite.cjs` | PM2 apps generated from the registry |
+| `deploy/nginx-site.conf.template` | vhost template used by `site-add.sh` |
