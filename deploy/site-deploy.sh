@@ -233,11 +233,14 @@ if ! pm2_app_exists "$SLUG"; then
 fi
 
 # --------------------------------------------------------------- health check
-log "Health check on http://127.0.0.1:$PORT/"
+# HOSTNAME=localhost (required for Next middleware rewrites) may bind IPv6
+# ::1 only on some hosts. Probe both names so a healthy app is not rolled back.
+log "Health check on port $PORT (localhost and 127.0.0.1)"
 HEALTHY=0
 # -s without -S so a connection refused during startup does not print 20 times.
-for attempt in $(seq 1 30); do
-  if curl -fs -o /dev/null -m 10 "http://127.0.0.1:$PORT/" 2>/dev/null; then
+for attempt in $(seq 1 45); do
+  if curl -fs -o /dev/null -m 5 "http://localhost:$PORT/" 2>/dev/null ||
+    curl -fs -o /dev/null -m 5 "http://127.0.0.1:$PORT/" 2>/dev/null; then
     HEALTHY=1
     info "healthy after ${attempt}s"
     break
@@ -247,6 +250,10 @@ done
 
 if [ "$HEALTHY" = 0 ]; then
   warn "site did not answer on port $PORT"
+  info "last error log lines:"
+  tail -n 40 "$SHARED/logs/error.log" 2>/dev/null | sed 's/^/      /' || true
+  info "listen sockets:"
+  ss -ltnp 2>/dev/null | grep -E ":$PORT\\b" | sed 's/^/      /' || true
   if [ -n "$PREVIOUS" ] && [ -d "$PREVIOUS" ] && [ "$PREVIOUS" != "$RELEASE" ]; then
     warn "rolling back to $PREVIOUS"
     ln -sfn "$PREVIOUS" "$CURRENT.tmp"
@@ -255,7 +262,6 @@ if [ "$HEALTHY" = 0 ]; then
     rm -rf "$RELEASE"
   fi
   info "logs: pm2 logs $SLUG --lines 100"
-  info "port: ss -ltnp | grep :$PORT"
   exit 1
 fi
 

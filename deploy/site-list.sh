@@ -42,7 +42,8 @@ while read -r slug; do
   fi
 
   http="down"
-  curl -fsS -o /dev/null -m 5 "http://127.0.0.1:$PORT/" 2>/dev/null && http="ok"
+  { curl -fsS -o /dev/null -m 5 "http://localhost:$PORT/" 2>/dev/null ||
+    curl -fsS -o /dev/null -m 5 "http://127.0.0.1:$PORT/" 2>/dev/null; } && http="ok"
 
   disk="-"
   if [ "$SHOW_SIZE" = 1 ]; then
