@@ -75,6 +75,24 @@ log "Certificate installed"
 curl -sS -o /dev/null -w '    https://%{http_code} from https://'"$DOMAIN"'\n' \
   "https://$DOMAIN/" 2>/dev/null || warn "could not verify over HTTPS yet"
 
+# A valid certificate is not enough: if the port 80 block still serves the site
+# instead of redirecting, anyone arriving over http:// gets Chrome's "Not secure"
+# warning and never sees the certificate at all.
+HTTP_CODE="$(curl -sS -o /dev/null -w '%{http_code}' "http://$DOMAIN/" 2>/dev/null || echo 000)"
+case "$HTTP_CODE" in
+30[128])
+  printf '    http://%s redirects (%s)\n' "$DOMAIN" "$HTTP_CODE"
+  ;;
+000)
+  warn "could not reach http://$DOMAIN/ to check for the redirect"
+  ;;
+*)
+  warn "http://$DOMAIN/ answered $HTTP_CODE instead of redirecting to https"
+  info "visitors who type the bare domain will see 'Not secure'. Add the redirect:"
+  info "  sudo certbot --nginx $DOMAIN_FLAGS --redirect"
+  ;;
+esac
+
 # Aliases left out above can be folded in later without reissuing from scratch.
 for alias in $ALIASES; do
   [ -n "$alias" ] || continue
