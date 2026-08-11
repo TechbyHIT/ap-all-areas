@@ -224,12 +224,21 @@ export function buildKeywordGeoContent(
     heading: `Serving ${geo.name} and wider ${geo.cityName}`,
     paragraphs: [
       `${brand} supports ${p} enquiries across ${geo.name} and other localities in ${geo.cityName}, Andhra Pradesh. Coverage is confirmed after site review—send photos and landmark details when you enquire. We do not claim a shop inside every neighbourhood listed online.`,
+      `Residents comparing options in ${geo.cityName} should judge written scope quality—openings, materials, spacing or mesh intent, inclusions and aftercare—rather than invented rankings. That is how durable balcony and terrace work is planned across Andhra Pradesh.`,
+    ],
+  });
+
+  sections.push({
+    heading: `Why measured local pages matter for ${geo.name}`,
+    paragraphs: [
+      `Searchers looking for ${p} in ${geo.name} usually want a reachable installer who can visit, measure and finish without vague statewide promises. Local pages should explain product fit, weather-aware materials and the photo-to-measurement path—not copy-paste the same paragraph for every pin code.`,
+      `${brand} keeps ${geo.name} content tied to real opening problems and Andhra Pradesh exposure notes so the page stays useful after the click—not only for the keyword.`,
     ],
   });
 
   return {
-    metaTitle: `Best ${keyword.phrase} in ${geo.name} | Free Site Visit | ${brand}`,
-    metaDescription: `Looking for ${p} in ${geo.name}, ${geo.cityName}? Get professional installation, measured quotes, warranty scope and photo-led estimates from ${brand}. Call ${BUSINESS_CONFIG.phone.displayFormatted}.`,
+    metaTitle: `${keyword.phrase} in ${geo.name} | Measured Quote | ${brand}`,
+    metaDescription: `${p} in ${geo.name}, ${geo.cityName}, Andhra Pradesh — photo estimate, measured quotation, weather-aware materials and clear written scope from ${brand}. Call ${BUSINESS_CONFIG.phone.displayFormatted}.`,
     heroDescription: `Professional ${p} for apartments, villas, homes and suitable commercial openings in ${geo.name}, ${geo.cityName}. Send opening photos for a measured estimate from ${brand}.`,
     sections,
     decisionPoints: [
@@ -238,6 +247,7 @@ export function buildKeywordGeoContent(
       "Note society permissions and working hours before drill day",
       "Ask for written inclusions: materials, labour, travel and warranty scope",
       "Prefer photo + measurement over teaser citywide rates",
+      "Ask how Andhra Pradesh sun, rain or coastal exposure affects the specification",
     ],
     processSteps: [
       `Share opening photos, ${geo.name} landmark and your main risk priority`,

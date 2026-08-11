@@ -278,6 +278,8 @@ export default async function CityServicePage({ params }: PageProps) {
           <>
             <p>{content.uniqueIntroduction}</p>
             <p>{content.localRequirements}</p>
+            <p>{content.buyingGuide}</p>
+            <p>{content.localAuthorityNote}</p>
           </>
         }
         note="Service availability is confirmed after reviewing site access, measurements and technician scheduling."

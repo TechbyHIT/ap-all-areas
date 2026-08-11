@@ -120,6 +120,87 @@ function genericService(serviceName: string, place: string): EncyclopediaSection
   ];
 }
 
+/** Shared buyer-depth blocks appended to every service × place page. */
+function buyerDepth(place: string, serviceLabel: string): EncyclopediaSection[] {
+  return [
+    {
+      heading: `Buyer checklist for ${serviceLabel} in ${place}`,
+      paragraphs: [
+        `Before approving work in ${place}, confirm the problem (fall risk, birds, view, sports or drying), the openings included, the material grade, spacing or mesh size, and what is excluded—travel, society permissions, AC cut-outs or extra frames. A short written scope beats a verbal “package rate”.`,
+        `Ask how Andhra Pradesh weather is handled: UV on nets, corrosion on stainless and fasteners, and simple aftercare after heavy rain or coastal salt exposure. Request photo references of similar openings when you want proof of finishing quality.`,
+        `Share balcony photos, landmark or society name, floor access and preferred working hours. Measurement still decides the final quotation; photos only accelerate early guidance.`,
+      ],
+    },
+    {
+      heading: `Common mistakes to avoid in ${place}`,
+      paragraphs: [
+        `Choosing only by the lowest teaser price often skips corners, higher floors, frames or travel. Incomplete edge coverage—especially side returns and AC ledges—is why birds return or climbable gaps remain.`,
+        `Treating every balcony the same ignores society rules, railing type and how the space is used daily. In ${place}, utility balconies, front living balconies and terrace edges usually need different detailing.`,
+        `Skipping measurement or approving work from a single WhatsApp photo alone creates scope disputes. Use photos to start, then lock size, material and inclusions in writing.`,
+      ],
+    },
+    {
+      heading: `Aftercare and long-term usefulness in Andhra Pradesh`,
+      paragraphs: [
+        `After handover in ${place}, keep fixings clear of heavy hanging loads that the system was not designed for. Clear leaf litter and debris from nets; wipe cables periodically; check hooks or terminations after severe weather.`,
+        `If sag, corrosion, torn mesh or loose anchors appear, schedule a review before small defects become open gaps. Honest maintenance advice is part of durable outdoor protection—not an optional brochure line.`,
+      ],
+    },
+  ];
+}
+
+/** City / area hub encyclopedia covering the full Andhra Pradesh service set. */
+export function getLocationHubEncyclopedia(
+  placeName: string,
+  parentCityName?: string,
+): EncyclopediaSection[] {
+  const place = placeClause(placeName);
+  const cityBit = parentCityName
+    ? ` within ${placeClause(parentCityName)}`
+    : " in Andhra Pradesh";
+
+  return [
+    {
+      heading: `How to choose the right protection in ${place}`,
+      paragraphs: [
+        `Start with the household problem${cityBit}: children near railings, pets on balconies, pigeons on ledges, clear-view living balconies, terrace cricket, or compact laundry drying. Product names should follow that brief—not the other way around.`,
+        `Invisible grills suit openings where slim stainless cables and daylight matter. Safety and bird nets suit wider mesh coverage, ducts and irregular shapes. Sports nets need measured practice length and height. Cloth hangers need sound ceiling or wall fixing and realistic load guidance.`,
+        `In ${place}, society working hours, lift access and permission for external drilling often decide schedule more than catalogue availability. Photos plus measurement keep the plan honest.`,
+      ],
+    },
+    {
+      heading: `Invisible grills, safety nets and bird control in ${place}`,
+      paragraphs: [
+        `Invisible grills in ${place} are planned opening-by-opening: spacing, anchors, corner returns and AC outdoor-unit cut-outs. They supplement—not replace—railings and adult supervision.`,
+        `Safety nets and pigeon nets close fall-risk or bird-entry planes across balconies, windows, ducts and terrace edges. Mesh size and tension should match children, pets or birds—not a single default colour choice.`,
+        `Bird spikes help only on narrow ledges where a full net is unnecessary. If pigeons keep returning, inspect side gaps and ducts before buying more front-only mesh.`,
+      ],
+    },
+    {
+      heading: `Sports nets and cloth drying hangers in ${place}`,
+      paragraphs: [
+        `Sports and cricket nets in ${place} are sized for home terrace practice or heavier school and coaching use. Posts, wall fixings, height and entry gaps must be stated in the scope.`,
+        `Cloth drying hangers reclaim railing space in compact flats. Ceiling strength, headroom and daily load decide whether a pulley or wall system is safe. Overloading a weak false ceiling is a structural risk, not a product upgrade.`,
+      ],
+    },
+    {
+      heading: `Andhra Pradesh weather, materials and measured quotes`,
+      paragraphs: [
+        `Across Andhra Pradesh—including ${place}—outdoor systems face strong sun, seasonal rain, dust and coastal salt where relevant. UV-aware meshes and corrosion-conscious stainless hardware are practical defaults for exposed balconies and terraces.`,
+        `Useful quotations state measured size, material, inclusions, exclusions and warranty scope. Listing ${place} online supports visit planning; it is not a claim of a permanent branch on every street.`,
+        `Send opening photos and a landmark to start. Final pricing follows measurement and site access confirmation so the finished job matches the brief you approved.`,
+      ],
+    },
+    {
+      heading: `Local buying path that earns trust in ${place}`,
+      paragraphs: [
+        `Residents comparing installers in ${place} should ask for written openings count, spacing or mesh intent, society-hour constraints and aftercare notes. Avoid rankings, invented years-in-business claims or fake review counts—ask for recent project photos instead.`,
+        `A clear path—photo enquiry → measurement → written scope → scheduled fixing → handover checks—beats vague “same-day statewide” promises. That process is how durable balcony and terrace work is planned across Andhra Pradesh cities and localities.`,
+      ],
+    },
+  ];
+}
+
 /** Deep explainer blocks for a service, localised with a place name. */
 export function getServiceEncyclopedia(
   serviceSlug: string,
@@ -127,22 +208,26 @@ export function getServiceEncyclopedia(
   serviceName = serviceSlug.replace(/-/g, " "),
 ): EncyclopediaSection[] {
   const place = placeClause(placeName);
-  switch (serviceSlug) {
-    case "invisible-grills":
-      return invisibleGrills(place);
-    case "safety-nets":
-    case "balcony-safety-nets":
-    case "pigeon-nets":
-    case "children-safety-nets":
-    case "pet-safety-nets":
-    case "duct-area-safety-nets":
-      return safetyNets(place);
-    case "sports-nets":
-    case "cricket-nets":
-      return sportsNets(place);
-    case "cloth-drying-hangers":
-      return clothHangers(place);
-    default:
-      return genericService(serviceName, place);
-  }
+  const core = (() => {
+    switch (serviceSlug) {
+      case "invisible-grills":
+        return invisibleGrills(place);
+      case "safety-nets":
+      case "balcony-safety-nets":
+      case "pigeon-nets":
+      case "children-safety-nets":
+      case "pet-safety-nets":
+      case "duct-area-safety-nets":
+        return safetyNets(place);
+      case "sports-nets":
+      case "cricket-nets":
+        return sportsNets(place);
+      case "cloth-drying-hangers":
+        return clothHangers(place);
+      default:
+        return genericService(serviceName, place);
+    }
+  })();
+
+  return [...core, ...buyerDepth(place, serviceName.toLowerCase())];
 }

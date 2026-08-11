@@ -17,6 +17,7 @@ import { PricingFactors } from "@/components/sections/PricingFactors";
 import { CoverageSection } from "@/components/sections/CoverageSection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
+import { SeoEncyclopediaSections } from "@/components/sections/SeoEncyclopediaSections";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
@@ -152,6 +153,8 @@ export default async function LocationDetailPage({ params }: PageProps) {
           <>
             <p>{content.introduction}</p>
             <p>{content.servicesOverview}</p>
+            <p>{content.buyingGuide}</p>
+            <p>{content.localDecisionGuide}</p>
             {profile ? (
               <>
                 <p>{profile.weatherNotes}</p>
@@ -165,6 +168,8 @@ export default async function LocationDetailPage({ params }: PageProps) {
         }
         note="Listing this location means installation support can be arranged subject to site confirmation — not that a shop or branch exists here."
       />
+
+      <SeoEncyclopediaSections sections={content.encyclopedia} />
 
       <ServiceCards
         title={`Services Available in ${displayName}`}

@@ -7,6 +7,7 @@
 import { getAreaLocalFact } from "@/data/area-local-facts";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
 import {
+  getLocationHubEncyclopedia,
   getServiceEncyclopedia,
   type EncyclopediaSection,
 } from "@/data/service-encyclopedia";
@@ -16,11 +17,14 @@ export type LocationPageContent = {
   servicesOverview: string;
   residentialApplications: string;
   commercialApplications: string;
+  buyingGuide: string;
+  localDecisionGuide: string;
   commonRequirements: string[];
   installationOverview: string;
   siteInspectionInfo: string;
   pricingFactors: string[];
   faqs: Array<{ question: string; answer: string }>;
+  encyclopedia: EncyclopediaSection[];
 };
 
 export type CityServiceContent = {
@@ -33,6 +37,8 @@ export type CityServiceContent = {
   weatherNotes: string;
   areasServedIntro: string;
   pricingNote: string;
+  buyingGuide: string;
+  localAuthorityNote: string;
   encyclopedia: EncyclopediaSection[];
 };
 
@@ -47,6 +53,8 @@ export type AreaServiceContent = {
   installationSteps: string;
   maintenanceAdvice: string;
   pricingNote: string;
+  buyingGuide: string;
+  localAuthorityNote: string;
   encyclopedia: EncyclopediaSection[];
 };
 
@@ -170,6 +178,10 @@ export function buildLocationPageContent(input: {
 
     commercialApplications: `Commercial and institutional requests around ${name} may include apartment associations, schools, coaching centres, hostels, clinics, small offices and sports practice grounds. These sites often need clearer access planning, larger spans and durable specifications suited to frequent use. We share a scope based on measured openings and intended use, then schedule installation when materials and site readiness are confirmed.`,
 
+    buyingGuide: `Buyers in ${name} comparing invisible grills, safety nets, sports nets or cloth hangers should ask for a written openings list, material grade, spacing or mesh intent, society-hour constraints and what is excluded from the price. Prefer photo + measurement over a single citywide teaser rate. Andhra Pradesh sun, rain and coastal exposure (where relevant) should appear in the material conversation—not only in marketing adjectives.`,
+
+    localDecisionGuide: `A practical decision path for ${name}: (1) name the risk—children, pets, pigeons, view, sports or drying; (2) send opening photos and a landmark; (3) confirm measurement and access; (4) approve a written scope; (5) schedule fixing and handover checks. That sequence keeps local pages useful for residents across ${district ? `${district} district and ` : ""}Andhra Pradesh without inventing office addresses or fake rankings.`,
+
     commonRequirements: [
       "Accurate width and height of each balcony, window, duct or practice area",
       "Notes on parapet height, railing gaps and wall or ceiling condition",
@@ -253,7 +265,16 @@ export function buildLocationPageContent(input: {
         question: "How do I start an enquiry for this location?",
         answer: `Share your city or area as ${name}, the service needed, approximate opening count and photos if available. We will guide you on the next measurement or quotation step based on project requirements.`,
       },
+      {
+        question: `What makes a useful ${name} quotation different from a teaser rate?`,
+        answer: `A useful quotation for ${name} lists measured openings, material grade, spacing or mesh intent, inclusions and exclusions. Teaser citywide rates often omit corners, higher floors, frames or travel—so compare written scopes, not slogans.`,
+      },
+      {
+        question: `How should Andhra Pradesh weather affect material choice in ${name}?`,
+        answer: `Strong sun, seasonal rain, dust and coastal salt (where relevant) affect nets, cables and fasteners. Ask for outdoor-appropriate specifications and simple maintenance checks after heavy weather—especially on exposed balconies and terraces in ${name}.`,
+      },
     ],
+    encyclopedia: getLocationHubEncyclopedia(name),
   };
 }
 
@@ -274,6 +295,10 @@ export function buildAreaPageContent(input: {
     residentialApplications: `Homes in ${areaName} may include mid-rise flats, independent houses and villa-style residences linked to ${cityName}. Typical applications are balcony edge protection, bedroom window safety, utility balcony bird control and ceiling-mounted drying systems. Building access, parking distance and lift usage can affect installation planning, so those details are useful during enquiry.`,
 
     commercialApplications: `Small commercial and community sites around ${areaName} — such as coaching centres, apartment common areas or school practice corners linked to ${cityName} — can also request nets or safety installations. Scope depends on measured span, usage intensity and safe working access.`,
+
+    buyingGuide: `When requesting work in ${areaName}, send society or landmark details, opening photos and whether children, pets, pigeons, sports or drying lead the brief. Ask for written inclusions before drill day. ${cityName} area names help visit planning; measured building access still decides the final scope.`,
+
+    localDecisionGuide: `Use this ${areaName} page to pick the service link that matches your opening, then compare parent-city guidance for ${cityName}. Prefer measurement and a written scope over assuming every flat in ${areaName} needs the same mesh or cable spacing.`,
 
     commonRequirements: [
       "Building name or landmark reference within the area for visit planning",
@@ -334,7 +359,16 @@ export function buildAreaPageContent(input: {
         answer:
           "Outdoor exposure in Andhra Pradesh calls for UV-aware nets and corrosion-conscious metal components. We advise based on your opening orientation and maintenance preference.",
       },
+      {
+        question: `Is there one fixed rate for every balcony in ${areaName}?`,
+        answer: `No. Openings in ${areaName} differ by size, corners, AC outdoor units, floor access and society rules. Measured quotations for your building are clearer than a single area-wide teaser rate.`,
+      },
+      {
+        question: `How do I compare installers serving ${areaName}?`,
+        answer: `Compare written scopes: openings count, material, spacing or mesh intent, inclusions and aftercare. Ask for recent project photos. Avoid invented rankings or branch claims that cannot be verified for ${areaName}.`,
+      },
     ],
+    encyclopedia: getLocationHubEncyclopedia(areaName, cityName),
   };
 }
 
@@ -505,6 +539,8 @@ export function buildCityServiceContent(input: {
       : `Service enquiries across ${cityName} are welcome from residential and suitable commercial sites.${corridors}${societies} ${coverageSentence(cityName)} Final suitability depends on building access and measured site conditions.`,
     pricingNote: `Pricing for ${label} in ${cityName} depends on measured size, material specification, access difficulty and total openings or span. We share a site-specific quotation after inspection rather than a one-rate list for the whole city. ${profile?.photoEstimateHint ?? "Share opening photos for a clearer first estimate."}`,
     encyclopedia: getServiceEncyclopedia(serviceSlug, cityName, serviceName),
+    buyingGuide: `For ${label} in ${cityName}, send opening photos, landmark or society name, and whether children, pets, birds, view or sports lead the brief. Approve measured size, material grade and written inclusions before installation day. Andhra Pradesh weather should influence outdoor specifications—not only colour preference.`,
+    localAuthorityNote: `${cityName} pages are built to help residents compare real installation options across Andhra Pradesh with honest coverage wording. Listing areas supports visit planning; each building still needs its own access and measurement review.`,
   };
 }
 
@@ -640,5 +676,7 @@ export function buildAreaServiceContent(input: {
     pricingNote: `Quotation for ${label} in ${place} is based on measured scope, material choice and installation access. ${coverageSentence(place)}${
       cityProfile ? ` ${cityProfile.photoEstimateHint}` : ""
     }`,
+    buyingGuide: `For ${label} in ${areaName}, share society or landmark details, opening photos and the main risk priority. Approve measured size, material and written inclusions before installation. Parent-city context for ${cityName} helps, but your building access still decides the final plan.`,
+    localAuthorityNote: `${areaName} pages support Andhra Pradesh local search with honest coverage wording. They help residents find the right service path—not invent a shop on every street.`,
   };
 }

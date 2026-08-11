@@ -236,6 +236,8 @@ export default async function AreaServicePage({ params }: PageProps) {
           <>
             <p>{content.uniqueIntroduction}</p>
             <p>{content.serviceOverview}</p>
+            <p>{content.buyingGuide}</p>
+            <p>{content.localAuthorityNote}</p>
           </>
         }
         note="Address-level coverage is confirmed after reviewing access, measurements and technician availability."

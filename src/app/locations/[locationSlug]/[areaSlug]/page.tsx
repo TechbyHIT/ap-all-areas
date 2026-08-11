@@ -12,6 +12,7 @@ import { PricingFactors } from "@/components/sections/PricingFactors";
 import { CoverageSection } from "@/components/sections/CoverageSection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
+import { SeoEncyclopediaSections } from "@/components/sections/SeoEncyclopediaSections";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { INITIAL_SERVICES } from "@/data/initial-services";
 import { prerenderAreas, prerenderCities } from "@/config/prerender";
@@ -123,10 +124,14 @@ export default async function AreaDetailPage({ params }: PageProps) {
           <>
             <p>{content.introduction}</p>
             <p>{content.servicesOverview}</p>
+            <p>{content.buyingGuide}</p>
+            <p>{content.localDecisionGuide}</p>
           </>
         }
         note={`${area.name} is part of ${city.name} service-area coverage. Final suitability depends on building access and measured site conditions.`}
       />
+
+      <SeoEncyclopediaSections sections={content.encyclopedia} />
 
       <ServiceCards
         title={`Services Available in ${area.name}`}
