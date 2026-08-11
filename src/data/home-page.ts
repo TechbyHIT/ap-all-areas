@@ -39,88 +39,252 @@ export type HomeServiceCard = {
   featured?: boolean;
 };
 
+/**
+ * Main Services grid — all 24 Aug-2026 installation photos as content cards
+ * (same card pattern as Children Safety Nets: image + summary + benefits + CTAs).
+ */
 export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
   {
-    name: "Invisible Grills",
-    href: ROUTES.service("invisible-grills"),
-    quoteHref: ROUTES.contact,
-    image: "/images/projects/balcony-invisible-grills-8.jpg",
-    alt: "Balcony invisible grill installation",
-    summary:
-      "Stainless-steel cable systems that protect openings while keeping daylight and a clearer outward view.",
-    benefits: ["Clear-view finish", "Balcony & window fit", "Measured spacing"],
-    featured: true,
-  },
-  {
-    name: "Balcony Safety Nets",
+    name: "Night Balcony Safety Nets",
     href: ROUTES.service("safety-nets"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/balcony-safety-nets-12.jpg",
-    alt: "Balcony safety net installation",
+    image: "/images/projects/installations/night-balcony-safety-net.jpg",
+    alt: "Night balcony safety net installation",
     summary:
-      "Mesh systems fitted across balcony openings to reduce fall risk for family use while keeping the space usable.",
-    benefits: ["Family openings", "Secure edge fixing", "Airflow retained"],
+      "Evening balcony mesh that keeps openings protected after dark while preserving usable seating and plant space.",
+    benefits: ["Night-ready mesh", "Secure edge fixing", "Family openings"],
     featured: true,
-  },
-  {
-    name: "Pigeon Safety Nets",
-    href: ROUTES.solution("pigeon-infestation"),
-    quoteHref: ROUTES.contact,
-    image: "/images/projects/balcony-safety-nets-13.jpg",
-    alt: "Pigeon and bird protection net",
-    summary:
-      "Full-opening nets that close bird-entry paths on balconies, AC ledges and ducts.",
-    benefits: ["Stops nesting", "Full-opening cover", "Duct options"],
-  },
-  {
-    name: "Children Safety Nets",
-    href: ROUTES.solution("child-balcony-safety"),
-    quoteHref: ROUTES.contact,
-    image: "/images/projects/children-safety-nets-1.jpg",
-    alt: "Children safety net on balcony",
-    summary:
-      "Closer-spaced mesh planned where toddlers use balconies or window openings—alongside adult supervision.",
-    benefits: ["Closer mesh", "Opening-specific", "Handover checks"],
-  },
-  {
-    name: "Pet Safety Nets",
-    href: ROUTES.solution("pet-balcony-safety"),
-    quoteHref: ROUTES.contact,
-    image: "/images/projects/pet-safety-nets-1.jpg",
-    alt: "Pet safety net installation",
-    summary:
-      "Climb-aware layouts for cats and small dogs on utility and living balconies.",
-    benefits: ["Gap checks", "Climb-aware fit", "Utility balconies"],
-  },
-  {
-    name: "Sports Nets",
-    href: ROUTES.service("sports-nets"),
-    quoteHref: ROUTES.contact,
-    image: "/images/projects/cricket-nets-4.jpg",
-    alt: "Cricket and sports practice net",
-    summary:
-      "Practice enclosures and ball-stop nets for terraces, coaching spaces and schools.",
-    benefits: ["Ball containment", "Terrace ready", "Measured height"],
-  },
-  {
-    name: "Duct Area Safety Nets",
-    href: ROUTES.service("safety-nets"),
-    quoteHref: ROUTES.contact,
-    image: "/images/projects/duct-area-nets-1.jpg",
-    alt: "Duct area safety net",
-    summary:
-      "Shaft and duct coverings that block bird nesting while respecting service access.",
-    benefits: ["Shaft cover", "Service clearance", "Bird control"],
   },
   {
     name: "Cloth Drying Hangers",
     href: ROUTES.service("cloth-drying-hangers"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/cloth-hangers-9.jpeg",
-    alt: "Cloth drying hanger installation",
+    image: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
+    alt: "Ceiling cloth drying hanger on balcony",
     summary:
-      "Ceiling and balcony drying systems that free railing space in compact apartments.",
+      "Ceiling drying systems that free railing space in compact apartments—load-aware fixing after site check.",
     benefits: ["Ceiling systems", "Load-aware fix", "Compact flats"],
+  },
+  {
+    name: "Atrium Invisible Grills",
+    href: ROUTES.service("invisible-grills"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/atrium-invisible-grill-circle.jpg",
+    alt: "Circular atrium invisible grill cables",
+    summary:
+      "Circular and atrium cable layouts where clear sightlines matter as much as a supplementary fall barrier.",
+    benefits: ["Clear-view cables", "Custom shapes", "Measured spacing"],
+    featured: true,
+  },
+  {
+    name: "Indoor Cricket Practice Nets",
+    href: ROUTES.service("sports-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/indoor-cricket-practice-nets.jpg",
+    alt: "Indoor cricket practice net lanes",
+    summary:
+      "Indoor practice lanes with measured height and ball containment for coaching spaces and academies.",
+    benefits: ["Ball containment", "Lane layout", "Impact-ready mesh"],
+  },
+  {
+    name: "Outdoor Cricket Cage Nets",
+    href: ROUTES.service("sports-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/outdoor-cricket-cage-nets.jpg",
+    alt: "Outdoor cricket practice cage nets",
+    summary:
+      "Outdoor cricket cages and practice enclosures planned for ground length, height and neighbour safety.",
+    benefits: ["Cage enclosure", "Outdoor durability", "Measured height"],
+  },
+  {
+    name: "High-Rise Green Safety Nets",
+    href: ROUTES.service("safety-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/highrise-green-safety-net-up.jpg",
+    alt: "High-rise green safety net looking up",
+    summary:
+      "High-floor green mesh systems for tall façades where access, tension and edge fixing need careful planning.",
+    benefits: ["High-rise access", "UV-aware mesh", "Full-opening cover"],
+  },
+  {
+    name: "Facade Balcony Safety Nets",
+    href: ROUTES.service("safety-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/facade-balcony-safety-nets.jpg",
+    alt: "Building facade balcony safety nets",
+    summary:
+      "Multi-balcony façade nets that close fall-risk and bird-entry openings across apartment elevations.",
+    benefits: ["Façade coverage", "Uniform finish", "Secure hooks"],
+  },
+  {
+    name: "Professional Net Installation",
+    href: ROUTES.service("safety-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/installer-harness-green-net.jpg",
+    alt: "Installer securing green safety netting",
+    summary:
+      "Trained fixing with harness-aware work on elevated openings—tension, corners and handover checks included.",
+    benefits: ["Site-safe install", "Corner finishing", "Handover checks"],
+  },
+  {
+    name: "Night Invisible Grills",
+    href: ROUTES.service("invisible-grills"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/night-invisible-grills-city.jpg",
+    alt: "Invisible grills over city lights at night",
+    summary:
+      "Stainless cable grills that keep city views open at night while adding a slim supplementary barrier.",
+    benefits: ["Clear night view", "Stainless cables", "Balcony & window fit"],
+  },
+  {
+    name: "Balcony Mesh with City View",
+    href: ROUTES.service("safety-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/balcony-mesh-view-apartments.jpg",
+    alt: "Balcony mesh with apartment view",
+    summary:
+      "Daylight balcony mesh that balances outward view with family protection on living-room openings.",
+    benefits: ["View retained", "Family openings", "Airflow retained"],
+  },
+  {
+    name: "Wide Sports Net Enclosure",
+    href: ROUTES.service("sports-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/sports-net-enclosure-wide.jpg",
+    alt: "Wide outdoor sports net enclosure",
+    summary:
+      "Wide outdoor sports enclosures for terrace or ground practice where balls must stay inside the lane.",
+    benefits: ["Wide span", "Ball stop", "Terrace / ground"],
+  },
+  {
+    name: "Green Facade Bird Netting",
+    href: ROUTES.solution("pigeon-infestation"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/green-facade-netting-street.jpg",
+    alt: "Green facade netting above the street",
+    summary:
+      "Street-facing green façade nets that close pigeon routes on ledges and open balcony planes.",
+    benefits: ["Stops nesting", "Façade cover", "Bird control"],
+  },
+  {
+    name: "Children Safety Nets",
+    href: ROUTES.solution("child-balcony-safety"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/balcony-white-net-palm.jpg",
+    alt: "White balcony safety net with palm trees",
+    summary:
+      "Closer-spaced white mesh planned where toddlers use balconies—alongside adult supervision and sound railings.",
+    benefits: ["Closer mesh", "Opening-specific", "Handover checks"],
+  },
+  {
+    name: "Family Balcony Safety Nets",
+    href: ROUTES.solution("child-balcony-safety"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/balcony-white-net-palm-alt.jpg",
+    alt: "White balcony safety net overlooking palms",
+    summary:
+      "Bright white balcony nets for family openings with palm and garden views kept largely open.",
+    benefits: ["Family use", "Clean white finish", "Secure edges"],
+  },
+  {
+    name: "Invisible Grills — Construction View",
+    href: ROUTES.service("invisible-grills"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/invisible-grill-construction-view.jpg",
+    alt: "Invisible grill cables with construction view",
+    summary:
+      "Cable systems for balconies facing construction or busy corridors where clear view still matters.",
+    benefits: ["Slim cables", "Dust-aware finish", "Measured returns"],
+  },
+  {
+    name: "Residential Balcony Safety Nets",
+    href: ROUTES.service("safety-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/balcony-white-net-residential.jpg",
+    alt: "White residential balcony safety net",
+    summary:
+      "Residential white nets for apartment balconies used daily for seating, plants and laundry.",
+    benefits: ["Daily-use balcony", "Neat finish", "Airflow retained"],
+  },
+  {
+    name: "Daytime Invisible Grills",
+    href: ROUTES.service("invisible-grills"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/invisible-grill-day-city.jpg",
+    alt: "Daytime invisible grill city view",
+    summary:
+      "Daylight invisible grills that keep city skyline views while adding measured cable spacing.",
+    benefits: ["Clear-view finish", "City balconies", "Stainless options"],
+  },
+  {
+    name: "Daylight Balcony Safety Nets",
+    href: ROUTES.service("safety-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/balcony-net-daylight-view.jpg",
+    alt: "Daylight balcony safety net installation",
+    summary:
+      "Bright daylight balcony nets for living spaces where airflow and outward view stay important.",
+    benefits: ["Daylight mesh", "Living balconies", "Secure fixing"],
+  },
+  {
+    name: "Balcony Safety Net Detail",
+    href: ROUTES.service("safety-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/balcony-safety-net-detail.jpg",
+    alt: "Close detail of balcony safety netting",
+    summary:
+      "Close-mesh detailing at rails and corners so gaps that children or pets could use are closed.",
+    benefits: ["Detail finishing", "Gap checks", "Rail-safe fit"],
+  },
+  {
+    name: "Pet Safety Nets",
+    href: ROUTES.solution("pet-balcony-safety"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/balcony-safety-net-detail-b.jpg",
+    alt: "Balcony safety net mesh and rail detail",
+    summary:
+      "Climb-aware mesh and rail detailing for cats and small dogs on utility and living balconies.",
+    benefits: ["Gap checks", "Climb-aware fit", "Utility balconies"],
+  },
+  {
+    name: "Corner Fixing Safety Nets",
+    href: ROUTES.service("safety-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/balcony-safety-net-detail-c.jpg",
+    alt: "Balcony safety net corner fixing detail",
+    summary:
+      "Corner returns and edge hooks finished carefully—where most incomplete jobs leave climbable gaps.",
+    benefits: ["Corner returns", "Edge hooks", "Full coverage"],
+  },
+  {
+    name: "Completed Safety Net Project",
+    href: ROUTES.service("safety-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/project-install-31.jpg",
+    alt: "Completed safety net installation project",
+    summary:
+      "Finished balcony net project after measurement, tensioning and edge checks—ready for everyday use.",
+    benefits: ["Measured scope", "Neat handover", "Photo estimate first"],
+  },
+  {
+    name: "Completed Invisible Grill Project",
+    href: ROUTES.service("invisible-grills"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/project-install-32.jpg",
+    alt: "Completed invisible grill installation project",
+    summary:
+      "Finished invisible grill project with aligned cables, corner returns and written scope handover.",
+    benefits: ["Aligned cables", "Written scope", "View retained"],
+  },
+  {
+    name: "Duct & Utility Area Nets",
+    href: ROUTES.service("safety-nets"),
+    quoteHref: ROUTES.contact,
+    image: "/images/projects/installations/project-install-32b.jpg",
+    alt: "Completed duct and utility net installation",
+    summary:
+      "Utility and duct-area nets that block bird nesting while keeping service access workable.",
+    benefits: ["Duct cover", "Bird control", "Service clearance"],
   },
 ];
 

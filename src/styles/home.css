@@ -528,7 +528,7 @@
   line-height: 1.55;
   color: var(--home-muted);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1644,12 +1644,27 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .home-service-card.is-featured {
+  /* Equal cards when showing the full 24-photo service list */
+  .home-bento--all-photos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home-bento:not(.home-bento--all-photos) .home-service-card.is-featured {
     grid-column: span 2;
   }
 
-  .home-service-card.is-featured .home-service-media {
+  .home-bento:not(.home-bento--all-photos)
+    .home-service-card.is-featured
+    .home-service-media {
     aspect-ratio: 21 / 10;
+  }
+
+  .home-bento--all-photos .home-service-card.is-featured {
+    grid-column: auto;
+  }
+
+  .home-bento--all-photos .home-service-card.is-featured .home-service-media {
+    aspect-ratio: 16 / 10;
   }
 
   .home-city-grid {

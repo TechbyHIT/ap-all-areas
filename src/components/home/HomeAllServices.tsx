@@ -2,11 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 import { ROUTES } from "@/config/routes";
-import { HOME_VISUAL_SERVICES } from "@/config/design";
+import { HOME_BENTO_SERVICES } from "@/data/home-page";
 
 /**
- * Full visual services catalog — image-above cards matching the
- * "Complete home & building safety solutions" layout.
+ * Full visual services catalog — all 24 installation photos as content cards
+ * (same pattern as Children Safety Nets / Main Services).
  */
 export function HomeAllServices() {
   return (
@@ -18,14 +18,15 @@ export function HomeAllServices() {
             Complete home &amp; building safety solutions
           </h2>
           <p className="home-lead">
-            Every major installation type we offer across Andhra Pradesh—with
-            real project photos, clear scope and measured quotations.
+            Every recent project photo with service content—invisible grills,
+            children safety nets, sports nets, cloth hangers and more across
+            Andhra Pradesh.
           </p>
         </header>
 
         <div className="home-all-services-grid">
-          {HOME_VISUAL_SERVICES.map((service) => (
-            <article key={service.name} className="home-svc-tile">
+          {HOME_BENTO_SERVICES.map((service) => (
+            <article key={service.image} className="home-svc-tile">
               <Link
                 href={service.href}
                 className="home-svc-tile-media"
@@ -46,6 +47,11 @@ export function HomeAllServices() {
                   <Link href={service.href}>{service.name}</Link>
                 </h3>
                 <p>{service.summary}</p>
+                <ul className="home-service-benefits">
+                  {service.benefits.map((benefit) => (
+                    <li key={benefit}>{benefit}</li>
+                  ))}
+                </ul>
                 <div className="home-svc-tile-actions">
                   <Link href={service.href} className="view">
                     View Details

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { HomeAllServices } from "@/components/home/HomeAllServices";
 import { HomeCombos } from "@/components/home/HomeCombos";
 import { HomeFinalCta } from "@/components/home/HomeFinalCta";
 import { HomeGallery } from "@/components/home/HomeGallery";
@@ -52,10 +51,9 @@ export default function HomePage() {
       <FaqJsonLd faqs={HOMEPAGE_CONTENT.faqs} />
       <HomeHeroPremium />
       <HomeTrustStrip />
+      <HomeServicesBento />
       <HomeSeoIntro />
       <HomePhotoRotation />
-      <HomeServicesBento />
-      <HomeAllServices />
       <HomeWhyChoose />
       <HomeMaterials />
       <HomeProcess />
