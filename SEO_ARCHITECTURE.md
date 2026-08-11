@@ -20,7 +20,11 @@ Rules enforced by the registry:
 - Stable `lastmod` from `SEO_CONFIG.sitemapContentRevision` (and per-post dates for blog)
 - No redirect-equivalent `/{service}-in-{city}/` URLs (those 308 to `/{city}/{service}/`)
 - No thank-you / admin / noindex guide-detail URLs
-- Deduplicated entries; chunked at ≤9000 URLs per file
+- Deduplicated entries
+- Expansion knobs in `src/config/programmatic-scale.ts`:
+  - `SITEMAP_KEYWORD_CITY_PRIORITY_MAX`
+  - `SITEMAP_KEYWORD_AREA_PRIORITY_MAX`
+  - `SITEMAP_SCALE_P0_URL_LIMIT` (P0 × scale localities, page robots aligned)
 
 Validate before deploy:
 

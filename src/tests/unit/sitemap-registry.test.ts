@@ -59,6 +59,10 @@ describe("sitemap registry", () => {
     expect(buildSitemapRegistry().length).toBeLessThanOrEqual(50000);
   });
 
+  it("expands beyond the prior ~11k curated baseline", () => {
+    expect(buildSitemapRegistry().length).toBeGreaterThan(20000);
+  });
+
   it("includes indexable hubs and excludes thank-you", () => {
     const paths = new Set(buildSitemapRegistry().map((e) => e.path));
     expect(paths.has("/")).toBe(true);

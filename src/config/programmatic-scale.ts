@@ -173,5 +173,20 @@ export function buildScaleReport(): ScaleReport {
 /** Sitemap / ISR: index curated area×service for ALL high-priority cities (not only Vizag/Vijayawada). */
 export const SITEMAP_ALL_CURATED_AREA_SERVICES = true;
 
-/** Max keyword×locality URLs to emit into sitemap chunk per run (crawl budget). */
+/** Max keyword priority included for `/{keyword}-in-{city}/` sitemap URLs. */
+export const SITEMAP_KEYWORD_CITY_PRIORITY_MAX: 0 | 1 | 2 = 2;
+
+/**
+ * Max keyword priority for curated-area money URLs.
+ * Pages already allow index for curated areas; expand beyond P0 for more coverage.
+ */
+export const SITEMAP_KEYWORD_AREA_PRIORITY_MAX: 0 | 1 | 2 = 1;
+
+/**
+ * Cap of indexable P0 keyword × scale-locality URLs in the sitemap.
+ * Kept under Google’s 50k single-sitemap limit with headroom for hubs/grids.
+ */
+export const SITEMAP_SCALE_P0_URL_LIMIT = 25_000;
+
+/** Max keyword×locality URLs to emit into sitemap chunk per run (legacy helper). */
 export const SITEMAP_KEYWORD_LOCALITY_CHUNK = 5000;

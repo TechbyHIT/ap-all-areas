@@ -1,5 +1,10 @@
 import type { MetadataRoute } from "next";
-import { SITEMAP_ALL_CURATED_AREA_SERVICES } from "@/config/programmatic-scale";
+import {
+  SITEMAP_ALL_CURATED_AREA_SERVICES,
+  SITEMAP_KEYWORD_AREA_PRIORITY_MAX,
+  SITEMAP_KEYWORD_CITY_PRIORITY_MAX,
+  SITEMAP_SCALE_P0_URL_LIMIT,
+} from "@/config/programmatic-scale";
 import { SEO_CONFIG } from "@/config/seo";
 import { P0_MONEY_CITY_SLUGS } from "@/data/city-local-profiles";
 import { listAreaMoneyLandings } from "@/data/landings";
@@ -12,6 +17,7 @@ import { PROPERTY_TYPES } from "@/data/property-types";
 import { ROUTES } from "@/config/routes";
 import { matchServiceInCityPrettyPath } from "@/lib/routing/pretty-money-urls";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
+import { getIndexableScaleLocalitySlugSet } from "@/lib/seo/keyword-geo-indexability";
 import {
   listCuratedAreaServiceUrls,
   listKeywordCityUrls,
@@ -184,7 +190,7 @@ function buildAreaServiceEntries(): SitemapRegistryEntry[] {
 }
 
 function buildKeywordCityEntries(): SitemapRegistryEntry[] {
-  return listKeywordCityUrls(1)
+  return listKeywordCityUrls(SITEMAP_KEYWORD_CITY_PRIORITY_MAX)
     .filter((row) => !isSitemapRedirectPath(row.path))
     .map((row) =>
       makeEntry(row.path, row.indexCandidate ? 0.74 : 0.55, { kind: "money" }),
@@ -192,17 +198,45 @@ function buildKeywordCityEntries(): SitemapRegistryEntry[] {
 }
 
 function buildKeywordAreaEntries(): SitemapRegistryEntry[] {
-  const p0Keywords = KEYWORD_INTENTS.filter((k) => k.priority === 0);
+  const keywords = KEYWORD_INTENTS.filter(
+    (k) => k.priority <= SITEMAP_KEYWORD_AREA_PRIORITY_MAX,
+  );
   const entries: SitemapRegistryEntry[] = [];
 
   for (const city of HIGH_PRIORITY_CITY_AREAS) {
     if (!P0_CITY_SET.has(city.citySlug)) continue;
     for (const area of city.areas) {
-      for (const keyword of p0Keywords) {
+      for (const keyword of keywords) {
         const path = pathKeywordInGeo(keyword.slug, area.slug);
         if (isSitemapRedirectPath(path)) continue;
-        entries.push(makeEntry(path, 0.68, { kind: "money" }));
+        entries.push(
+          makeEntry(path, keyword.priority === 0 ? 0.68 : 0.58, {
+            kind: "money",
+          }),
+        );
       }
+    }
+  }
+
+  return entries;
+}
+
+/** P0 keyword × scale localities (capped, indexable). */
+function buildKeywordScaleEntries(): SitemapRegistryEntry[] {
+  const p0Keywords = KEYWORD_INTENTS.filter((k) => k.priority === 0);
+  if (p0Keywords.length === 0 || SITEMAP_SCALE_P0_URL_LIMIT <= 0) return [];
+
+  const localitySlugs = [...getIndexableScaleLocalitySlugSet()];
+  const entries: SitemapRegistryEntry[] = [];
+
+  for (const geoSlug of localitySlugs) {
+    for (const keyword of p0Keywords) {
+      if (entries.length >= SITEMAP_SCALE_P0_URL_LIMIT) {
+        return entries;
+      }
+      const path = pathKeywordInGeo(keyword.slug, geoSlug);
+      if (isSitemapRedirectPath(path)) continue;
+      entries.push(makeEntry(path, 0.52, { kind: "money" }));
     }
   }
 
@@ -231,6 +265,7 @@ export function buildSitemapRegistry(): SitemapRegistryEntry[] {
     ...buildAreaServiceEntries(),
     ...buildKeywordCityEntries(),
     ...buildKeywordAreaEntries(),
+    ...buildKeywordScaleEntries(),
   ];
 
   return dedupeSitemapEntries(raw).filter(

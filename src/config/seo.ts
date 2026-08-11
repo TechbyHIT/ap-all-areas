@@ -56,7 +56,7 @@ export const SEO_CONFIG = {
    * Stable sitemap lastmod for matrix-driven URLs.
    * Bump when services, locations, keywords, or hub content change.
    */
-  sitemapContentRevision: "2026-08-11",
+  sitemapContentRevision: "2026-08-11-scale-expand",
 
   /**
    * Strategy flag: prefer more unique useful URLs over mega-pages.

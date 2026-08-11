@@ -14,6 +14,7 @@ import {
 import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 import { INITIAL_SERVICE_MAP } from "@/data/initial-services";
 import { findScaleLocality, pathKeywordInGeo } from "@/lib/seo/url-matrix";
+import { isScaleLocalityIndexable } from "@/lib/seo/keyword-geo-indexability";
 import { ServiceHero } from "@/components/sections/ServiceHero";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
@@ -40,7 +41,7 @@ type PageProps = {
   params: Promise<{ keywordSlug: string; geoSlug: string }>;
 };
 
-function resolveGeo(geoSlug: string) {
+function resolveGeo(geoSlug: string, keywordPriority = 0) {
   const city = HIGH_PRIORITY_CITY_AREAS.find((c) => c.citySlug === geoSlug);
   if (city) {
     return {
@@ -76,7 +77,7 @@ function resolveGeo(geoSlug: string) {
       citySlug: scale.routeCitySlug,
       cityName: parentCity?.cityName ?? scale.routeCitySlug.replace(/-/g, " "),
       areaSlug: scale.slug,
-      indexable: false,
+      indexable: isScaleLocalityIndexable(geoSlug, keywordPriority),
     };
   }
   return null;
@@ -109,8 +110,9 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { keywordSlug, geoSlug } = await params;
   const keyword = KEYWORD_INTENT_MAP[keywordSlug];
-  const geo = resolveGeo(geoSlug);
-  if (!keyword || !geo) return {};
+  if (!keyword) return {};
+  const geo = resolveGeo(geoSlug, keyword.priority);
+  if (!geo) return {};
 
   const content = buildKeywordGeoContent(keyword, geo);
   const path = pathKeywordInGeo(keywordSlug, geoSlug);
@@ -132,9 +134,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function KeywordGeoLandingPage({ params }: PageProps) {
   const { keywordSlug, geoSlug } = await params;
   const keyword = KEYWORD_INTENT_MAP[keywordSlug];
-  const geo = resolveGeo(geoSlug);
-  const service = keyword ? INITIAL_SERVICE_MAP[keyword.serviceSlug] : null;
-  if (!keyword || !geo || !service) notFound();
+  if (!keyword) notFound();
+  const geo = resolveGeo(geoSlug, keyword.priority);
+  const service = INITIAL_SERVICE_MAP[keyword.serviceSlug];
+  if (!geo || !service) notFound();
 
   const content = buildKeywordGeoContent(keyword, geo);
   const path = pathKeywordInGeo(keywordSlug, geoSlug);

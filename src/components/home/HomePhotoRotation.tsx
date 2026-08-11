@@ -1,104 +1,57 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { HOME_ROTATION_PHOTOS } from "@/config/installation-photos";
-import { ROUTES } from "@/config/routes";
 
 /**
- * Homepage full photo rotation — cycles every installation image (not only
- * the hero subset).
+ * Continuous horizontal scroll of every installation photo — images only.
  */
 export function HomePhotoRotation() {
+  const trackRef = useRef<HTMLDivElement>(null);
   const photos = HOME_ROTATION_PHOTOS;
-  const [index, setIndex] = useState(0);
-  const pauseRef = useRef(false);
+  // Duplicate for seamless loop
+  const loop = [...photos, ...photos];
 
   useEffect(() => {
-    if (photos.length < 2) return;
-    const id = window.setInterval(() => {
-      if (pauseRef.current) return;
-      setIndex((current) => (current + 1) % photos.length);
-    }, 3800);
-    return () => window.clearInterval(id);
-  }, [photos.length]);
+    const el = trackRef.current;
+    if (!el || photos.length < 2) return;
 
-  const active = photos[index] ?? photos[0];
-  if (!active) return null;
+    let raf = 0;
+    let x = 0;
+    const speed = 0.45;
+
+    const tick = () => {
+      x += speed;
+      const half = el.scrollWidth / 2;
+      if (half > 0 && x >= half) x = 0;
+      el.style.transform = `translate3d(${-x}px, 0, 0)`;
+      raf = window.requestAnimationFrame(tick);
+    };
+
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+  }, [photos.length]);
 
   return (
     <section
-      className="home-section home-section--soft home-photo-rotation"
-      aria-labelledby="home-photo-rotation-heading"
-      onMouseEnter={() => {
-        pauseRef.current = true;
-      }}
-      onMouseLeave={() => {
-        pauseRef.current = false;
-      }}
+      className="home-section home-section--soft home-photo-marquee"
+      aria-label="Installation photo scroll"
     >
-      <div className="home-container">
-        <header className="home-section-head home-section-head--center">
-          <p className="home-eyebrow">Real installations</p>
-          <h2 id="home-photo-rotation-heading" className="home-h2">
-            Every project photo in rotation
-          </h2>
-          <p className="home-lead">
-            All {photos.length} recent installation photos — nets, invisible
-            grills, sports cages and cloth hangers across Andhra Pradesh.
-          </p>
-        </header>
-
-        <div className="home-photo-rotation-stage">
-          <Image
-            key={active.src}
-            src={active.src}
-            alt={active.alt}
-            fill
-            sizes="(max-width: 900px) 100vw, 1100px"
-            className="home-photo-rotation-img"
-            priority={index === 0}
-          />
-          <div className="home-photo-rotation-caption">
-            <strong>{active.alt}</strong>
-            <span>
-              {index + 1} / {photos.length}
-            </span>
-          </div>
-        </div>
-
-        <div
-          className="home-photo-rotation-thumbs"
-          role="tablist"
-          aria-label="Installation photos"
-        >
-          {photos.map((photo, i) => (
-            <button
-              key={photo.src}
-              type="button"
-              role="tab"
-              aria-selected={i === index}
-              aria-label={`Show photo ${i + 1}: ${photo.alt}`}
-              className={i === index ? "is-active" : undefined}
-              onClick={() => setIndex(i)}
-            >
+      <div className="home-photo-marquee-viewport">
+        <div ref={trackRef} className="home-photo-marquee-track">
+          {loop.map((photo, i) => (
+            <figure key={`${photo.src}-${i}`} className="home-photo-marquee-item">
               <Image
                 src={photo.src}
-                alt=""
-                width={96}
-                height={72}
-                loading="lazy"
-                sizes="96px"
+                alt={i < photos.length ? photo.alt : ""}
+                width={480}
+                height={360}
+                loading={i < 6 ? "eager" : "lazy"}
+                sizes="280px"
               />
-            </button>
+            </figure>
           ))}
-        </div>
-
-        <div className="home-cta-row">
-          <Link href={ROUTES.gallery} className="home-btn home-btn--outline">
-            Open full gallery
-          </Link>
         </div>
       </div>
     </section>
