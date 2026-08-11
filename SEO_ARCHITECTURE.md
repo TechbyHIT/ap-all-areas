@@ -10,7 +10,9 @@ JSON-LD generators in `src/lib/schema/` for Organization, WebSite, Service, Brea
 
 ## Sitemaps (live discovery)
 
-**Source of truth:** `src/lib/seo/sitemap-registry.ts`, served by App Router `src/app/sitemap.ts` (partitioned via `generateSitemaps`).
+**Source of truth:** `src/lib/seo/sitemap-registry.ts`, served by App Router `src/app/sitemap.ts` as a **single** `/sitemap.xml` urlset.
+
+> Note: Next.js 16 `generateSitemaps()` can leave `/sitemap.xml` as HTTP 404 while only `/sitemap/0.xml` works. Do not re-enable it without a manual index route — Google Search Console will report "Couldn't fetch".
 
 Rules enforced by the registry:
 

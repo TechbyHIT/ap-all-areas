@@ -45,7 +45,7 @@ describe("sitemap registry", () => {
     expect(new Set(urls).size).toBe(urls.length);
   });
 
-  it("partitions into CHUNK-sized files", () => {
+  it("partitions into CHUNK-sized files when needed", () => {
     const chunks = buildSitemapChunks();
     expect(chunks.length).toBeGreaterThan(0);
     for (const chunk of chunks) {
@@ -53,6 +53,10 @@ describe("sitemap registry", () => {
     }
     const flat = chunks.flat();
     expect(flat.length).toBe(buildSitemapRegistry().length);
+  });
+
+  it("stays under Google single-sitemap URL limit", () => {
+    expect(buildSitemapRegistry().length).toBeLessThanOrEqual(50000);
   });
 
   it("includes indexable hubs and excludes thank-you", () => {

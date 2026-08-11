@@ -1,17 +1,18 @@
 import type { MetadataRoute } from "next";
 import {
-  buildSitemapChunks,
+  buildSitemapRegistry,
   toMetadataSitemap,
 } from "@/lib/seo/sitemap-registry";
 
-export async function generateSitemaps() {
-  return buildSitemapChunks().map((_, id) => ({ id }));
-}
-
-export default async function sitemap(props: {
-  id: number | Promise<number>;
-}): Promise<MetadataRoute.Sitemap> {
-  const id = Number(await props.id);
-  const chunks = buildSitemapChunks();
-  return toMetadataSitemap(chunks[id] ?? []);
+/**
+ * Single sitemap at `/sitemap.xml`.
+ *
+ * Do NOT use `generateSitemaps()` here — in Next.js 16 it serves
+ * `/sitemap/0.xml` etc. but often leaves `/sitemap.xml` as a 404, which
+ * Google Search Console reports as "Couldn't fetch".
+ *
+ * ~11k URLs is well under the 50,000 URL / 50 MB protocol limits.
+ */
+export default function sitemap(): MetadataRoute.Sitemap {
+  return toMetadataSitemap(buildSitemapRegistry());
 }

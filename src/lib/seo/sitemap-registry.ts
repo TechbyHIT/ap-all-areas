@@ -249,11 +249,63 @@ export function chunkSitemapEntries<T>(items: T[], size: number): T[][] {
   return out.length > 0 ? out : [[]];
 }
 
-/** Partitioned sitemap files for Next `generateSitemaps`. */
+/** Partitioned sitemap files for Next `generateSitemaps` (optional). */
 export function buildSitemapChunks(
   chunkSize: number = SITEMAP_CHUNK_SIZE,
 ): SitemapRegistryEntry[][] {
   return chunkSitemapEntries(buildSitemapRegistry(), chunkSize);
+}
+
+/**
+ * Manual sitemap-index XML (use with route handlers if / when multiple files
+ * are required). Next.js `generateSitemaps()` alone may 404 `/sitemap.xml`.
+ */
+export function buildSitemapIndexXml(baseUrl: string): string {
+  const base = baseUrl.replace(/\/$/, "");
+  const chunks = buildSitemapChunks();
+  const now = new Date().toISOString();
+  const body = chunks
+    .map((_, id) => {
+      return `  <sitemap>
+    <loc>${base}/sitemap/${id}.xml</loc>
+    <lastmod>${now}</lastmod>
+  </sitemap>`;
+    })
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${body}
+</sitemapindex>
+`;
+}
+
+export function buildUrlsetXml(entries: SitemapRegistryEntry[]): string {
+  const body = entries
+    .map((entry) => {
+      const lastmod =
+        entry.lastModified instanceof Date
+          ? entry.lastModified.toISOString()
+          : new Date(entry.lastModified ?? Date.now()).toISOString();
+      const changefreq = entry.changeFrequency
+        ? `\n    <changefreq>${entry.changeFrequency}</changefreq>`
+        : "";
+      const priority =
+        typeof entry.priority === "number"
+          ? `\n    <priority>${entry.priority.toFixed(1)}</priority>`
+          : "";
+      return `  <url>
+    <loc>${entry.url}</loc>
+    <lastmod>${lastmod}</lastmod>${changefreq}${priority}
+  </url>`;
+    })
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${body}
+</urlset>
+`;
 }
 
 /** Strip registry-only fields for MetadataRoute.Sitemap. */
