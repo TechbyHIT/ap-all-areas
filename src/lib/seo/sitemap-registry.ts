@@ -41,8 +41,17 @@ type ChangeFrequency = SitemapRegistryEntry["changeFrequency"];
 
 const P0_CITY_SET = new Set<string>(P0_MONEY_CITY_SLUGS);
 
+function parseIsoDay(value: string): Date {
+  const day = value.match(/^(\d{4}-\d{2}-\d{2})/)?.[1] ?? "1970-01-01";
+  const date = new Date(`${day}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) {
+    return new Date("1970-01-01T00:00:00.000Z");
+  }
+  return date;
+}
+
 function revisionDate(): Date {
-  return new Date(`${SEO_CONFIG.sitemapContentRevision}T00:00:00.000Z`);
+  return parseIsoDay(SEO_CONFIG.sitemapContentRevision);
 }
 
 function makeEntry(
@@ -113,7 +122,7 @@ function buildHubEntries(): SitemapRegistryEntry[] {
     entries.push(
       makeEntry(`/blog/${post.slug}/`, 0.65, {
         kind: "hub",
-        lastModified: new Date(`${post.publishedAt}T00:00:00.000Z`),
+        lastModified: parseIsoDay(post.publishedAt),
       }),
     );
   }
@@ -318,10 +327,13 @@ ${body}
 export function buildUrlsetXml(entries: SitemapRegistryEntry[]): string {
   const body = entries
     .map((entry) => {
-      const lastmod =
+      const raw =
         entry.lastModified instanceof Date
-          ? entry.lastModified.toISOString()
-          : new Date(entry.lastModified ?? Date.now()).toISOString();
+          ? entry.lastModified
+          : new Date(entry.lastModified ?? Date.now());
+      const lastmod = Number.isNaN(raw.getTime())
+        ? revisionDate().toISOString()
+        : raw.toISOString();
       const changefreq = entry.changeFrequency
         ? `\n    <changefreq>${entry.changeFrequency}</changefreq>`
         : "";
