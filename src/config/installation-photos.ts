@@ -1,6 +1,6 @@
 /**
- * New installation photos (Aug 2026). Full-ratio display — do not force a crop
- * that destroys composition; heroes use object-contain / scroll strips.
+ * Installation photos (Aug 2026 WhatsApp set). All 24 live under
+ * /public/images/projects/installations/.
  */
 export const INSTALLATION_PHOTOS = [
   {
@@ -69,6 +69,11 @@ export const INSTALLATION_PHOTOS = [
     service: "safety-nets",
   },
   {
+    src: "/images/projects/installations/balcony-white-net-palm-alt.jpg",
+    alt: "White balcony safety net overlooking palms",
+    service: "safety-nets",
+  },
+  {
     src: "/images/projects/installations/invisible-grill-construction-view.jpg",
     alt: "Invisible grill cables with construction view",
     service: "invisible-grills",
@@ -94,6 +99,16 @@ export const INSTALLATION_PHOTOS = [
     service: "safety-nets",
   },
   {
+    src: "/images/projects/installations/balcony-safety-net-detail-b.jpg",
+    alt: "Balcony safety net mesh and rail detail",
+    service: "safety-nets",
+  },
+  {
+    src: "/images/projects/installations/balcony-safety-net-detail-c.jpg",
+    alt: "Balcony safety net corner fixing detail",
+    service: "safety-nets",
+  },
+  {
     src: "/images/projects/installations/project-install-31.jpg",
     alt: "Completed installation project photo",
     service: "safety-nets",
@@ -110,13 +125,35 @@ export const INSTALLATION_PHOTOS = [
   },
 ] as const;
 
-/** Homepage + page hero auto-scroll sequence (unique best shots). */
-export const HERO_SCROLL_IMAGES = INSTALLATION_PHOTOS.filter(
-  (photo, index, list) =>
-    list.findIndex((p) => p.src === photo.src) === index,
+export type InstallationPhoto = (typeof INSTALLATION_PHOTOS)[number];
+
+/** Full set for homepage rotation / gallery (every photo). */
+export const HOME_ROTATION_PHOTOS = INSTALLATION_PHOTOS;
+
+/**
+ * Hero bleed uses cover-fit — prefer wider, clear compositions that fill the
+ * frame without awkward letterboxing.
+ */
+const HERO_SRCS = new Set([
+  "/images/projects/installations/invisible-grill-day-city.jpg",
+  "/images/projects/installations/night-balcony-safety-net.jpg",
+  "/images/projects/installations/night-invisible-grills-city.jpg",
+  "/images/projects/installations/facade-balcony-safety-nets.jpg",
+  "/images/projects/installations/balcony-mesh-view-apartments.jpg",
+  "/images/projects/installations/balcony-white-net-palm.jpg",
+  "/images/projects/installations/balcony-net-daylight-view.jpg",
+  "/images/projects/installations/sports-net-enclosure-wide.jpg",
+  "/images/projects/installations/outdoor-cricket-cage-nets.jpg",
+  "/images/projects/installations/atrium-invisible-grill-circle.jpg",
+  "/images/projects/installations/highrise-green-safety-net-up.jpg",
+  "/images/projects/installations/green-facade-netting-street.jpg",
+]);
+
+export const HERO_SCROLL_IMAGES = INSTALLATION_PHOTOS.filter((photo) =>
+  HERO_SRCS.has(photo.src),
 );
 
 export function installationPhotosForService(serviceSlug: string) {
   const matched = INSTALLATION_PHOTOS.filter((p) => p.service === serviceSlug);
-  return matched.length > 0 ? matched : HERO_SCROLL_IMAGES.slice(0, 8);
+  return matched.length > 0 ? matched : HERO_SCROLL_IMAGES;
 }

@@ -15,7 +15,7 @@ export function HomeHeroPremium() {
 
   return (
     <section className="home-hero home-hero--bleed" aria-labelledby="home-hero-heading">
-      <HeroImageScroll images={HERO_SCROLL_IMAGES} variant="bleed" />
+      <HeroImageScroll images={HERO_SCROLL_IMAGES} variant="bleed" fit="cover" />
 
       <div className="home-container home-hero-inner">
         <div className="home-hero-center">

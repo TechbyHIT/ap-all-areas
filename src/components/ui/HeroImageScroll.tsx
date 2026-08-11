@@ -12,18 +12,19 @@ type HeroImageScrollProps = {
   images: readonly HeroScrollImage[];
   /** full-bleed background behind home hero text */
   variant?: "bleed" | "panel";
+  /** cover = perfect frame fill; contain = full photo visible */
+  fit?: "cover" | "contain";
   intervalMs?: number;
   className?: string;
 };
 
 /**
- * Full-ratio scrolling hero media. Images keep their natural aspect via
- * object-contain (bleed) or a horizontal scroll strip (panel). Auto-advances;
- * user can also swipe / use dots.
+ * Scrolling hero media. Default fit is cover so images fill the hero frame.
  */
 export function HeroImageScroll({
   images,
   variant = "bleed",
+  fit = "cover",
   intervalMs = 4500,
   className = "",
 }: HeroImageScrollProps) {
@@ -49,10 +50,12 @@ export function HeroImageScroll({
 
   if (safe.length === 0) return null;
 
+  const fitClass = fit === "contain" ? "is-contain" : "is-cover";
+
   if (variant === "panel") {
     return (
       <div
-        className={`hero-scroll-panel ${className}`.trim()}
+        className={`hero-scroll-panel ${fitClass} ${className}`.trim()}
         onMouseEnter={() => {
           pauseRef.current = true;
         }}
@@ -78,7 +81,7 @@ export function HeroImageScroll({
                 src={image.src}
                 alt={image.alt}
                 width={1200}
-                height={1600}
+                height={900}
                 priority={i === 0}
                 sizes="(max-width: 1024px) 90vw, 520px"
                 className="hero-scroll-panel-img"
@@ -105,7 +108,7 @@ export function HeroImageScroll({
 
   return (
     <div
-      className={`hero-scroll-bleed ${className}`.trim()}
+      className={`hero-scroll-bleed ${fitClass} ${className}`.trim()}
       aria-hidden
       onMouseEnter={() => {
         pauseRef.current = true;

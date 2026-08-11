@@ -3,31 +3,36 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { GALLERY_PROJECTS } from "@/config/design";
+import { INSTALLATION_PHOTOS } from "@/config/installation-photos";
 import { ROUTES } from "@/config/routes";
-import { HOME_GALLERY_FILTERS } from "@/data/home-page";
 
-function categoryFor(title: string): string {
-  const t = title.toLowerCase();
-  if (t.includes("window")) return "Windows";
-  if (t.includes("stair")) return "Staircases";
-  if (t.includes("cricket") || t.includes("sport")) return "Sports Areas";
-  if (t.includes("apartment") || t.includes("coastal") || t.includes("premium"))
-    return "Apartments";
-  if (t.includes("net") || t.includes("pet") || t.includes("children") || t.includes("duct"))
-    return "Safety Nets";
-  return "Balconies";
+const FILTERS = [
+  "All",
+  "Safety Nets",
+  "Invisible Grills",
+  "Sports Nets",
+  "Cloth Hangers",
+] as const;
+
+function labelForService(service: string): string {
+  switch (service) {
+    case "invisible-grills":
+      return "Invisible Grills";
+    case "sports-nets":
+      return "Sports Nets";
+    case "cloth-drying-hangers":
+      return "Cloth Hangers";
+    default:
+      return "Safety Nets";
+  }
 }
 
 export function HomeGallery() {
-  const [filter, setFilter] = useState<(typeof HOME_GALLERY_FILTERS)[number]>(
-    "All",
-  );
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
 
   const projects = useMemo(() => {
-    const base = GALLERY_PROJECTS.slice(0, 8);
-    if (filter === "All") return base;
-    return base.filter((p) => categoryFor(p.title) === filter);
+    if (filter === "All") return [...INSTALLATION_PHOTOS];
+    return INSTALLATION_PHOTOS.filter((p) => labelForService(p.service) === filter);
   }, [filter]);
 
   return (
@@ -37,13 +42,13 @@ export function HomeGallery() {
           <p className="home-eyebrow">Featured projects</p>
           <h2 className="home-h2">Recent Installation Gallery</h2>
           <p className="home-lead">
-            Real project photographs across balconies, windows, ducts and
-            practice areas—useful when comparing nets and invisible grills.
+            All {INSTALLATION_PHOTOS.length} project photographs — balconies,
+            invisible grills, sports nets and cloth hangers.
           </p>
         </header>
 
         <div className="home-gallery-filters" role="group" aria-label="Gallery filters">
-          {HOME_GALLERY_FILTERS.map((item) => (
+          {FILTERS.map((item) => (
             <button
               key={item}
               type="button"
@@ -58,12 +63,12 @@ export function HomeGallery() {
         <div className="home-gallery-grid">
           {projects.map((project) => (
             <Link
-              key={project.image}
-              href={project.href ?? ROUTES.gallery}
+              key={project.src}
+              href={ROUTES.gallery}
               className="home-gallery-item"
             >
               <Image
-                src={project.image}
+                src={project.src}
                 alt={project.alt}
                 width={800}
                 height={600}
@@ -71,9 +76,9 @@ export function HomeGallery() {
                 sizes="(max-width: 768px) 100vw, (max-width: 1050px) 50vw, 33vw"
               />
               <div className="home-gallery-meta">
-                <strong>{project.title}</strong>
+                <strong>{project.alt}</strong>
                 <span>
-                  {categoryFor(project.title)} · Andhra Pradesh installation
+                  {labelForService(project.service)} · Andhra Pradesh
                 </span>
               </div>
             </Link>

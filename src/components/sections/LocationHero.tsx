@@ -85,7 +85,7 @@ export function LocationHero({
           </div>
 
           {showImage ? (
-            <HeroImageScroll images={scrollImages} variant="panel" />
+            <HeroImageScroll images={scrollImages} variant="panel" fit="cover" />
           ) : null}
         </div>
       </Container>

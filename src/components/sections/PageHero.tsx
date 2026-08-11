@@ -79,7 +79,7 @@ export function PageHero({
           </div>
 
           {withImage ? (
-            <HeroImageScroll images={scrollImages} variant="panel" />
+            <HeroImageScroll images={scrollImages} variant="panel" fit="cover" />
           ) : null}
         </div>
       </Container>

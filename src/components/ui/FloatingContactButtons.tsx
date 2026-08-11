@@ -9,7 +9,8 @@ import {
 import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 
 /**
- * Sticky contact: phone shows the real digits (click-to-call), plus WhatsApp / email.
+ * Sticky contact dock: phone digits + WhatsApp (+ email on desktop).
+ * Mobile: bottom-center dock above the home indicator / browser chrome.
  */
 export function FloatingContactButtons() {
   const phoneReady = isPhoneValidForProduction();
@@ -20,7 +21,12 @@ export function FloatingContactButtons() {
 
   return (
     <div className="floating-contact" aria-label="Quick contact">
-      {phoneReady ? <PhoneNumberLink className="floating-phone" /> : null}
+      {phoneReady ? (
+        <PhoneNumberLink
+          className="floating-phone"
+          formatted={false}
+        />
+      ) : null}
 
       {phoneReady && wa ? (
         <a
@@ -32,12 +38,13 @@ export function FloatingContactButtons() {
           title="WhatsApp enquiry"
         >
           <WhatsAppIcon />
+          <span className="floating-contact-label">WhatsApp</span>
         </a>
       ) : null}
 
       <a
         href={email}
-        className="is-mail"
+        className="is-mail floating-mail"
         aria-label={`Email ${BUSINESS_CONFIG.email}`}
         title={BUSINESS_CONFIG.email}
       >
