@@ -13,6 +13,25 @@
   --home-green: #16a34a;
   --home-border: #dce4ee;
   --home-muted: #475569;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Keep later homepage sections above the hero/trust overlap so content
+   never paints “behind” the trust strip while scrolling. */
+.home-shell > .home-hero {
+  position: relative;
+  z-index: 0;
+}
+
+.home-shell > .home-trust {
+  position: relative;
+  z-index: 1;
+}
+
+.home-shell > *:not(.home-hero):not(.home-trust) {
+  position: relative;
+  z-index: 2;
 }
 
 .home-shell .home-container {
@@ -389,8 +408,6 @@
 /* —— Trust strip —— */
 .home-trust {
   margin-top: -1.75rem;
-  position: relative;
-  z-index: 3;
   padding-bottom: 0.5rem;
 }
 
@@ -747,6 +764,21 @@
   font-size: 0.9rem;
   line-height: 1.55;
   color: var(--home-muted);
+}
+
+/* —— Homepage SEO intro —— */
+.home-seo-intro-prose {
+  max-width: 48rem;
+  margin: 1.75rem auto 0;
+  display: grid;
+  gap: 1.1rem;
+  font-size: clamp(0.98rem, 1.2vw, 1.075rem);
+  line-height: 1.75;
+  color: var(--home-muted);
+}
+
+.home-seo-intro-prose p {
+  margin: 0;
 }
 
 /* —— Full homepage photo marquee (images only) —— */

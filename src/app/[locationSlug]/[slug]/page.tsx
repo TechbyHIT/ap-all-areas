@@ -18,6 +18,7 @@ import { CoverageSection } from "@/components/sections/CoverageSection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { PillarPageView } from "@/components/sections/PillarPageView";
+import { SeoEncyclopediaSections } from "@/components/sections/SeoEncyclopediaSections";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
@@ -281,6 +282,8 @@ export default async function CityServicePage({ params }: PageProps) {
         }
         note="Service availability is confirmed after reviewing site access, measurements and technician scheduling."
       />
+
+      <SeoEncyclopediaSections sections={content.encyclopedia} />
 
       <FeaturesSection
         title="Suitable Property Types"

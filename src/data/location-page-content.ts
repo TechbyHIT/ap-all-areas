@@ -6,6 +6,10 @@
 
 import { getAreaLocalFact } from "@/data/area-local-facts";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
+import {
+  getServiceEncyclopedia,
+  type EncyclopediaSection,
+} from "@/data/service-encyclopedia";
 
 export type LocationPageContent = {
   introduction: string;
@@ -29,6 +33,7 @@ export type CityServiceContent = {
   weatherNotes: string;
   areasServedIntro: string;
   pricingNote: string;
+  encyclopedia: EncyclopediaSection[];
 };
 
 export type AreaServiceContent = {
@@ -42,6 +47,7 @@ export type AreaServiceContent = {
   installationSteps: string;
   maintenanceAdvice: string;
   pricingNote: string;
+  encyclopedia: EncyclopediaSection[];
 };
 
 const COASTAL_NAME_MARKERS = [
@@ -498,6 +504,7 @@ export function buildCityServiceContent(input: {
       ? `Within ${cityName}, customers often enquire from areas such as ${areaList}.${corridors}${societies} ${coverageSentence(cityName)} Area names help with visit planning; final suitability still depends on building access and measured site conditions.`
       : `Service enquiries across ${cityName} are welcome from residential and suitable commercial sites.${corridors}${societies} ${coverageSentence(cityName)} Final suitability depends on building access and measured site conditions.`,
     pricingNote: `Pricing for ${label} in ${cityName} depends on measured size, material specification, access difficulty and total openings or span. We share a site-specific quotation after inspection rather than a one-rate list for the whole city. ${profile?.photoEstimateHint ?? "Share opening photos for a clearer first estimate."}`,
+    encyclopedia: getServiceEncyclopedia(serviceSlug, cityName, serviceName),
   };
 }
 
@@ -615,6 +622,7 @@ export function buildAreaServiceContent(input: {
     materialGuidance: materialsByService(serviceSlug, serviceName),
     measurementProcess: `Measurement in ${place} covers opening width and height, fixing surface condition, obstacles such as AC units, and access notes for installation day.${landmarkBit} These details replace guesswork based only on the area name.`,
     installationSteps: `After approval, technicians prepare the opening, install fixings, fit the ${label}, check tension or alignment, clean the area and explain basic care before leaving the site in ${areaName}.`,
+    encyclopedia: getServiceEncyclopedia(serviceSlug, place, serviceName),
     maintenanceAdvice: (() => {
       switch (serviceSlug) {
         case "invisible-grills":

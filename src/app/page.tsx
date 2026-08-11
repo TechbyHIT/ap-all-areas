@@ -10,6 +10,7 @@ import { HomePhotoRotation } from "@/components/home/HomePhotoRotation";
 import { HomePricing } from "@/components/home/HomePricing";
 import { HomeProcess } from "@/components/home/HomeProcess";
 import { HomeReviews } from "@/components/home/HomeReviews";
+import { HomeSeoIntro } from "@/components/home/HomeSeoIntro";
 import { HomeServicesBento } from "@/components/home/HomeServicesBento";
 import { HomeTrustStrip } from "@/components/home/HomeTrustStrip";
 import { HomeWhyChoose } from "@/components/home/HomeWhyChoose";
@@ -51,6 +52,7 @@ export default function HomePage() {
       <FaqJsonLd faqs={HOMEPAGE_CONTENT.faqs} />
       <HomeHeroPremium />
       <HomeTrustStrip />
+      <HomeSeoIntro />
       <HomePhotoRotation />
       <HomeServicesBento />
       <HomeAllServices />

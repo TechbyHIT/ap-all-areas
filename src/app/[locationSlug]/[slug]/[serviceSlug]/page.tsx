@@ -16,6 +16,7 @@ import { RelatedGuides } from "@/components/sections/RelatedGuides";
 import { CoverageSection } from "@/components/sections/CoverageSection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
+import { SeoEncyclopediaSections } from "@/components/sections/SeoEncyclopediaSections";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
@@ -239,6 +240,8 @@ export default async function AreaServicePage({ params }: PageProps) {
         }
         note="Address-level coverage is confirmed after reviewing access, measurements and technician availability."
       />
+
+      <SeoEncyclopediaSections sections={content.encyclopedia} />
 
       <BenefitsSection
         title={`Residential Applications in ${area.name}`}

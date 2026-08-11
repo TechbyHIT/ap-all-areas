@@ -44,8 +44,14 @@ export function HeroImageScroll({
 
   useEffect(() => {
     if (variant !== "panel" || !trackRef.current) return;
-    const child = trackRef.current.children[index] as HTMLElement | undefined;
-    child?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    const track = trackRef.current;
+    const child = track.children[index] as HTMLElement | undefined;
+    if (!child) return;
+    // Scroll only the gallery track — never the document (scrollIntoView can
+    // yank the whole page and make lower sections feel like they go “behind”).
+    const left =
+      child.offsetLeft - (track.clientWidth - child.clientWidth) / 2;
+    track.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
   }, [index, variant]);
 
   if (safe.length === 0) return null;

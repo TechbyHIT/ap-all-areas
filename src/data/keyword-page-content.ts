@@ -7,6 +7,7 @@ import { BUSINESS_CONFIG } from "@/config/business";
 import { getAreaLocalFact } from "@/data/area-local-facts";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
 import type { KeywordIntent } from "@/data/keyword-intents";
+import { getServiceEncyclopedia } from "@/data/service-encyclopedia";
 
 export type KeywordGeoContent = {
   metaTitle: string;
@@ -169,6 +170,12 @@ export function buildKeywordGeoContent(
   const local = localContext(geo);
   const brand = BUSINESS_CONFIG.name;
 
+  const encyclopedia = getServiceEncyclopedia(
+    keyword.serviceSlug,
+    geo.name,
+    keyword.phrase,
+  );
+
   const sections: KeywordGeoContent["sections"] = [
     {
       heading: `Why people search ${p} in ${geo.name}`,
@@ -179,11 +186,13 @@ export function buildKeywordGeoContent(
           `${brand} plans ${p} from photos and on-site measurement in ${geo.name}. Final pricing is scoped in writing before work starts.`,
       ],
     },
+    ...encyclopedia,
     {
       heading: `How ${keyword.phrase} is planned in ${geo.name}`,
       paragraphs: [
         `We start with your opening photos and the main risk—children, pets, pigeons, clear view, sports practice or drying utility. Then we confirm fixing surfaces, society rules and access in ${geo.name} before locking material and spacing.`,
         `Across Andhra Pradesh, including ${geo.cityName}, outdoor systems need UV-aware meshes or corrosion-conscious stainless hardware depending on exposure. Coastal belts and hot inland terraces are not treated the same.`,
+        `${brand} supports measured quotations for ${p} in ${geo.name} after photo review—listing this locality helps visit planning and does not claim a permanent branch on every street.`,
       ],
     },
   ];

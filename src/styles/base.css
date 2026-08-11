@@ -78,8 +78,11 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Clip horizontal overflow on content only — keeps sticky header working */
+  /* Clip horizontal overflow on content only — keeps sticky header working.
+     Keep main below the sticky header stacking context. */
   #main-content {
+    position: relative;
+    z-index: 1;
     overflow-x: clip;
     min-width: 0;
   }

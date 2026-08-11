@@ -781,6 +781,9 @@ a.button-secondary:hover {
   display: grid;
   gap: 12px;
   pointer-events: none;
+  /* Keep FABs above page chrome, but never create a full-width stacking wall */
+  width: max-content;
+  max-width: 72px;
 }
 
 .floating-contact a {
