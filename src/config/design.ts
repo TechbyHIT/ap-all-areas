@@ -177,8 +177,8 @@ export const HOME_VISUAL_SERVICES: VisualServiceItem[] = [
     name: "Balcony Safety Nets",
     summary:
       "Mesh systems fitted across balcony openings to reduce fall risk for children and pets while keeping the space usable for plants and seating.",
-    image: "/images/projects/balcony-safety-nets-12.jpg",
-    alt: "HD balcony safety net installation",
+    image: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
+    alt: "Residential balcony safety net with city view",
     href: "/services/safety-nets/",
   },
   {
@@ -186,15 +186,15 @@ export const HOME_VISUAL_SERVICES: VisualServiceItem[] = [
     summary:
       "Closer-spaced mesh planned where toddlers use balconies, stair voids or window openings—always as a supplement to adult supervision.",
     image: "/images/projects/children-safety-nets-3.jpg",
-    alt: "HD children safety net on balcony",
+    alt: "Children safety net on residential balcony",
     href: "/solutions/child-balcony-safety/",
   },
   {
     name: "Pet Safety Nets",
     summary:
       "Climb-aware layouts for cats and small dogs on utility and living balconies, with gap and tension checks at handover.",
-    image: "/images/projects/installations/balcony-safety-net-detail-b.jpg",
-    alt: "Pet-focused balcony mesh and rail detail",
+    image: "/images/projects/children-safety-nets-2.jpg",
+    alt: "Balcony mesh protection for pets and family openings",
     href: "/solutions/pet-balcony-safety/",
   },
   {
@@ -202,15 +202,15 @@ export const HOME_VISUAL_SERVICES: VisualServiceItem[] = [
     summary:
       "Full-opening nets that close bird-entry paths on balconies, AC ledges and ducts where pigeons return repeatedly.",
     image: "/images/projects/balcony-safety-nets-13.jpg",
-    alt: "HD bird protection net on residential balcony",
+    alt: "Bird protection net on residential balcony",
     href: "/solutions/pigeon-infestation/",
   },
   {
     name: "Duct Area Safety Nets",
     summary:
       "Shaft and duct coverings that block bird nesting while respecting building access and service-pipe clearances.",
-    image: "/images/projects/installations/project-install-32b.jpg",
-    alt: "Duct and utility area net installation",
+    image: "/images/projects/installations/sports-net-enclosure-wide.jpg",
+    alt: "Building shaft and duct-area safety net installation",
     href: "/services/safety-nets/",
   },
   {
@@ -234,7 +234,7 @@ export const HOME_VISUAL_SERVICES: VisualServiceItem[] = [
     summary:
       "Practice enclosures and ball-stop nets for terraces, coaching spaces, schools and home practice areas.",
     image: "/images/projects/cricket-nets-4.jpg",
-    alt: "HD cricket practice net enclosure",
+    alt: "Cricket practice sports net cages on outdoor field",
     href: "/services/sports-nets/",
   },
   {
@@ -242,7 +242,7 @@ export const HOME_VISUAL_SERVICES: VisualServiceItem[] = [
     summary:
       "Ceiling and balcony drying systems that free railing space in compact apartments—especially useful in humid monsoon months.",
     image: "/images/projects/cloth-hangers-9.jpeg",
-    alt: "HD ceiling cloth drying hanger installation",
+    alt: "Ceiling-mounted cloth drying hanger on balcony",
     href: "/services/cloth-drying-hangers/",
   },
   {
@@ -250,15 +250,15 @@ export const HOME_VISUAL_SERVICES: VisualServiceItem[] = [
     summary:
       "Window and balcony insect screening that improves comfort without sealing the home from ventilation.",
     image: "/images/projects/mosquito-nets-1.png",
-    alt: "HD mosquito net window screening",
+    alt: "Window mosquito net screening installation",
     href: "/services/safety-nets/",
   },
   {
     name: "Staircase Safety",
     summary:
       "Side-void nets or cable barriers for duplex staircases and open gallery edges in independent homes and apartments.",
-    image: "/images/projects/balcony-invisible-grills-2.png",
-    alt: "HD staircase and balcony cable safety system",
+    image: "/images/projects/installations/highrise-green-safety-net-up.jpg",
+    alt: "Open-edge safety net for stair voids and gallery openings",
     href: "/solutions/staircase-fall-risk/",
   },
   {
@@ -342,16 +342,16 @@ export const GALLERY_PROJECTS: GalleryProject[] = [
     href: "/solutions/pigeon-infestation/",
   },
   {
-    title: "Facade Safety Nets",
+    title: "Outdoor Sports Net Enclosure",
     image: "/images/projects/installations/facade-balcony-safety-nets.jpg",
-    alt: "Building facade balcony safety nets",
-    href: "/services/safety-nets/",
+    alt: "Circular outdoor sports net enclosure for practice",
+    href: "/services/sports-nets/",
   },
   {
-    title: "Sports Net Enclosure",
+    title: "Building Shaft Safety Net",
     image: "/images/projects/installations/sports-net-enclosure-wide.jpg",
-    alt: "Wide outdoor sports net enclosure",
-    href: "/services/sports-nets/",
+    alt: "Building shaft safety net between balcony stacks",
+    href: "/services/safety-nets/",
   },
   {
     title: "Installer at Work",

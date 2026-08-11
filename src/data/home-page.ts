@@ -49,7 +49,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     href: ROUTES.service("invisible-grills"),
     quoteHref: ROUTES.contact,
     image: "/images/projects/installations/invisible-grill-day-city.jpg",
-    alt: "Daytime invisible grill city view",
+    alt: "Stainless steel invisible grill on apartment balcony",
     summary:
       "Stainless-steel cable systems that protect openings while keeping daylight and a clearer outward view.",
     benefits: ["Clear-view finish", "Balcony & window fit", "Measured spacing"],
@@ -59,8 +59,8 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Balcony Safety Nets",
     href: ROUTES.service("safety-nets"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/installations/balcony-net-daylight-view.jpg",
-    alt: "Daylight balcony safety net installation",
+    image: "/images/projects/balcony-safety-nets-12.jpg",
+    alt: "Balcony safety net installation on residential balcony",
     summary:
       "Mesh systems fitted across balcony openings to reduce fall risk for family use while keeping the space usable.",
     benefits: ["Family openings", "Secure edge fixing", "Airflow retained"],
@@ -70,8 +70,8 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Pigeon Safety Nets",
     href: ROUTES.solution("pigeon-infestation"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
-    alt: "Pigeon and bird protection net on balcony",
+    image: "/images/projects/pet-safety-nets-1.jpg",
+    alt: "Balcony bird protection net keeping pigeons outside",
     summary:
       "Full-opening nets that close bird-entry paths on balconies, AC ledges and ducts.",
     benefits: ["Stops nesting", "Full-opening cover", "Duct options"],
@@ -81,7 +81,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     href: ROUTES.solution("child-balcony-safety"),
     quoteHref: ROUTES.contact,
     image: "/images/projects/children-safety-nets-1.jpg",
-    alt: "Children safety net on balcony",
+    alt: "Children safety net installation on residential balcony",
     summary:
       "Closer-spaced mesh planned where toddlers use balconies or window openings—alongside adult supervision.",
     benefits: ["Closer mesh", "Opening-specific", "Handover checks"],
@@ -90,8 +90,8 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Pet Safety Nets",
     href: ROUTES.solution("pet-balcony-safety"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/pet-safety-nets-1.jpg",
-    alt: "Pet safety net installation",
+    image: "/images/projects/installations/night-balcony-safety-net.jpg",
+    alt: "Balcony safety net for pet and family openings",
     summary:
       "Climb-aware layouts for cats and small dogs on utility and living balconies.",
     benefits: ["Gap checks", "Climb-aware fit", "Utility balconies"],
@@ -100,8 +100,8 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Sports Nets",
     href: ROUTES.service("sports-nets"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/installations/outdoor-cricket-cage-nets.jpg",
-    alt: "Outdoor cricket practice cage nets",
+    image: "/images/projects/installations/facade-balcony-safety-nets.jpg",
+    alt: "Outdoor sports net enclosure for cricket practice",
     summary:
       "Practice enclosures and ball-stop nets for terraces, coaching spaces and schools.",
     benefits: ["Ball containment", "Terrace ready", "Measured height"],
@@ -111,7 +111,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     href: ROUTES.service("safety-nets"),
     quoteHref: ROUTES.contact,
     image: "/images/projects/duct-area-nets-1.jpg",
-    alt: "Duct area safety net",
+    alt: "Duct and courtyard safety net installation",
     summary:
       "Shaft and duct coverings that block bird nesting while respecting service access.",
     benefits: ["Shaft cover", "Service clearance", "Bird control"],
@@ -121,7 +121,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     href: ROUTES.service("cloth-drying-hangers"),
     quoteHref: ROUTES.contact,
     image: "/images/projects/installations/green-facade-netting-street.jpg",
-    alt: "Ceiling cloth drying hanger on balcony",
+    alt: "Ceiling-mounted cloth drying hanger on balcony",
     summary:
       "Ceiling and balcony drying systems that free railing space in compact apartments.",
     benefits: ["Ceiling systems", "Load-aware fix", "Compact flats"],
