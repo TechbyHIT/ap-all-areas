@@ -6,6 +6,7 @@ import { LocationHero } from "@/components/sections/LocationHero";
 import { LocationCards } from "@/components/sections/LocationCards";
 import { CoverageSection } from "@/components/sections/CoverageSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
@@ -52,6 +53,12 @@ export default function LocationsPage() {
 
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Locations", path: "/locations/" },
+        ]}
+      />
       <LocationHero
         badge="Andhra Pradesh · Statewide coverage"
         title="Safety Nets & Invisible Grills Across Andhra Pradesh"
@@ -60,10 +67,6 @@ export default function LocationsPage() {
           src: HERO_FALLBACK,
           alt: "Service coverage across Andhra Pradesh cities and districts",
         }}
-        breadcrumbItems={[
-          { label: "Home", href: "/" },
-          { label: "Locations" },
-        ]}
       />
 
       <CoverageSection

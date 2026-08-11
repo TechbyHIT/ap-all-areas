@@ -190,6 +190,18 @@ else
   [ -f "$BUILD/.next/standalone/server.js" ] ||
     die "build produced no .next/standalone/server.js"
 
+  log "Validating sitemap registry (integrity)"
+  (
+    cd "$BUILD"
+    set -a
+    # shellcheck disable=SC1090
+    [ -f "$SHARED/.env" ] && . "$SHARED/.env"
+    set +a
+    export NODE_ENV=production
+    export SITEMAP_VALIDATE_HTTP=0
+    npm run seo:validate-sitemap
+  ) || die "sitemap registry validation failed — refusing promote"
+
   log "Promoting build to $RELEASE"
   mv "$BUILD/.next/standalone" "$RELEASE"
   # Defence in depth: strip any .map files prepare-standalone missed.
@@ -263,6 +275,37 @@ if [ "$HEALTHY" = 0 ]; then
   fi
   info "logs: pm2 logs $SLUG --lines 100"
   exit 1
+fi
+
+# ----------------------------------------------- post-health sitemap HTTP sample
+# Registry integrity already ran pre-promote. After the app is healthy, sample
+# live HTML for status / canonical path / robots (uses BUILD tree if still present).
+if [ -f "$BUILD/package.json" ] && [ -d "$BUILD/node_modules" ] &&
+  grep -q 'seo:validate-sitemap' "$BUILD/package.json"; then
+  log "Validating sitemap HTTP sample on localhost:$PORT"
+  if ! (
+    cd "$BUILD"
+    set -a
+    # shellcheck disable=SC1090
+    [ -f "$SHARED/.env" ] && . "$SHARED/.env"
+    set +a
+    export NODE_ENV=production
+    export SITEMAP_VALIDATE_HTTP=1
+    export SITEMAP_VALIDATE_BASE="http://localhost:${PORT}"
+    npm run seo:validate-sitemap
+  ); then
+    warn "HTTP sitemap sample failed"
+    if [ -n "$PREVIOUS" ] && [ -d "$PREVIOUS" ] && [ "$PREVIOUS" != "$RELEASE" ]; then
+      warn "rolling back to $PREVIOUS"
+      ln -sfn "$PREVIOUS" "$CURRENT.tmp"
+      mv -Tf "$CURRENT.tmp" "$CURRENT"
+      pm2 reload "$ECO" --only "$SLUG" --update-env || true
+      rm -rf "$RELEASE"
+    fi
+    die "sitemap HTTP validation failed"
+  fi
+else
+  info "skipping HTTP sitemap sample (no build tree / script) — registry gate already passed when built from source"
 fi
 
 # ---------------------------------------------------------------------- prune

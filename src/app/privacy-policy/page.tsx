@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { BUSINESS_CONFIG } from "@/config/business";
 import { PageHero } from "@/components/sections/PageHero";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { Container } from "@/components/ui/Container";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -16,6 +17,12 @@ export const metadata: Metadata = generatePageMetadata({
 export default function PrivacyPolicyPage() {
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Privacy Policy", path: "/privacy-policy/" },
+        ]}
+      />
       <PageHero title="Privacy Policy" />
       <Container>
         <div className="prose prose-zinc max-w-none dark:prose-invert">

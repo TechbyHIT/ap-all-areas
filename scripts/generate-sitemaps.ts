@@ -1,3 +1,12 @@
+/**
+ * DB eligibility summary for publishing workflows.
+ *
+ * NOTE: This does NOT emit the live XML sitemap search engines crawl.
+ * Production discovery is App Router `src/app/sitemap.ts` fed by
+ * `src/lib/seo/sitemap-registry.ts`. Use `npm run seo:validate-sitemap`.
+ *
+ * Output: reports/sitemap-summary.json
+ */
 import { writeFileSync, mkdirSync } from "fs";
 import path from "path";
 import { prisma } from "../src/lib/prisma";

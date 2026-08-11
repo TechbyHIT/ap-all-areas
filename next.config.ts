@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   /** Smaller production artifact for PM2 / nginx (no Docker). */
   output: "standalone",
 
+  /** Match SITE_CONFIG / canonical URLs (trailing slash on). */
+  trailingSlash: true,
+
   /** Ensure Prisma generated client is included in the standalone trace. */
   outputFileTracingIncludes: {
     "/**": ["./src/generated/prisma/**/*"],

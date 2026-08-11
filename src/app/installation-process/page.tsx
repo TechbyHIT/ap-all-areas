@@ -8,6 +8,7 @@ import { MaintenanceSection } from "@/components/sections/MaintenanceSection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { INSTALLATION_PROCESS_CONTENT } from "@/data/static-page-content";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -31,6 +32,12 @@ export default function InstallationProcessPage() {
 
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Installation Process", path: "/installation-process/" },
+        ]}
+      />
       <FaqJsonLd faqs={faqs} />
 
       <PageHero

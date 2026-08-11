@@ -7,6 +7,7 @@ import { BenefitsSection } from "@/components/sections/BenefitsSection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { SAFETY_GUIDE_CONTENT } from "@/data/static-page-content";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -26,6 +27,12 @@ export default function SafetyGuidePage() {
 
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Safety Guide", path: "/safety-guide/" },
+        ]}
+      />
       <FaqJsonLd faqs={faqs} />
 
       <PageHero

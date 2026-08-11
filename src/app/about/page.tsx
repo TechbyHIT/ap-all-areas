@@ -12,6 +12,7 @@ import { QualitySection } from "@/components/sections/QualitySection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { ABOUT_CONTENT } from "@/data/static-page-content";
 import { ROUTES } from "@/config/routes";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
@@ -50,6 +51,12 @@ export default function AboutPage() {
 
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "About", path: "/about/" },
+        ]}
+      />
       <FaqJsonLd faqs={faqs} />
 
       <PageHero

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/sections/PageHero";
 import { CTASection } from "@/components/sections/CTASection";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { Container } from "@/components/ui/Container";
 import { PROBLEMS } from "@/data/problems";
 import { ROUTES } from "@/config/routes";
@@ -20,6 +21,12 @@ export const metadata: Metadata = generatePageMetadata({
 export default function SolutionsPage() {
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Solutions", path: "/solutions/" },
+        ]}
+      />
       <PageHero
         title="Solutions"
         description="Find the right installation service for your safety, bird control, sports or drying needs across Andhra Pradesh."

@@ -13,7 +13,7 @@ import { ServiceCityAreaLinks } from "@/components/sections/ServiceCityAreaLinks
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { Heading } from "@/components/ui/Heading";
-import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { PROBLEM_MAP, PROBLEM_SLUGS } from "@/data/problems";
 import { INITIAL_SERVICE_MAP, INITIAL_SERVICES } from "@/data/initial-services";
@@ -144,16 +144,14 @@ export default async function SolutionDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <FaqJsonLd faqs={faqs} />
-
-      <Breadcrumbs
-        className="pt-6"
-        items={[
-          { label: "Home", href: "/" },
-          { label: "Solutions", href: "/solutions/" },
-          { label: problem.name },
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Solutions", path: "/solutions/" },
+          { name: problem.name, path: `/solutions/${problem.slug}/` },
         ]}
       />
+      <FaqJsonLd faqs={faqs} />
 
       <PageHero
         title={problem.name}

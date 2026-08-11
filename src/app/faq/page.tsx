@@ -5,6 +5,7 @@ import { MaterialsSection } from "@/components/sections/MaterialsSection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { FAQ_PAGE_EXTRA } from "@/data/static-page-content";
 import { GENERAL_FAQS, SERVICE_FAQS } from "@/data/service-faqs";
 import type { FaqItem } from "@/data/service-faqs";
@@ -40,6 +41,12 @@ export default function FAQPage() {
 
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "FAQ", path: "/faq/" },
+        ]}
+      />
       <FaqJsonLd faqs={allFaqsForSchema} />
 
       <PageHero

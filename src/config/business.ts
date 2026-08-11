@@ -37,7 +37,7 @@ export const BUSINESS_CONFIG = {
 
   logo: "/images/hiranya-enterprises-logo.png",
   logoCircle: "/images/hiranya-logo-circle.png",
-  defaultOpenGraphImage: "/images/projects/balcony-invisible-grills-8.jpg",
+  defaultOpenGraphImage: "/images/projects/installations/invisible-grill-day-city.jpg",
 
   serviceArea: {
     primaryCity: "Visakhapatnam",

@@ -385,16 +385,16 @@ Ports are allocated from 3000 upwards (`AP_PORT_BASE=3000`), one per site:
 `site-add.sh` picks the next free one by checking both the registry and the
 listening sockets, so you never assign them by hand.
 
-To pin a specific port, pass `--port`. This app's `package.json` uses 3008 for
+To pin a specific port, pass `--port`. This app's `package.json` uses 3001 for
 `dev` and `start`, so keeping the production port the same is convenient:
 
 ```bash
 sudo bash deploy/site-add.sh --slug hiranaya-enterprises \
-  --domain hiranayaenterprises.in --port 3008 --repo <url>
+  --domain hiranayaenterprises.in --port 3001 --repo <url>
 ```
 
 A pinned port is recorded in the registry, so later sites skip it automatically.
-To start the whole fleet at 3008 instead, set `AP_PORT_BASE=3008` in
+To start the whole fleet at 3001 instead, set `AP_PORT_BASE=3001` in
 `/etc/ap-sites/config`.
 
 Those ports must stay private. Only nginx is public:

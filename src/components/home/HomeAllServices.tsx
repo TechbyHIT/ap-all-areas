@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getTelLink } from "@/config/business";
+import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 import { ROUTES } from "@/config/routes";
 import { HOME_VISUAL_SERVICES } from "@/config/design";
 
@@ -9,8 +9,6 @@ import { HOME_VISUAL_SERVICES } from "@/config/design";
  * "Complete home & building safety solutions" layout.
  */
 export function HomeAllServices() {
-  const tel = getTelLink();
-
   return (
     <section className="home-section home-section--soft" id="all-services">
       <div className="home-container">
@@ -53,15 +51,7 @@ export function HomeAllServices() {
                     View Details
                     <span aria-hidden> →</span>
                   </Link>
-                  {tel ? (
-                    <a href={tel} className="call">
-                      Call
-                    </a>
-                  ) : (
-                    <Link href={ROUTES.contact} className="call">
-                      Call
-                    </Link>
-                  )}
+                  <PhoneNumberLink className="call" />
                 </div>
               </div>
             </article>

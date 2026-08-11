@@ -22,4 +22,5 @@ npm run pages:count
 - Maximum batch size: 500
 - Pages default to draft with `allowIndexing: false`
 - Phone/WhatsApp links blocked until 10-digit number verified
-- Noindex pages excluded from sitemaps
+- Live XML sitemaps are built from `src/lib/seo/sitemap-registry.ts` (App Router). Only indexable, non-redirect URLs are included; validate with `npm run seo:validate-sitemap`
+- `npm run sitemaps:generate` is a DB summary helper only — it does not publish production sitemap XML

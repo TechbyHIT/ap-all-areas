@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/sections/PageHero";
 import { CTASection } from "@/components/sections/CTASection";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { Container } from "@/components/ui/Container";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -17,6 +18,12 @@ export const metadata: Metadata = generatePageMetadata({
 export default function ProjectsPage() {
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Projects", path: "/projects/" },
+        ]}
+      />
       <PageHero
         title="Projects"
         description="Case studies and completed installations will be featured here."

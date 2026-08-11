@@ -12,6 +12,7 @@ import { FinalCTA } from "@/components/sections/FinalCTA";
 import { ServiceCityAreaLinks } from "@/components/sections/ServiceCityAreaLinks";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
+import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 import { Section } from "@/components/ui/Section";
 import type { MoneyLanding } from "@/data/landings/types";
 
@@ -46,7 +47,7 @@ export function MoneyLandingView({ landing }: MoneyLandingViewProps) {
               <div className="mt-8 flex flex-wrap gap-3">
                 {tel ? (
                   <Button href={tel} variant="primary">
-                    Call Now
+                    {BUSINESS_CONFIG.phone.displayFormatted}
                   </Button>
                 ) : null}
                 {wa ? (
@@ -333,7 +334,8 @@ export function MoneyLandingView({ landing }: MoneyLandingViewProps) {
             {BUSINESS_CONFIG.name}
           </p>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-            Phone: {BUSINESS_CONFIG.phone.displayFormatted}
+            Phone:{" "}
+            <PhoneNumberLink className="font-semibold text-[var(--foreground)] underline-offset-2 hover:underline" />
           </p>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
             Email: {BUSINESS_CONFIG.email}

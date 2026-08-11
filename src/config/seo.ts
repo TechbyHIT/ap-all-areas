@@ -53,6 +53,12 @@ export const SEO_CONFIG = {
   sitemapMaxUrls: 10000,
 
   /**
+   * Stable sitemap lastmod for matrix-driven URLs.
+   * Bump when services, locations, keywords, or hub content change.
+   */
+  sitemapContentRevision: "2026-08-11",
+
+  /**
    * Strategy flag: prefer more unique useful URLs over mega-pages.
    * 5,000 high-quality intent pages > 500 encyclopedic dumps.
    */

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/sections/PageHero";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { Container } from "@/components/ui/Container";
 import { PLACEHOLDER_GUIDES } from "@/data/placeholder-content";
 import { ROUTES } from "@/config/routes";
@@ -19,6 +20,12 @@ export const metadata: Metadata = generatePageMetadata({
 export default function GuidesPage() {
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Guides", path: "/guides/" },
+        ]}
+      />
       <PageHero
         title="Guides"
         description="Practical guides to help you choose and plan safety and utility installations."

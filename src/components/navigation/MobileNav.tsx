@@ -196,7 +196,7 @@ export function MobileNav({
               href={telLink}
               className="flex min-h-12 items-center justify-center rounded-lg border border-zinc-300 px-4 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-600)]"
             >
-              Call {phoneDisplay}
+              {phoneDisplay}
             </a>
           ) : null}
           {whatsAppLink ? (

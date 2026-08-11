@@ -149,10 +149,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         badge="Andhra Pradesh"
         title={`${service.name} Installation in Andhra Pradesh`}
         description={service.summary}
+        serviceSlug={service.slug}
         image={{
           src: media.image,
           alt: media.alt,
         }}
+        gallery={media.gallery.map((src) => ({ src, alt: media.alt }))}
         breadcrumbItems={[
           { label: "Home", href: "/" },
           { label: "Services", href: "/services/" },

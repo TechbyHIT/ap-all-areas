@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3008",
+    "dev": "next dev -p 3001",
     "build": "next build",
     "prepare:standalone": "node scripts/prepare-standalone.mjs",
     "build:standalone": "npm run build && npm run prepare:standalone",
-    "start": "next start -p 3008",
+    "start": "next start -p 3001",
     "start:standalone": "node .next/standalone/server.js",
     "pm2:start": "pm2 start ecosystem.config.cjs",
     "pm2:reload": "pm2 reload ecosystem.config.cjs --update-env",
@@ -34,6 +34,7 @@
     "links:audit": "tsx scripts/internal-link-audit.ts",
     "schema:audit": "tsx scripts/schema-audit.ts",
     "sitemaps:generate": "tsx scripts/generate-sitemaps.ts",
+    "seo:validate-sitemap": "tsx scripts/validate-sitemap.ts",
     "placeholders:audit": "tsx scripts/placeholder-audit.ts",
     "postinstall": "prisma generate"
   },

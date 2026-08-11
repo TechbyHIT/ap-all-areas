@@ -7,6 +7,7 @@ import { SafetySection } from "@/components/sections/SafetySection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { MATERIALS_GUIDE_CONTENT } from "@/data/static-page-content";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -33,6 +34,12 @@ export default function MaterialsGuidePage() {
 
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Materials Guide", path: "/materials-guide/" },
+        ]}
+      />
       <FaqJsonLd faqs={faqs} />
 
       <PageHero

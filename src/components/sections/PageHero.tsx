@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
+import { HERO_SCROLL_IMAGES } from "@/config/installation-photos";
 import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
+import { HeroImageScroll } from "@/components/ui/HeroImageScroll";
 
 type PageHeroProps = {
   title: string;
@@ -9,6 +10,7 @@ type PageHeroProps = {
   eyebrow?: string;
   badge?: string;
   image?: { src: string; alt: string };
+  gallery?: readonly { src: string; alt: string }[];
   actions?: ReactNode;
   breadcrumbs?: ReactNode;
   className?: string;
@@ -20,10 +22,20 @@ export function PageHero({
   eyebrow,
   badge,
   image,
+  gallery,
   actions,
   breadcrumbs,
   className = "",
 }: PageHeroProps) {
+  const scrollImages =
+    gallery && gallery.length > 0
+      ? gallery
+      : image
+        ? [image, ...HERO_SCROLL_IMAGES.slice(0, 6)]
+        : HERO_SCROLL_IMAGES.slice(0, 8);
+
+  const withImage = scrollImages.length > 0;
+
   return (
     <section
       className={`border-b border-zinc-200 bg-gradient-to-b from-zinc-50 to-white ${className}`.trim()}
@@ -33,7 +45,7 @@ export function PageHero({
       <Container className="py-10 md:py-14">
         <div
           className={
-            image
+            withImage
               ? "grid items-center gap-8 lg:grid-cols-2 lg:gap-12"
               : "max-w-3xl"
           }
@@ -66,17 +78,8 @@ export function PageHero({
             ) : null}
           </div>
 
-          {image ? (
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-zinc-100 shadow-md">
-              <Image
-                src={image.src}
-                alt={image.alt}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                priority
-              />
-            </div>
+          {withImage ? (
+            <HeroImageScroll images={scrollImages} variant="panel" />
           ) : null}
         </div>
       </Container>

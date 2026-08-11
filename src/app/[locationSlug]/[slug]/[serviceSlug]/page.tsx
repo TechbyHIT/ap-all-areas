@@ -212,10 +212,12 @@ export default async function AreaServicePage({ params }: PageProps) {
         badge={`${area.name}, ${city.name}`}
         title={`${service.name} in ${area.name}, ${city.name}`}
         description={`Send a photo of the opening in ${area.name} for a clear estimate. ${service.name} coverage is confirmed after site review — not a claimed neighbourhood branch.`}
+        serviceSlug={service.slug}
         image={{
           src: media.image,
           alt: media.alt,
         }}
+        gallery={media.gallery.map((src) => ({ src, alt: media.alt }))}
         breadcrumbItems={[
           { label: "Home", href: "/" },
           { label: city.name, href: ROUTES.location(locationSlug) },

@@ -367,6 +367,90 @@ a.services-mega-heading:hover {
   display: none;
 }
 
+.header-phone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: var(--primary-600, #2563eb);
+  color: #fff !important;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-decoration: none !important;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgb(37 99 235 / 0.28);
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 2;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.header-phone:hover,
+.header-phone:focus-visible {
+  background: var(--primary-700, #1d4ed8);
+  color: #fff !important;
+  outline: 2px solid var(--primary-300, #93c5fd);
+  outline-offset: 2px;
+}
+
+.header-phone .phone-number-digits {
+  font-variant-numeric: tabular-nums;
+}
+
+.header-phone--mobile {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+  max-width: none;
+}
+
+.phone-number-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.phone-number-digits {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Floating pill with visible number (not icon-only) */
+.floating-contact .floating-phone {
+  pointer-events: auto;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 48px;
+  padding: 0.65rem 0.95rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-600, #2563eb);
+  color: #fff !important;
+  font-weight: 800;
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 0.18);
+  text-decoration: none !important;
+}
+
+.floating-contact .floating-phone:hover,
+.floating-contact .floating-phone:focus-visible {
+  transform: scale(1.03);
+  background: var(--primary-700, #1d4ed8);
+}
+
+.phone-cta.btn-secondary-hero,
+a.phone-cta.btn-secondary-hero {
+  text-decoration: none;
+}
+
 .mobile-menu-toggle {
   display: inline-grid;
   place-items: center;
@@ -383,7 +467,7 @@ a.services-mega-heading:hover {
   gap: 8px;
 }
 
-.mobile-quick-actions a {
+.mobile-quick-actions a:not(.header-phone) {
   display: inline-grid;
   place-items: center;
   width: 44px;
@@ -720,14 +804,17 @@ a.button-secondary:hover {
 
 .floating-contact a {
   pointer-events: auto;
+  color: #fff;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 0.18);
+  transition: transform 0.2s ease;
+}
+
+.floating-contact a:not(.floating-phone) {
   width: 56px;
   height: 56px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  color: #fff;
-  box-shadow: 0 10px 24px rgb(15 23 42 / 0.18);
-  transition: transform 0.2s ease;
 }
 
 .floating-contact a:hover,

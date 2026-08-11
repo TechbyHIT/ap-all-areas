@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/sections/PageHero";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { Container } from "@/components/ui/Container";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -16,6 +17,12 @@ export const metadata: Metadata = generatePageMetadata({
 export default function TestimonialsPage() {
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Testimonials", path: "/testimonials/" },
+        ]}
+      />
       <PageHero
         title="Testimonials"
         description="What our customers say about our installation services."

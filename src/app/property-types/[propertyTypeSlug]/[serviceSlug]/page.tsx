@@ -9,7 +9,7 @@ import {
   ProseSection,
 } from "@/components/sections/ContentBlocks";
 import { ServiceCityAreaLinks } from "@/components/sections/ServiceCityAreaLinks";
-import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { PROPERTY_TYPE_MAP, PROPERTY_TYPE_SLUGS } from "@/data/property-types";
 import { INITIAL_SERVICE_MAP, INITIAL_SERVICES } from "@/data/initial-services";
@@ -85,15 +85,18 @@ export default async function PropertyTypeServicePage({ params }: PageProps) {
 
   return (
     <>
-      <FaqJsonLd faqs={faqs} />
-      <Breadcrumbs
-        items={[
-          { label: "Home", href: "/" },
-          { label: "Property Types", href: "/property-types/" },
-          { label: propertyType.name, href: `/property-types/` },
-          { label: service.name },
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Property Types", path: "/property-types/" },
+          { name: propertyType.name, path: "/property-types/" },
+          {
+            name: service.name,
+            path: `/property-types/${propertyTypeSlug}/${serviceSlug}/`,
+          },
         ]}
       />
+      <FaqJsonLd faqs={faqs} />
       <PageHero
         title={`${service.name} for ${propertyType.name}`}
         description={`${service.name} planning for ${propertyType.name.toLowerCase()} across Andhra Pradesh, subject to site confirmation.`}

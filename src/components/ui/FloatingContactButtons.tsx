@@ -3,17 +3,16 @@
 import {
   BUSINESS_CONFIG,
   getEmailLink,
-  getTelLink,
   getWhatsAppLink,
   isPhoneValidForProduction,
 } from "@/config/business";
+import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 
 /**
- * Right-side circular FABs (Call / WhatsApp / Email).
+ * Sticky contact: phone shows the real digits (click-to-call), plus WhatsApp / email.
  */
 export function FloatingContactButtons() {
   const phoneReady = isPhoneValidForProduction();
-  const tel = getTelLink();
   const wa = getWhatsAppLink(
     "Hello, I would like a free quote and site inspection.",
   );
@@ -21,16 +20,7 @@ export function FloatingContactButtons() {
 
   return (
     <div className="floating-contact" aria-label="Quick contact">
-      {phoneReady && tel ? (
-        <a
-          href={tel}
-          className="is-call"
-          aria-label={`Call ${BUSINESS_CONFIG.phone.displayFormatted}`}
-          title={`Call ${BUSINESS_CONFIG.phone.displayFormatted}`}
-        >
-          <PhoneIcon />
-        </a>
-      ) : null}
+      {phoneReady ? <PhoneNumberLink className="floating-phone" /> : null}
 
       {phoneReady && wa ? (
         <a
@@ -48,8 +38,8 @@ export function FloatingContactButtons() {
       <a
         href={email}
         className="is-mail"
-        aria-label="Email us"
-        title="Email us"
+        aria-label={`Email ${BUSINESS_CONFIG.email}`}
+        title={BUSINESS_CONFIG.email}
       >
         <MailIcon />
       </a>
@@ -65,25 +55,6 @@ function WhatsAppIcon() {
   );
 }
 
-function PhoneIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <path
-        d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.6a2 2 0 0 1-.5 2.1L8.1 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.6 2.6.7A2 2 0 0 1 22 16.9z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function MailIcon() {
   return (
     <svg
@@ -94,8 +65,12 @@ function MailIcon() {
       strokeWidth="2"
       aria-hidden
     >
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="m3 7 9 6 9-6" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="m22 6-10 7L2 6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

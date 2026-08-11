@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { BUSINESS_CONFIG } from "@/config/business";
+import { BUSINESS_CONFIG, getEmailLink, getWhatsAppLink } from "@/config/business";
+import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 import { HERO_FALLBACK } from "@/config/design";
 import { PageHero } from "@/components/sections/PageHero";
 import { InstallationProcess } from "@/components/sections/InstallationProcess";
@@ -13,6 +14,7 @@ import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { Heading } from "@/components/ui/Heading";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { CONTACT_CONTENT } from "@/data/static-page-content";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -27,9 +29,16 @@ export const metadata: Metadata = generatePageMetadata({
 
 export default function ContactPage() {
   const faqs = [...CONTACT_CONTENT.faqs];
+  const whatsAppLink = getWhatsAppLink();
 
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Contact", path: "/contact/" },
+        ]}
+      />
       <FaqJsonLd faqs={faqs} />
 
       <PageHero
@@ -58,15 +67,37 @@ export default function ContactPage() {
               <dl className="space-y-3 text-sm text-zinc-600">
                 <div>
                   <dt className="font-medium text-zinc-900">Phone</dt>
-                  <dd>{BUSINESS_CONFIG.phone.display}</dd>
+                  <dd>
+                    <PhoneNumberLink className="font-semibold text-[var(--primary-700)] underline-offset-2 hover:underline" />
+                  </dd>
                 </div>
                 <div>
                   <dt className="font-medium text-zinc-900">WhatsApp</dt>
-                  <dd>{BUSINESS_CONFIG.whatsapp.display}</dd>
+                  <dd>
+                    {whatsAppLink ? (
+                      <a
+                        href={whatsAppLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-[var(--primary-700)] underline-offset-2 hover:underline"
+                      >
+                        {BUSINESS_CONFIG.whatsapp.display}
+                      </a>
+                    ) : (
+                      BUSINESS_CONFIG.whatsapp.display
+                    )}
+                  </dd>
                 </div>
                 <div>
                   <dt className="font-medium text-zinc-900">Email</dt>
-                  <dd>{BUSINESS_CONFIG.email}</dd>
+                  <dd>
+                    <a
+                      href={getEmailLink()}
+                      className="font-semibold text-[var(--primary-700)] underline-offset-2 hover:underline"
+                    >
+                      {BUSINESS_CONFIG.email}
+                    </a>
+                  </dd>
                 </div>
                 <div>
                   <dt className="font-medium text-zinc-900">Address</dt>

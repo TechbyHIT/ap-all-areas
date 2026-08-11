@@ -1,11 +1,12 @@
 import Link from "next/link";
 import {
-  getTelLink,
+  BUSINESS_CONFIG,
   getWhatsAppLink,
   isPhoneValidForProduction,
 } from "@/config/business";
 import { ROUTES } from "@/config/routes";
 import { Container } from "@/components/ui/Container";
+import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 
 type FinalCTAProps = {
   title?: string;
@@ -21,7 +22,6 @@ export function FinalCTA({
   whatsappMessage = "Hello, I would like a quotation for installation service in Andhra Pradesh.",
   className = "",
 }: FinalCTAProps) {
-  const tel = getTelLink();
   const wa = getWhatsAppLink(whatsappMessage);
   const phoneReady = isPhoneValidForProduction();
 
@@ -51,14 +51,7 @@ export function FinalCTA({
           >
             Request Quote
           </Link>
-          {phoneReady && tel ? (
-            <a
-              href={tel}
-            className="inline-flex min-h-11 items-center rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100"
-          >
-            Call Now
-          </a>
-          ) : null}
+          <PhoneNumberLink className="inline-flex min-h-11 items-center rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100" />
           {phoneReady && wa ? (
             <a
               href={wa}
@@ -70,7 +63,8 @@ export function FinalCTA({
             </a>
           ) : (
             <span className="inline-flex min-h-11 items-center rounded-xl border border-white/20 px-5 py-2.5 text-sm text-zinc-300">
-              Call / WhatsApp available after phone number verification
+              Call {BUSINESS_CONFIG.phone.displayFormatted} / WhatsApp after
+              verification
             </span>
           )}
         </div>

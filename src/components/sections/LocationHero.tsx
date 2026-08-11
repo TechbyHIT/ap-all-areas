@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { HERO_FALLBACK } from "@/config/design";
+import { HERO_SCROLL_IMAGES } from "@/config/installation-photos";
 import { ROUTES } from "@/config/routes";
 import { Badge } from "@/components/ui/Badge";
 import { Container } from "@/components/ui/Container";
+import { HeroImageScroll } from "@/components/ui/HeroImageScroll";
+import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/navigation/Breadcrumbs";
 
 type LocationHeroProps = {
@@ -13,7 +14,6 @@ type LocationHeroProps = {
   description: string;
   coverageMessage?: string;
   image?: { src: string; alt: string };
-  /** Default false — SEO hubs prefer content + links over decorative hero media. */
   showImage?: boolean;
   trustLine?: string;
   breadcrumbs?: ReactNode;
@@ -27,16 +27,15 @@ export function LocationHero({
   description,
   coverageMessage = "Service availability in this location is confirmed after reviewing site access, measurements and technician scheduling. Listing an area does not mean we operate a local branch there.",
   image,
-  showImage = false,
+  showImage = true,
   trustLine = "Honest coverage confirmation before scheduling",
   breadcrumbs,
   breadcrumbItems,
   className = "",
 }: LocationHeroProps) {
-  const heroImage = image ?? {
-    src: HERO_FALLBACK,
-    alt: "Local safety installation coverage",
-  };
+  const scrollImages = image
+    ? [image, ...HERO_SCROLL_IMAGES.slice(0, 6)]
+    : HERO_SCROLL_IMAGES.slice(0, 8);
 
   return (
     <section
@@ -73,23 +72,12 @@ export function LocationHero({
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
+              <PhoneNumberLink className="inline-flex min-h-11 items-center rounded-xl bg-[var(--primary-600)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]" />
               <Link
                 href={ROUTES.contact}
                 className="inline-flex min-h-11 items-center rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition hover:bg-amber-400"
               >
                 Check Coverage & Quote
-              </Link>
-              <Link
-                href={ROUTES.services}
-                className="inline-flex min-h-11 items-center rounded-xl border border-zinc-300 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50"
-              >
-                View Services
-              </Link>
-              <Link
-                href={ROUTES.locations}
-                className="inline-flex min-h-11 items-center rounded-xl border border-zinc-300 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50"
-              >
-                All AP locations
               </Link>
             </div>
 
@@ -97,16 +85,7 @@ export function LocationHero({
           </div>
 
           {showImage ? (
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-zinc-100 shadow-md">
-              <Image
-                src={heroImage.src}
-                alt={heroImage.alt}
-                fill
-                priority
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-            </div>
+            <HeroImageScroll images={scrollImages} variant="panel" />
           ) : null}
         </div>
       </Container>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { PageHero } from "@/components/sections/PageHero";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { Container } from "@/components/ui/Container";
 import { HOME_BLOG_POSTS } from "@/data/blog-posts";
 import { ROUTES } from "@/config/routes";
@@ -20,6 +21,12 @@ export const metadata: Metadata = generatePageMetadata({
 export default function BlogPage() {
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Blog", path: "/blog/" },
+        ]}
+      />
       <PageHero
         title="Blog"
         description="Tips, comparisons and updates about safety and utility installations from Hiranya Enterprises."

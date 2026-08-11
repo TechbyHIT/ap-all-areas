@@ -252,10 +252,12 @@ export function PillarPageView({ pillar }: PillarPageViewProps) {
         description={pillar.hero.deck}
         trustLine={pillar.hero.trustLine}
         whatsappMessage={pillar.hero.whatsappMessage}
+        serviceSlug={pillar.serviceSlug}
         image={{
           src: media.image,
           alt: media.alt,
         }}
+        gallery={media.gallery.map((src) => ({ src, alt: media.alt }))}
         breadcrumbItems={[
           { label: "Home", href: "/" },
           { label: "Services", href: ROUTES.services },

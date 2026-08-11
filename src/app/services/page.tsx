@@ -11,6 +11,7 @@ import { LinkDirectory } from "@/components/sections/LinkDirectory";
 import { ProjectGallery } from "@/components/sections/ProjectGallery";
 import { ServiceCityAreaLinks } from "@/components/sections/ServiceCityAreaLinks";
 import { FinalCTA } from "@/components/sections/FinalCTA";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { INITIAL_SERVICES } from "@/data/initial-services";
 import { SERVICE_DIRECTORY } from "@/data/service-directory";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
@@ -42,6 +43,12 @@ export default function ServicesPage() {
 
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Services", path: "/services/" },
+        ]}
+      />
       <PageHero
         badge="Andhra Pradesh"
         title="Our Services"

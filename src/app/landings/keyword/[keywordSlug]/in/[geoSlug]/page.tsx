@@ -196,6 +196,7 @@ export default async function KeywordGeoLandingPage({ params }: PageProps) {
         badge={`${geo.name} · ${geo.cityName} · Andhra Pradesh`}
         title={`${keyword.phrase} in ${geo.name}`}
         description={content.heroDescription}
+        serviceSlug={keyword.serviceSlug}
         image={heroImage}
         quoteHref={ROUTES.contact}
         whatsappMessage={`Hello, I need ${keyword.phrase.toLowerCase()} in ${geo.name}, ${geo.cityName}. Sharing opening photos for a free estimate.`}

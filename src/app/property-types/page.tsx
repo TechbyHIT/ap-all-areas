@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/sections/PageHero";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { Container } from "@/components/ui/Container";
 import { PROPERTY_TYPES } from "@/data/property-types";
 import { INITIAL_SERVICE_MAP } from "@/data/initial-services";
@@ -20,6 +21,12 @@ export const metadata: Metadata = generatePageMetadata({
 export default function PropertyTypesPage() {
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Property Types", path: "/property-types/" },
+        ]}
+      />
       <PageHero
         title="Property Types"
         description="Safety and utility solutions tailored to how you live, work and use your space across Andhra Pradesh."

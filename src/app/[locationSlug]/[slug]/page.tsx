@@ -255,10 +255,12 @@ export default async function CityServicePage({ params }: PageProps) {
         badge={`${city.name} · Andhra Pradesh`}
         title={`${service.name} in ${city.name}`}
         description={`Compare the right fit for your balcony, window, terrace or duct in ${city.name}. Send a photo for a clear local estimate — coverage confirmed after site review, not a claimed branch office.`}
+        serviceSlug={service.slug}
         image={{
           src: media.image,
           alt: media.alt,
         }}
+        gallery={media.gallery.map((src) => ({ src, alt: media.alt }))}
         breadcrumbItems={[
           { label: "Home", href: "/" },
           { label: "Services", href: "/services/" },

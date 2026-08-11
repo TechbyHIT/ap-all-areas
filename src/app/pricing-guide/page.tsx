@@ -7,6 +7,7 @@ import { QualitySection } from "@/components/sections/QualitySection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { PRICING_GUIDE_CONTENT } from "@/data/static-page-content";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -33,6 +34,12 @@ export default function PricingGuidePage() {
 
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Pricing Guide", path: "/pricing-guide/" },
+        ]}
+      />
       <FaqJsonLd faqs={faqs} />
 
       <PageHero

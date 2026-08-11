@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/sections/PageHero";
 import { ProjectGallery } from "@/components/sections/ProjectGallery";
 import { FinalCTA } from "@/components/sections/FinalCTA";
+import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { GALLERY_ALL_PROJECTS, HERO_FALLBACK } from "@/config/design";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -18,6 +19,12 @@ export const metadata: Metadata = generatePageMetadata({
 export default function GalleryPage() {
   return (
     <>
+      <HubBreadcrumbs
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Gallery", path: "/gallery/" },
+        ]}
+      />
       <PageHero
         badge="Project photos"
         title="Installation Gallery"

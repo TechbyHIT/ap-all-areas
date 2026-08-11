@@ -16,6 +16,7 @@ import { ROUTES } from "@/config/routes";
 import { MobileNav } from "@/components/navigation/MobileNav";
 import { NavDropdown } from "@/components/navigation/NavDropdown";
 import { Button } from "@/components/ui/Button";
+import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 
 export function HeaderClient() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -115,6 +116,7 @@ export function HeaderClient() {
           </nav>
 
           <div className="header-actions">
+            <PhoneNumberLink className="header-phone" />
             {whatsAppLink ? (
               <Button
                 href={whatsAppLink}
@@ -122,11 +124,6 @@ export function HeaderClient() {
                 className="btn-compact btn-wa-header"
               >
                 WhatsApp
-              </Button>
-            ) : null}
-            {telLink ? (
-              <Button href={telLink} variant="primary" className="btn-compact">
-                Call Now
               </Button>
             ) : null}
             <Button
@@ -139,15 +136,7 @@ export function HeaderClient() {
           </div>
 
           <div className="mobile-quick-actions">
-            {telLink ? (
-              <a
-                href={telLink}
-                className="is-call"
-                aria-label={`Call ${BUSINESS_CONFIG.phone.displayFormatted}`}
-              >
-                <PhoneIcon />
-              </a>
-            ) : null}
+            <PhoneNumberLink className="header-phone header-phone--mobile" />
             <button
               type="button"
               className="mobile-menu-toggle"
@@ -172,25 +161,6 @@ export function HeaderClient() {
         />
       </div>
     </>
-  );
-}
-
-function PhoneIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <path
-        d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.6a2 2 0 0 1-.5 2.1L8.1 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.6 2.6.7A2 2 0 0 1 22 16.9z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 

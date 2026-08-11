@@ -1,4 +1,4 @@
-# VPS quickstart — hiranayaenterprises.in on port 3008
+# VPS quickstart — hiranayaenterprises.in on port 3001
 
 Copy-paste runbook for a fresh Hostinger VPS (Ubuntu, root). Background and
 options are in [MULTISITE.md](./MULTISITE.md); this file is just the commands.
@@ -48,7 +48,7 @@ sizes nginx for many vhosts. This is what stops the disk filling again.
 bash deploy/server-setup.sh
 ```
 
-## 5. Register the site on port 3008
+## 5. Register the site on port 3001
 
 Allocates the port, creates `/srv/sites/hiranaya-enterprises/`, writes the nginx
 vhost (which blocks `/admin`) and reloads nginx.
@@ -57,7 +57,7 @@ vhost (which blocks `/admin`) and reloads nginx.
 bash deploy/site-add.sh \
   --slug hiranaya-enterprises \
   --domain hiranayaenterprises.in \
-  --port 3008 \
+  --port 3001 \
   --repo https://github.com/TechbyHIT/ap-all-areas.git
 ```
 
@@ -129,7 +129,7 @@ bash deploy/site-deploy.sh hiranaya-enterprises
 ```
 
 Adding the next site, which takes the next free port automatically (3000, since
-3008 is recorded as taken):
+3001 is recorded as taken):
 
 ```bash
 bash deploy/site-add.sh --slug site-b --domain site-b.com \
@@ -137,7 +137,7 @@ bash deploy/site-add.sh --slug site-b --domain site-b.com \
 bash deploy/site-deploy.sh site-b
 ```
 
-Firewall: open only 80, 443 and SSH. Port 3008 binds to `127.0.0.1`, so it is
+Firewall: open only 80, 443 and SSH. Port 3001 binds to `localhost`, so it is
 not reachable from the internet — do not open it.
 
 ---
