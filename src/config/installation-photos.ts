@@ -10,8 +10,8 @@ export const INSTALLATION_PHOTOS = [
   },
   {
     src: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
-    alt: "Ceiling cloth drying hanger on balcony",
-    service: "cloth-drying-hangers",
+    alt: "White balcony safety net with apartment view",
+    service: "safety-nets",
   },
   {
     src: "/images/projects/installations/atrium-invisible-grill-circle.jpg",
@@ -60,8 +60,8 @@ export const INSTALLATION_PHOTOS = [
   },
   {
     src: "/images/projects/installations/green-facade-netting-street.jpg",
-    alt: "Green facade netting above the street",
-    service: "safety-nets",
+    alt: "Ceiling cloth drying hanger on green balcony wall",
+    service: "cloth-drying-hangers",
   },
   {
     src: "/images/projects/installations/balcony-white-net-palm.jpg",
@@ -146,7 +146,7 @@ const HERO_SRCS = new Set([
   "/images/projects/installations/outdoor-cricket-cage-nets.jpg",
   "/images/projects/installations/atrium-invisible-grill-circle.jpg",
   "/images/projects/installations/highrise-green-safety-net-up.jpg",
-  "/images/projects/installations/green-facade-netting-street.jpg",
+  "/images/projects/installations/facade-balcony-safety-nets.jpg",
 ]);
 
 export const HERO_SCROLL_IMAGES = INSTALLATION_PHOTOS.filter((photo) =>

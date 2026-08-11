@@ -70,8 +70,8 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Pigeon Safety Nets",
     href: ROUTES.solution("pigeon-infestation"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/installations/green-facade-netting-street.jpg",
-    alt: "Green facade bird protection netting",
+    image: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
+    alt: "Pigeon and bird protection net on balcony",
     summary:
       "Full-opening nets that close bird-entry paths on balconies, AC ledges and ducts.",
     benefits: ["Stops nesting", "Full-opening cover", "Duct options"],
@@ -120,7 +120,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Cloth Drying Hangers",
     href: ROUTES.service("cloth-drying-hangers"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
+    image: "/images/projects/installations/green-facade-netting-street.jpg",
     alt: "Ceiling cloth drying hanger on balcony",
     summary:
       "Ceiling and balcony drying systems that free railing space in compact apartments.",

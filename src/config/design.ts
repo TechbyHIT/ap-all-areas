@@ -42,11 +42,11 @@ export const SERVICE_MEDIA: Record<
     ],
   },
   "cloth-drying-hangers": {
-    image: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
-    icon: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
+    image: "/images/projects/installations/green-facade-netting-street.jpg",
+    icon: "/images/projects/cloth-hangers-9.jpeg",
     alt: "High-definition cloth drying hanger installation",
     gallery: [
-      "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
+      "/images/projects/installations/green-facade-netting-street.jpg",
       "/images/projects/cloth-hangers-9.jpeg",
       "/images/projects/cloth-hangers-11.jpeg",
     ],
@@ -331,9 +331,15 @@ export const GALLERY_PROJECTS: GalleryProject[] = [
   },
   {
     title: "Cloth Drying Hanger",
-    image: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
+    image: "/images/projects/installations/green-facade-netting-street.jpg",
     alt: "Ceiling cloth drying hanger on balcony",
     href: "/services/cloth-drying-hangers/",
+  },
+  {
+    title: "Balcony Bird Safety Net",
+    image: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
+    alt: "White balcony bird and safety net installation",
+    href: "/solutions/pigeon-infestation/",
   },
   {
     title: "Facade Safety Nets",
@@ -365,10 +371,10 @@ export const GALLERY_ALL_PROJECTS: GalleryProject[] = [
     href: "/services/safety-nets/",
   },
   {
-    title: "Green Facade Netting",
-    image: "/images/projects/installations/green-facade-netting-street.jpg",
-    alt: "Green facade netting above the street",
-    href: "/services/safety-nets/",
+    title: "Ceiling Cloth Hanger Detail",
+    image: "/images/projects/cloth-hangers-10.jpeg",
+    alt: "Ceiling cloth drying hanger installation detail",
+    href: "/services/cloth-drying-hangers/",
   },
   {
     title: "Palm View Safety Net",
