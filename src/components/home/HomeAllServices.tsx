@@ -2,13 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 import { ROUTES } from "@/config/routes";
-import { HOME_BENTO_SERVICES } from "@/data/home-page";
+import { HOME_VISUAL_SERVICES } from "@/config/design";
+import { HOME_MAIN_SERVICE_IMAGE_SRCS } from "@/data/home-page";
 
 /**
- * Full visual services catalog — all 24 installation photos as content cards
- * (same pattern as Children Safety Nets / Main Services).
+ * Full services catalog (previous services list) — topic images only,
+ * skipping any src already used in Main Services.
  */
 export function HomeAllServices() {
+  const services = HOME_VISUAL_SERVICES.filter(
+    (service) => !HOME_MAIN_SERVICE_IMAGE_SRCS.has(service.image),
+  );
+
   return (
     <section className="home-section home-section--soft" id="all-services">
       <div className="home-container">
@@ -18,15 +23,14 @@ export function HomeAllServices() {
             Complete home &amp; building safety solutions
           </h2>
           <p className="home-lead">
-            Every recent project photo with service content—invisible grills,
-            children safety nets, sports nets, cloth hangers and more across
-            Andhra Pradesh.
+            Full service list across Andhra Pradesh—each card uses a
+            topic-matched photo (no duplicates from Main Services).
           </p>
         </header>
 
         <div className="home-all-services-grid">
-          {HOME_BENTO_SERVICES.map((service) => (
-            <article key={service.image} className="home-svc-tile">
+          {services.map((service) => (
+            <article key={service.name} className="home-svc-tile">
               <Link
                 href={service.href}
                 className="home-svc-tile-media"
@@ -36,10 +40,11 @@ export function HomeAllServices() {
                 <Image
                   src={service.image}
                   alt={service.alt}
-                  width={640}
-                  height={400}
+                  width={900}
+                  height={700}
                   loading="lazy"
                   sizes="(max-width: 700px) 100vw, (max-width: 1050px) 50vw, 33vw"
+                  className="home-native-img"
                 />
               </Link>
               <div className="home-svc-tile-body">
@@ -47,11 +52,6 @@ export function HomeAllServices() {
                   <Link href={service.href}>{service.name}</Link>
                 </h3>
                 <p>{service.summary}</p>
-                <ul className="home-service-benefits">
-                  {service.benefits.map((benefit) => (
-                    <li key={benefit}>{benefit}</li>
-                  ))}
-                </ul>
                 <div className="home-svc-tile-actions">
                   <Link href={service.href} className="view">
                     View Details

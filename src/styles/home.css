@@ -492,20 +492,26 @@
 
 .home-service-media {
   position: relative;
-  aspect-ratio: 16 / 10;
   overflow: hidden;
-  background: #e2e8f0;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Full image at natural aspect ratio — no forced same-height crop */
+.home-native-img,
 .home-service-media img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+  display: block;
   transition: transform 0.35s ease;
 }
 
 .home-service-card:hover .home-service-media img {
-  transform: scale(1.04);
+  transform: scale(1.02);
 }
 
 .home-service-body {
@@ -809,38 +815,42 @@
   margin: 0;
   flex: 0 0 auto;
   width: min(72vw, 280px);
-  aspect-ratio: 4 / 3;
   border-radius: 0.85rem;
   overflow: hidden;
-  background: #0b1220;
+  background: #f1f5f9;
 }
 
-.home-photo-marquee-item img {
+.home-photo-marquee-item img,
+.home-photo-marquee-item--native img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
 }
 
-/* —— Photo wall: all images, no content cards —— */
+/* —— Photo wall: natural aspect ratio, no forced crop —— */
 .home-photo-wall {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
+  align-items: start;
+}
+
+.home-photo-wall--native {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .home-photo-wall-item {
   margin: 0;
   border-radius: 0.75rem;
   overflow: hidden;
-  background: #0b1220;
-  aspect-ratio: 4 / 3;
+  background: #f1f5f9;
 }
 
 .home-photo-wall-item img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
 }
 
@@ -1644,27 +1654,12 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  /* Equal cards when showing the full 24-photo service list */
-  .home-bento--all-photos {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .home-bento:not(.home-bento--all-photos) .home-service-card.is-featured {
+  .home-service-card.is-featured {
     grid-column: span 2;
   }
 
-  .home-bento:not(.home-bento--all-photos)
-    .home-service-card.is-featured
-    .home-service-media {
-    aspect-ratio: 21 / 10;
-  }
-
-  .home-bento--all-photos .home-service-card.is-featured {
-    grid-column: auto;
-  }
-
-  .home-bento--all-photos .home-service-card.is-featured .home-service-media {
-    aspect-ratio: 16 / 10;
+  .home-photo-wall--native {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .home-city-grid {
@@ -1754,7 +1749,21 @@
   box-shadow: 0 16px 36px rgb(15 23 42 / 0.1);
 }
 
-.home-svc-tile-media,
+.home-svc-tile-media {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+.home-svc-tile-media img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.35s ease;
+}
+
 .blog-teaser-media {
   display: block;
   position: relative;
@@ -1763,7 +1772,6 @@
   background: #e2e8f0;
 }
 
-.home-svc-tile-media img,
 .blog-teaser-media img {
   width: 100%;
   height: 100%;

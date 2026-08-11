@@ -185,7 +185,7 @@ export const HOME_VISUAL_SERVICES: VisualServiceItem[] = [
     name: "Children Safety Nets",
     summary:
       "Closer-spaced mesh planned where toddlers use balconies, stair voids or window openings—always as a supplement to adult supervision.",
-    image: "/images/projects/children-safety-nets-1.jpg",
+    image: "/images/projects/children-safety-nets-3.jpg",
     alt: "HD children safety net on balcony",
     href: "/solutions/child-balcony-safety/",
   },
@@ -193,8 +193,8 @@ export const HOME_VISUAL_SERVICES: VisualServiceItem[] = [
     name: "Pet Safety Nets",
     summary:
       "Climb-aware layouts for cats and small dogs on utility and living balconies, with gap and tension checks at handover.",
-    image: "/images/projects/pet-safety-nets-1.jpg",
-    alt: "HD pet safety net installation",
+    image: "/images/projects/installations/balcony-safety-net-detail-b.jpg",
+    alt: "Pet-focused balcony mesh and rail detail",
     href: "/solutions/pet-balcony-safety/",
   },
   {
@@ -209,8 +209,8 @@ export const HOME_VISUAL_SERVICES: VisualServiceItem[] = [
     name: "Duct Area Safety Nets",
     summary:
       "Shaft and duct coverings that block bird nesting while respecting building access and service-pipe clearances.",
-    image: "/images/projects/duct-area-nets-1.jpg",
-    alt: "HD duct area safety net installation",
+    image: "/images/projects/installations/project-install-32b.jpg",
+    alt: "Duct and utility area net installation",
     href: "/services/safety-nets/",
   },
   {

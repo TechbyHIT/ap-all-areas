@@ -12,16 +12,15 @@ export function HomeServicesBento() {
             Professional Safety Solutions for Every Space
           </h2>
           <p className="home-lead">
-            All {HOME_BENTO_SERVICES.length} recent installation photos—each with
-            service content, benefits and a clear next step, same style as our
-            Children Safety Nets cards.
+            Choose a service based on your property, opening and safety need.
+            Each card shows a topic-matched photo at its natural aspect ratio.
           </p>
         </header>
 
-        <div className="home-bento home-bento--all-photos">
+        <div className="home-bento">
           {HOME_BENTO_SERVICES.map((service) => (
             <article
-              key={service.image}
+              key={service.name}
               className={`home-service-card${service.featured ? " is-featured" : ""}`}
             >
               <Link
@@ -33,10 +32,11 @@ export function HomeServicesBento() {
                 <Image
                   src={service.image}
                   alt={service.alt}
-                  width={800}
-                  height={500}
+                  width={1200}
+                  height={900}
                   loading="lazy"
                   sizes="(max-width: 768px) 100vw, (max-width: 1050px) 50vw, 33vw"
+                  className="home-native-img"
                 />
               </Link>
               <div className="home-service-body">

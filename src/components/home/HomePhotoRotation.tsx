@@ -1,16 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
-import { HOME_ROTATION_PHOTOS } from "@/config/installation-photos";
+import { useEffect, useMemo, useRef } from "react";
+import { HOME_VISUAL_SERVICES } from "@/config/design";
+import { INSTALLATION_PHOTOS } from "@/config/installation-photos";
+import { HOME_MAIN_SERVICE_IMAGE_SRCS } from "@/data/home-page";
 
 /**
- * Continuous horizontal scroll of every installation photo — images only.
+ * Horizontal scroll of leftover installation photos — never duplicates Main /
+ * Our Services card images. Natural aspect ratio (no forced crop height).
  */
 export function HomePhotoRotation() {
   const trackRef = useRef<HTMLDivElement>(null);
-  const photos = HOME_ROTATION_PHOTOS;
-  // Duplicate for seamless loop
+  const photos = useMemo(() => {
+    const used = new Set([
+      ...HOME_MAIN_SERVICE_IMAGE_SRCS,
+      ...HOME_VISUAL_SERVICES.map((s) => s.image),
+    ]);
+    return INSTALLATION_PHOTOS.filter((photo) => !used.has(photo.src));
+  }, []);
   const loop = [...photos, ...photos];
 
   useEffect(() => {
@@ -33,6 +41,8 @@ export function HomePhotoRotation() {
     return () => window.cancelAnimationFrame(raf);
   }, [photos.length]);
 
+  if (photos.length === 0) return null;
+
   return (
     <section
       className="home-section home-section--soft home-photo-marquee"
@@ -40,15 +50,19 @@ export function HomePhotoRotation() {
     >
       <div className="home-photo-marquee-viewport">
         <div ref={trackRef} className="home-photo-marquee-track">
-          {loop.map((photo, i) => (
-            <figure key={`${photo.src}-${i}`} className="home-photo-marquee-item">
+          {loop.map((photo, index) => (
+            <figure
+              key={`${photo.src}-${index}`}
+              className="home-photo-marquee-item home-photo-marquee-item--native"
+            >
               <Image
                 src={photo.src}
-                alt={i < photos.length ? photo.alt : ""}
-                width={480}
-                height={360}
-                loading={i < 6 ? "eager" : "lazy"}
+                alt={photo.alt}
+                width={900}
+                height={700}
+                loading="lazy"
                 sizes="280px"
+                className="home-native-img"
               />
             </figure>
           ))}
