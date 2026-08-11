@@ -45,6 +45,7 @@ export function HomeAllServices() {
                   loading="lazy"
                   sizes="(max-width: 700px) 100vw, (max-width: 1050px) 50vw, 33vw"
                   className="home-native-img"
+                  style={{ width: "100%", height: "auto" }}
                 />
               </Link>
               <div className="home-svc-tile-body">

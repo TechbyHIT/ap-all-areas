@@ -13,7 +13,7 @@ export function HomeServicesBento() {
           </h2>
           <p className="home-lead">
             Choose a service based on your property, opening and safety need.
-            Each card shows a topic-matched photo at its natural aspect ratio.
+            Full related photo first, then the service content for that topic.
           </p>
         </header>
 
@@ -37,6 +37,7 @@ export function HomeServicesBento() {
                   loading="lazy"
                   sizes="(max-width: 768px) 100vw, (max-width: 1050px) 50vw, 33vw"
                   className="home-native-img"
+                  style={{ width: "100%", height: "auto" }}
                 />
               </Link>
               <div className="home-service-body">
