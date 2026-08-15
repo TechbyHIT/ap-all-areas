@@ -720,6 +720,9 @@ closes it. The program reports the process and never kills it.
 
 ## Emergency recovery
 
+> The copy-paste version of this section, plus prompts for handing an incident to
+> an agent, is in [REUSE-PROMPT.md](./REUSE-PROMPT.md).
+
 ### The disk is 100% full and nothing will install
 
 At zero free space you cannot `git pull`, cannot install this program, and cannot

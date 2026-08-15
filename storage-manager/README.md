@@ -24,7 +24,8 @@ storage-manager/
 │   ├── storage-manager.conf.example    every threshold and path
 │   └── logrotate.storage-manager       so its own logs stay bounded
 ├── tests/run-tests.sh                  43 tests in a sandbox with fake pm2/df
-└── docs/STORAGE-MANAGER.md             the full manual
+├── docs/STORAGE-MANAGER.md             the full manual
+└── docs/REUSE-PROMPT.md                emergency runbook + prompts to reuse
 ```
 
 ## Install
@@ -155,3 +156,8 @@ Running both means one can delete what the other protects. Pick one:
 `storage-manager health` warns whenever both are active.
 
 Full manual: [docs/STORAGE-MANAGER.md](docs/STORAGE-MANAGER.md).
+
+Next time the disk fills, or the next time you hand storage work to an agent:
+[docs/REUSE-PROMPT.md](docs/REUSE-PROMPT.md) has the zero-free-space runbook and
+two prompts carrying this server's actual layout and failure modes, so none of it
+has to be rediscovered.
