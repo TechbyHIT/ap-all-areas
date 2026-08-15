@@ -1009,6 +1009,65 @@ t_online_cache_cap() {
   drop_cache
 }
 
+t_prerendered_page_cap() {
+  # What actually filled the real disk: 156 GB of rendered pages under
+  # .next/server/app, 71 GB of it in one city. The .next/cache ceiling never saw
+  # them, so this covers the location that mattered.
+  reset_optins
+  conf_set ALLOW_ONLINE_CACHE_TRIM true
+  conf_set PRERENDER_CACHE_MAX_MB 6
+  local app="$SITES/site-1/.next/standalone/.next/server/app/coimbatore"
+  mkdir -p "$app"
+  # Twelve pages of ~1 MB, page-1 oldest. The cap leaves room for several, so
+  # the newest must survive: a hot page is worth keeping.
+  local i
+  for i in $(seq 1 12); do
+    head -c 1000000 /dev/zero >"$app/page-$i.html"
+    printf '{"headers":{}}\n' >"$app/page-$i.meta"
+    touch -d "$((40 - i)) days ago" "$app/page-$i.html" "$app/page-$i.meta"
+  done
+  # The compiled server output lives in the same tree and must survive.
+  head -c 100000 /dev/zero >"$app/page.js"
+  printf '{}\n' >"$app/page_client-reference-manifest.js"
+  age_project site-1
+  drop_cache
+
+  local out
+  out="$(FAKE_PCT=87 sm cleanup --full)"
+  assert_contains "$out" "rendered page files"
+  assert_contains "$out" "oldest first"
+  # Code and manifests untouched.
+  assert_exists "$app/page.js"
+  assert_exists "$app/page_client-reference-manifest.js"
+  # Oldest went, newest kept, directory itself kept.
+  assert_gone "$app/page-1.html"
+  assert_exists "$app/page-12.html"
+  assert_exists "$app"
+  assert_exists "$SITES/site-1/shared/.env"
+  # And it stopped once under the cap rather than emptying the directory.
+  local left
+  left="$(find "$app" -name 'page-*.html' | wc -l)"
+  [ "${left:-0}" -ge 3 ] || fail "trim should stop at the cap, only $left pages left"
+  assert_eq "$(spy_count "$SPY/pm2.log" '^(restart|reload|stop|delete|kill)')" 0 \
+    "trimming rendered pages must not disturb the app"
+
+  # A dry run reports the same work and removes nothing.
+  for i in $(seq 13 24); do
+    head -c 1000000 /dev/zero >"$app/page-$i.html"
+    touch -d "$((60 - i)) days ago" "$app/page-$i.html"
+  done
+  age_project site-1
+  drop_cache
+  out="$(FAKE_PCT=87 sm cleanup --dry-run)"
+  assert_contains "$out" "would remove"
+  assert_exists "$app/page-13.html"
+
+  rm -rf "$SITES/site-1/.next"
+  conf_set ALLOW_ONLINE_CACHE_TRIM false
+  conf_set PRERENDER_CACHE_MAX_MB 8192
+  drop_cache
+}
+
 t_duplicate_dirs_do_not_both_look_online() {
   # A real server had the same site in two places. Matching PM2 apps on name
   # alone reported both copies as ONLINE, inflated the counts, and hid which
@@ -1265,12 +1324,15 @@ PY
   # No blind recursive delete of a whole directory family, and no removal that
   # bypasses the gate: every rm in the program is inside sm_safe_remove.
   assert_not_contains "$body" 'rm -rf /*'
-  # Three call sites and no more: the two inside sm_safe_remove, plus the one
-  # that deletes the manager's own scratch file in large-files. Any new rm has
-  # to be justified by changing this number deliberately.
+  # Four call sites and no more: the two inside sm_safe_remove, the one that
+  # deletes the manager's own scratch file in large-files, and the one in
+  # sm_trim_prerendered, which cannot go through the gate per file because there
+  # can be millions of them — it validates the directory instead and only ever
+  # matches three regenerated extensions. Any new rm has to be justified by
+  # changing this number deliberately.
   local rms
   rms="$(printf '%s\n' "$body" | grep -cE '(^|[[:space:]])rm[[:space:]]' || true)"
-  assert_eq "${rms:-0}" 3 "number of rm call sites"
+  assert_eq "${rms:-0}" 4 "number of rm call sites"
 }
 
 # =========================================================================
@@ -1379,6 +1441,7 @@ run_test 'deleted-but-open files are reported, never killed' t_open_deleted_repo
 run_test 'report and health commands work' t_report_and_health
 run_test 'the audit trail records before, after and guarantees' t_audit_trail_written
 run_test 'a live cache over its cap is trimmed, and only its regeneratable parts' t_online_cache_cap
+run_test 'rendered pages over the cap are trimmed oldest first, code kept' t_prerendered_page_cap
 run_test 'duplicate directories do not both look online' t_duplicate_dirs_do_not_both_look_online
 run_test 'investigate names where the space actually is' t_investigate_finds_the_elephant
 run_test 'the report points at application data when safe cleanup cannot reach the target' t_report_points_at_application_data

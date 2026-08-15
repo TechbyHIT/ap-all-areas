@@ -23,7 +23,7 @@ storage-manager/
 ├── config/
 │   ├── storage-manager.conf.example    every threshold and path
 │   └── logrotate.storage-manager       so its own logs stay bounded
-├── tests/run-tests.sh                  42 tests in a sandbox with fake pm2/df
+├── tests/run-tests.sh                  43 tests in a sandbox with fake pm2/df
 └── docs/STORAGE-MANAGER.md             the full manual
 ```
 
@@ -66,7 +66,8 @@ storage-manager logs                # its own log
 | `CRITICAL_USAGE_PERCENT` | 90 | system data only, opt-ins force-disabled, alert |
 | `EMERGENCY_USAGE_PERCENT` | 95 | same, and it asks for a human |
 | `ALLOW_ONLINE_CACHE_TRIM` | false | **recommended: true.** caps a live site's `.next/cache`, removing only its regeneratable parts |
-| `ISR_CACHE_MAX_MB` | 4096 | the cap above |
+| `ISR_CACHE_MAX_MB` | 4096 | cap on `.next/cache` |
+| `PRERENDER_CACHE_MAX_MB` | 8192 | cap on rendered pages under `server/app` — this is the one that filled a 193 GB disk |
 | `ALLOW_NEXT_CACHE_CLEANUP` | false | opt-in, offline projects only |
 | `ALLOW_NEXT_BUILD_CLEANUP` | false | opt-in, offline projects only |
 | `ALLOW_NODE_MODULES_CLEANUP` | false | opt-in, offline projects only |
@@ -95,7 +96,7 @@ loses the evidence of why it is crashing.
 ## Tests
 
 ```bash
-bash storage-manager/tests/run-tests.sh              # 42 tests
+bash storage-manager/tests/run-tests.sh              # 43 tests
 bash storage-manager/tests/run-tests.sh --keep       # keep the sandbox to poke at
 FAKE_PCT=92 bash storage-manager/tests/run-tests.sh --demo
 ```

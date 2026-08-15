@@ -97,6 +97,20 @@ PM2_LOGROTATE_AUTOCONFIGURE=false
 # under /srv/sites, and this covers the ones outside that layout too.
 ALLOW_ONLINE_CACHE_TRIM=false
 ISR_CACHE_MAX_MB=4096
+# The same problem in its other location, and the one that actually filled the
+# disk: rendered pages accumulating under .next/server/app as .html/.rsc/.meta.
+# A build without prerender caps writes the full city x area x keyword
+# cross-product there, and ISR keeps adding to it at runtime. One project reached
+# 156 GB this way, 71 GB of it under a single city.
+#
+# Over this cap, the oldest generated page files are removed until the directory
+# is back under it. Only those three extensions are ever touched: the compiled
+# .js, the manifests and everything else the server loads stay. With
+# dynamicParams a missing page is re-rendered on the next request.
+PRERENDER_CACHE_MAX_MB=8192
+# Ceiling on how many page files one pass will consider, so a run stays cheap on
+# a project with millions of them. Passes converge over successive runs.
+PRERENDER_TRIM_BATCH=500000
 
 # Project-level cleanup. All default to false. Enabling one does not make it
 # unconditional: every guard in sm_project_cleanup_allowed still has to pass.
@@ -159,6 +173,7 @@ SM_SELF_PATHS=""
 SM_CAT_FREE_BEFORE=0
 SM_CAT_RECLAIMED_BEFORE=0
 SM_OPTIN_MB=0
+SM_TRIM_MB=0
 SM_VERBOSE="${SM_VERBOSE:-0}"
 declare -a SM_ACTIONS=()
 declare -a SM_CATEGORY_NAMES=()
@@ -189,6 +204,7 @@ ENABLE_APT_CLEANUP ENABLE_JOURNAL_CLEANUP ENABLE_PM2_LOG_ROTATION
 ENABLE_NGINX_LOG_ROTATION ENABLE_SYSTEM_LOG_CLEANUP ENABLE_TEMP_CLEANUP
 ENABLE_PKG_CACHE_CLEANUP RUN_LOGROTATE_ON_PRESSURE ENABLE_APT_AUTOREMOVE
 PM2_LOGROTATE_AUTOCONFIGURE ALLOW_ONLINE_CACHE_TRIM ISR_CACHE_MAX_MB
+PRERENDER_CACHE_MAX_MB PRERENDER_TRIM_BATCH
 ALLOW_NEXT_CACHE_CLEANUP ALLOW_NEXT_BUILD_CLEANUP
 ALLOW_NODE_MODULES_CLEANUP ALLOW_STALE_RELEASE_CLEANUP KEEP_RELEASES
 STATE_DIR LOG_DIR LOCK_FILE DEPLOY_LOCK_DIR GLOBAL_DEPLOY_LOCKS PM2_LOG_DIRS
@@ -261,7 +277,8 @@ sm_validate_config() {
     TARGET_FREE_GB LOG_RETENTION_DAYS TEMP_RETENTION_DAYS DISCOVERY_MAX_DEPTH \
     KEEP_RELEASES PROJECT_SCAN_INTERVAL_MIN LARGE_FILE_SCAN_INTERVAL_MIN \
     LARGE_FILE_MIN_MB DEPLOY_RECENT_MIN NICE_LEVEL LOG_MAX_SIZE_MB LOG_KEEP \
-    INVESTIGATE_SAMPLE_SEC ISR_CACHE_MAX_MB; do
+    INVESTIGATE_SAMPLE_SEC ISR_CACHE_MAX_MB PRERENDER_CACHE_MAX_MB \
+    PRERENDER_TRIM_BATCH; do
     value="${!name}"
     if ! sm_is_int "$value"; then
       printf 'ERROR: %s must be a whole number, got "%s"\n' "$name" "$value" >&2
@@ -1704,8 +1721,66 @@ sm_clean_isr_cache() {
           dir "$dir" && total=$((total + mb))
       done
     done
+
+    # Rendered pages, which is where the 156 GB actually was.
+    for cache in "$dir/.next/standalone/.next/server/app" "$dir/.next/server/app" \
+      "$dir/build/.next/server/app" "$dir/current/.next/server/app"; do
+      [ -d "$cache" ] || continue
+      [ -L "$cache" ] && continue
+      mb="$(sm_du_mb "$cache")"
+      if [ "$mb" -le "$PRERENDER_CACHE_MAX_MB" ]; then
+        sm_action NOTE isr_pages "$mb" "$cache" "within the ${PRERENDER_CACHE_MAX_MB} MB cap"
+        continue
+      fi
+      sm_trim_prerendered "$cache" "$((mb - PRERENDER_CACHE_MAX_MB))" "$dir"
+      total=$((total + SM_TRIM_MB))
+    done
   done
   sm_category_end isr_cache "$total"
+}
+
+# Removes generated page files under an over-cap directory, oldest first, until
+# the excess is gone. Sets SM_TRIM_MB.
+#
+# The safety model differs from sm_safe_remove by necessity: validating each of
+# a million files individually would cost more than the cleanup saves. Instead
+# the *directory* goes through the same gate, and what may be removed inside it
+# is constrained to three extensions that are always regenerated output — never
+# .js, never a manifest, never anything the running server loads.
+sm_trim_prerendered() {
+  local base="$1" need_mb="$2" project="$3"
+  SM_TRIM_MB=0
+  local refusal
+  if ! refusal="$(sm_validate_target "$base" dir "$project")"; then
+    sm_action SKIPPED isr_pages - "$base" "refused by safety gate: $refusal"
+    return 0
+  fi
+  local budget=$((need_mb * 1048576)) freed=0 count=0 ts size path
+  while IFS=$'\t' read -r ts size path; do
+    [ "$freed" -ge "$budget" ] && break
+    [ -n "$path" ] || continue
+    # Belt and braces: nothing outside the validated directory, whatever find said.
+    case "$path" in "$base"/*) ;; *) continue ;; esac
+    if [ "$SM_DRY_RUN" = 1 ]; then
+      freed=$((freed + size))
+      count=$((count + 1))
+      continue
+    fi
+    if rm -f -- "$path" 2>/dev/null; then
+      freed=$((freed + size))
+      count=$((count + 1))
+    fi
+  done < <(sm_nice find "$base" -type f \
+    \( -name '*.html' -o -name '*.rsc' -o -name '*.meta' \) \
+    -printf '%T@\t%s\t%p\n' 2>/dev/null | sort -n | head -n "$PRERENDER_TRIM_BATCH")
+
+  SM_TRIM_MB=$((freed / 1048576))
+  [ "$SM_DRY_RUN" = 0 ] && SM_RECLAIMED_MB=$((SM_RECLAIMED_MB + SM_TRIM_MB))
+  local verb="removed"
+  [ "$SM_DRY_RUN" = 1 ] && verb="would remove"
+  sm_action SAFE isr_pages "$SM_TRIM_MB" "$base" \
+    "$verb $count rendered page files (.html/.rsc/.meta), oldest first, to get under the ${PRERENDER_CACHE_MAX_MB} MB cap"
+  return 0
 }
 
 sm_run_logrotate() {
@@ -2725,7 +2800,9 @@ Never done, at any level, for any reason:
   reboot
 
 Project-level cleanup is opt-in and currently:
-  ALLOW_ONLINE_CACHE_TRIM=$ALLOW_ONLINE_CACHE_TRIM (cap ${ISR_CACHE_MAX_MB} MB)
+  ALLOW_ONLINE_CACHE_TRIM=$ALLOW_ONLINE_CACHE_TRIM
+    .next/cache cap        ${ISR_CACHE_MAX_MB} MB
+    rendered pages cap     ${PRERENDER_CACHE_MAX_MB} MB
   ALLOW_NEXT_CACHE_CLEANUP=$ALLOW_NEXT_CACHE_CLEANUP
   ALLOW_NEXT_BUILD_CLEANUP=$ALLOW_NEXT_BUILD_CLEANUP
   ALLOW_NODE_MODULES_CLEANUP=$ALLOW_NODE_MODULES_CLEANUP

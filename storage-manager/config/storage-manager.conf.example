@@ -105,6 +105,25 @@ PM2_LOGROTATE_AUTOCONFIGURE=false
 ALLOW_ONLINE_CACHE_TRIM=false
 ISR_CACHE_MAX_MB=4096
 
+# The same problem in its other location, and the one that actually filled the
+# disk. A build run without prerender caps writes the whole city x area x keyword
+# cross-product into .next/server/app as .html/.rsc/.meta files, and ISR keeps
+# adding to it at runtime. One project reached 156 GB this way, 71 GB of it under
+# a single city, while .next/cache held almost nothing.
+#
+# Over this cap, the oldest generated page files are removed until the directory
+# is back under it — oldest first, so hot pages stay. Only those three extensions
+# are ever touched: compiled .js, manifests and everything else the server loads
+# stay. With dynamicParams a missing page re-renders on the next request.
+#
+# The real fix is capping the prerender seed at build time (PRERENDER_CITY_LIMIT,
+# PRERENDER_AREA_LIMIT, PRERENDER_KEYWORD_LIMIT in deploy/site-deploy.sh). This
+# is the safety net for a project built without them.
+PRERENDER_CACHE_MAX_MB=8192
+# Page files one pass will consider, so a run stays cheap on a project with
+# millions of them. Successive runs converge.
+PRERENDER_TRIM_BATCH=500000
+
 # ------------------------------------------------- project-level cleanup (opt-in)
 # All of these are false by default and should stay false unless you have a
 # specific reason. Enabling one does NOT make it unconditional: the project must

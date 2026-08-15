@@ -429,6 +429,40 @@ removed:
 Checked in `.next/cache`, `.next/standalone/.next/cache`, `build/.next/cache` and
 `shared/cache`, so it covers sites inside the `/srv/sites` layout and outside it.
 
+### Rendered pages, which is where the space actually went
+
+```ini
+PRERENDER_CACHE_MAX_MB=8192
+PRERENDER_TRIM_BATCH=500000
+```
+
+The cache ceiling above would not have saved this fleet on its own. The 156 GB
+was not in `.next/cache` at all — it was rendered pages under
+`.next/standalone/.next/server/app`, as `.html`, `.rsc` and `.meta` files: 71 GB
+under one city, 46 GB under the next. A build run without prerender caps writes
+the entire city x area x keyword cross-product there, and ISR keeps adding to it.
+
+Over this cap, the oldest page files are removed until the directory is back
+under it. Oldest first, so pages that are actually being served stay warm.
+
+| Removed | Kept |
+|---|---|
+| `*.html`, `*.rsc`, `*.meta` under `server/app` | every `.js`, every manifest |
+| oldest first, stopping at the cap | the directory itself, and the whole bundle |
+
+This one deliberately does not validate each file through the deletion gate: a
+project can hold millions of them, and per-file validation would cost more than
+the cleanup returns. The *directory* goes through the same gate instead, and what
+may be removed inside it is constrained to three extensions that are always
+regenerated output. `PRERENDER_TRIM_BATCH` bounds how many files one pass will
+look at, so successive runs converge instead of one run stalling.
+
+The real fix is upstream: cap the prerender seed at build time with
+`PRERENDER_CITY_LIMIT`, `PRERENDER_AREA_LIMIT` and `PRERENDER_KEYWORD_LIMIT`,
+which `deploy/site-deploy.sh` already sets. A project built outside that tooling
+gets no caps, which is exactly how one site reached 156 GB. This setting is the
+safety net, not the cure.
+
 Next.js rebuilds each entry on the next request that needs it, so the site keeps
 serving — the cost is CPU, not availability. `deploy/disk-cleanup.sh` has done the
 same thing to `/srv/sites/*/shared/cache` against this live fleet for a while;
@@ -584,7 +618,7 @@ Everything runs under `nice -n 19` and `ionice -c3`, and the unit adds
 ## Tests
 
 ```bash
-bash tests/run-tests.sh                     # 42 tests
+bash tests/run-tests.sh                     # 43 tests
 bash tests/run-tests.sh --keep              # keep the sandbox afterwards
 bash tests/run-tests.sh --filter pm2        # only matching tests
 FAKE_PCT=92 bash tests/run-tests.sh --demo  # rehearse the validation report
