@@ -1,0 +1,36 @@
+# Never commit anything from a real server.
+#
+# The storage manager reads secrets-adjacent paths (.env files, certificates, SSH
+# keys) while deciding what to protect. None of that belongs in git, and neither
+# does a copy of a production config or a log that lists every project path.
+
+# real configuration — only the example is tracked
+storage-manager.conf
+!storage-manager.conf.example
+
+# secrets of any kind
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+known_hosts
+authorized_keys
+
+# runtime output
+*.log
+*.log.*
+history.log
+last-run
+projects.tsv
+large-files.txt
+CRITICAL-ALERT.txt
+
+# test leftovers
+sandbox/
+.tmp/
+*.bak

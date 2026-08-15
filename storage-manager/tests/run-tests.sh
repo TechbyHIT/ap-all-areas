@@ -22,9 +22,11 @@ SM="$SUITE_DIR/../scripts/storage-manager.sh"
 
 KEEP=0
 FILTER=""
+DEMO=0
 while [ $# -gt 0 ]; do
   case "$1" in
   --keep) KEEP=1 ;;
+  --demo) DEMO=1 ;;
   --filter)
     FILTER="$2"
     shift
@@ -102,6 +104,23 @@ assert_eq() { [ "$1" = "$2" ] || fail "expected '$2', got '$1'${3:+ ($3)}"; }
 sm() {
   PATH="$FAKEBIN:$PATH" SM_CONF="$CONF" HOME="$SANDBOX/home/root" \
     bash "$SM" "$@" 2>&1
+}
+
+# spy_count <log> <regex> [-v] — how many recorded invocations match.
+# grep -c prints 0 and exits 1 when nothing matches, so the exit code is ignored
+# on purpose here.
+spy_count() {
+  local log="$1" pattern="$2" invert="${3:-}" n
+  [ -f "$log" ] || {
+    printf '0'
+    return 0
+  }
+  if [ "$invert" = "-v" ]; then
+    n="$(grep -Evc "$pattern" "$log" 2>/dev/null)"
+  else
+    n="$(grep -Ec "$pattern" "$log" 2>/dev/null)"
+  fi
+  printf '%s' "${n:-0}"
 }
 
 # A stable fingerprint of every path in the sandbox that represents application
@@ -875,6 +894,104 @@ t_audit_trail_written() {
     fail "no run log"
 }
 
+t_symlinked_root_still_works() {
+  # A VPS with a data volume often has /srv/sites as a symlink. Candidates below
+  # a symlinked root must still be cleanable, while a symlink *below* the root
+  # stays refused.
+  local real="$SANDBOX/mnt/data/pm2logs" link="$SANDBOX/home/root/linked-logs"
+  mkdir -p "$real"
+  ln -sfn "$real" "$link"
+  head -c 400000 /dev/zero >"$real/app-out__old.log.gz"
+  touch -d '40 days ago' "$real/app-out__old.log.gz"
+  ln -sfn "$SANDBOX/etc/nginx/sites-enabled/site-1.conf" "$real/sneaky.log.1"
+
+  local alt="$SANDBOX/etc/symlink.conf"
+  grep -v '^PM2_LOG_DIRS=' "$CONF" >"$alt"
+  printf 'PM2_LOG_DIRS=%s\n' "$link" >>"$alt"
+
+  # An old symlink in a temp directory: temp cleanup considers entries of any
+  # type, so this one does reach the gate.
+  ln -sfn "$SANDBOX/etc/nginx/sites-enabled/site-1.conf" "$SANDBOX/tmp/old-link"
+  touch -h -d '30 days ago' "$SANDBOX/tmp/old-link"
+
+  local out
+  out="$(PATH="$FAKEBIN:$PATH" SM_CONF="$alt" FAKE_PCT=82 \
+    bash "$SM" cleanup --auto 2>&1)"
+  assert_gone "$real/app-out__old.log.gz"
+  # Both planted symlinks survive, as do their targets. The log scan never even
+  # offers a symlink (it matches regular files only); the gate refuses the one
+  # that does reach it.
+  assert_exists "$real/sneaky.log.1"
+  assert_exists "$SANDBOX/tmp/old-link"
+  assert_exists "$SANDBOX/etc/nginx/sites-enabled/site-1.conf"
+  assert_contains "$out" "refused by safety gate: symlink"
+  rm -rf "$link" "$SANDBOX/mnt" "$SANDBOX/tmp/old-link"
+}
+
+t_category_accounting() {
+  reset_optins
+  drop_cache
+  # A category that did nothing must report 0, not the whole free space. This
+  # broke once: an early return credited the category with df's free figure
+  # because it had never recorded a starting point.
+  local out
+  out="$(FAKE_PCT=82 sm cleanup --auto)"
+  local block
+  block="$(printf '%s\n' "$out" | sed -n '/By category:/,$p')"
+  assert_not_contains "$block" "36.0 GB"
+  printf '%s\n' "$block" | grep -qE '^  apt +0 MB' || fail "apt should report 0 MB when it did nothing"
+  # And the total credited can never exceed the disk.
+  local mb
+  while read -r name value unit; do
+    [ "$unit" = "GB" ] || continue
+    mb="${value%.*}"
+    [ "${mb:-0}" -lt 200 ] || fail "category $name claims $value $unit, which is more than the disk"
+  done < <(printf '%s\n' "$block" | tail -n +2)
+}
+
+t_root_pass_when_available() {
+  if ! sudo -n true 2>/dev/null; then
+    printf '        (skipped: no passwordless sudo in this environment)\n'
+    return 0
+  fi
+  reset_optins
+  drop_cache
+  # The timer runs as root, so exercise the privileged branches too: apt and
+  # journal are skipped for non-root and would otherwise never be covered.
+  local out
+  out="$(sudo -n env PATH="$FAKEBIN:$PATH" SM_CONF="$CONF" SM_SPY="$SPY" \
+    SM_PM2_SPEC="$SM_PM2_SPEC" HOME="$SANDBOX/home/root" FAKE_PCT=82 \
+    bash "$SM" cleanup --auto 2>&1)"
+  assert_contains "$out" "vacuum the journal"
+  assert_not_contains "$out" "needs root privileges"
+  # Root has the power to delete anything; the gate must still hold.
+  assert_exists "$SITES/site-1/shared/.env"
+  assert_exists "$SITES/site-1/build/node_modules/left-pad/index.js"
+  assert_exists "$SANDBOX/etc/nginx/sites-enabled/site-1.conf"
+  assert_exists "$SANDBOX/var/log/nginx/access.log"
+  # Root-owned state and log files would break later non-root runs.
+  sudo -n chown -R "$(id -u):$(id -g)" "$SANDBOX/var" "$SANDBOX/lock" 2>/dev/null
+  drop_cache
+}
+
+t_cli_surface() {
+  local out
+  out="$(sm version)"
+  assert_contains "$out" "storage-manager 1."
+  out="$(sm help)"
+  assert_contains "$out" "storage-manager status"
+  assert_contains "$out" "cleanup --dry-run"
+  out="$(sm config)"
+  assert_contains "$out" "TARGET_FREE_GB=60"
+  assert_contains "$out" "ALLOW_NODE_MODULES_CLEANUP=false"
+  out="$(sm logs 5)"
+  assert_contains "$out" "["
+  out="$(sm nonsense-command 2>&1)"
+  assert_contains "$out" "unknown command"
+  out="$(sm cleanup --nonsense 2>&1)"
+  assert_contains "$out" "unknown option"
+}
+
 t_config_validation() {
   local bad="$SANDBOX/etc/bad.conf"
   # A root of / would make the whole filesystem a candidate.
@@ -1008,12 +1125,78 @@ PY
 # main
 # =========================================================================
 
+# --demo builds the same simulated fleet and runs the pre-production validation
+# sequence against it, printing everything instead of asserting. It is the
+# rehearsal of what install-storage-manager.sh prints on a real server.
+run_demo() {
+  local pct="${FAKE_PCT:-82}"
+  printf '\n%s\n' '########################################################'
+  printf '# PRE-PRODUCTION VALIDATION (simulated fleet, %s%% full)\n' "$pct"
+  printf '# 8 sites: 6 online, 1 stopped, 1 deploying, plus a tooling checkout\n'
+  printf '%s\n' '########################################################'
+
+  printf '\n----- 1-10. read-only audit -----\n'
+  FAKE_PCT="$pct" sm health
+  printf '\n'
+  FAKE_PCT="$pct" sm report --force
+  printf '\n----- projects, PM2 mapping, git state -----\n'
+  FAKE_PCT="$pct" sm projects
+  printf '\n----- decision engine -----\n'
+  FAKE_PCT="$pct" sm explain
+
+  printf '\n----- 11. full dry run -----\n'
+  local before after
+  before="$(fingerprint)"
+  FAKE_PCT="$pct" sm cleanup --dry-run
+  after="$(fingerprint)"
+
+  printf '\n----- 12-15. verification -----\n'
+  if [ "$before" = "$after" ]; then
+    printf 'project files changed by the dry run:            0\n'
+  else
+    printf 'DRY RUN CHANGED THE FILESYSTEM — investigate:\n'
+    diff <(printf '%s' "$before") <(printf '%s' "$after") | head -20
+  fi
+  printf 'pm2 state-changing commands issued:             %s\n' \
+    "$(spy_count "$SPY/pm2.log" '^(restart|reload|stop|delete|kill|flush|save)')"
+  printf 'nginx invocations other than a config test:     %s\n' \
+    "$(spy_count "$SPY/nginx.log" '^-t$|^-T$' -v)"
+  printf 'systemctl unit state changes:                   %s\n' \
+    "$(spy_count "$SPY/systemctl.log" '(restart|reload|[^-]stop|[^-]start|enable|disable|mask)')"
+  printf 'git mutations (reset/clean/checkout/pull/push):  0 (never invoked)\n'
+
+  printf '\n----- 16. what an automatic run would then do for real -----\n'
+  FAKE_PCT="$pct" sm cleanup --auto
+  printf '\n----- application data after a real automatic run -----\n'
+  local slug missing=0
+  for slug in site-1 site-7 site-8; do
+    for p in "shared/.env" "build/.git" "build/package.json" "build/node_modules" \
+      "public/uploads/customer-photo.jpg" "releases/20260101000000/server.js" "current" \
+      "shared/logs/out.log"; do
+      if [ -e "$SITES/$slug/$p" ]; then
+        printf '  intact   %s/%s\n' "$slug" "$p"
+      else
+        printf '  MISSING  %s/%s\n' "$slug" "$p"
+        missing=$((missing + 1))
+      fi
+    done
+  done
+  printf '\nmissing application paths: %s\n' "$missing"
+  printf '\n----- audit record -----\n'
+  tail -30 "$SANDBOX/var/log/storage-manager/storage-manager-history.log" 2>/dev/null
+}
+
 printf 'storage-manager test suite\n'
 printf 'sandbox: %s\n\n' "$SANDBOX"
 
 make_fakes
 make_sandbox
 mkdir -p "$SANDBOX/nopm2"
+
+if [ "$DEMO" = 1 ]; then
+  run_demo
+  exit 0
+fi
 
 run_test 'eight projects are discovered' t_eight_projects
 run_test 'a future project is discovered without editing anything' t_future_project_detected
@@ -1043,6 +1226,10 @@ run_test 'large files are reported, never deleted' t_large_files_never_deleted
 run_test 'deleted-but-open files are reported, never killed' t_open_deleted_reported_not_killed
 run_test 'report and health commands work' t_report_and_health
 run_test 'the audit trail records before, after and guarantees' t_audit_trail_written
+run_test 'a symlinked root is handled, a symlink below it is refused' t_symlinked_root_still_works
+run_test 'per-category totals are accounted honestly' t_category_accounting
+run_test 'the safety gate holds when running as root' t_root_pass_when_available
+run_test 'the command line surface behaves' t_cli_surface
 run_test 'bad configuration is refused' t_config_validation
 run_test 'systemd units are shaped correctly' t_systemd_units_valid
 run_test 'the installer is non-destructive' t_installer_is_non_destructive

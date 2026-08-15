@@ -144,6 +144,29 @@ sudo bash deploy/disk-guard.sh --dry-run
 sudo bash deploy/disk-guard.sh --warn 70    # lower the bar to force a pass
 ```
 
+### The protection-first alternative
+
+The 95% tier above is the reason there is a second option. Emptying a live log
+reclaims the space, and it also destroys the evidence of why the app was
+crash-looping — a trade an operator may want to make deliberately rather than
+automatically at 03:00.
+
+[`storage-manager/`](./storage-manager/README.md) is built the other way round:
+a systemd timer every 15 minutes, protection before reclamation, an audit record
+per run, and a hard rule that it never stops, restarts, reloads or signals
+anything and never truncates an active log. Its `node_modules`, `.next` and
+release cleanups are opt-in and default to off, and it does *less* at 90–95% than
+at 85%, alerting instead.
+
+Run one or the other, not both — their tiers disagree on purpose, so each can
+delete what the other protects:
+
+```bash
+sudo bash storage-manager/scripts/install-storage-manager.sh --disable-legacy-disk-guard
+```
+
+`storage-manager health` warns whenever both are still active.
+
 ---
 
 ## Every site returning 502 Bad Gateway
@@ -350,6 +373,7 @@ Other commands:
 | `deploy/find-write-leak.sh` | Find which process is writing, and where |
 | `deploy/disk-cleanup.sh` | Reclaim it |
 | `deploy/disk-guard.sh` | Reclaim it automatically once the disk starts filling |
+| `storage-manager/` | Protection-first automatic alternative to `disk-guard.sh` |
 | `deploy/site-tls.sh` | Issue TLS, skipping names that do not resolve |
 | `deploy/emergency-502.sh` | Triage and recover when every site is down |
 

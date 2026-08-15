@@ -135,6 +135,7 @@ SM_LOG_FILE=""
 SM_HISTORY_FILE=""
 SM_SELF_PATHS=""
 SM_CAT_FREE_BEFORE=0
+SM_CAT_RECLAIMED_BEFORE=0
 SM_OPTIN_MB=0
 SM_VERBOSE="${SM_VERBOSE:-0}"
 declare -a SM_ACTIONS=()
@@ -412,20 +413,26 @@ sm_nice() {
 }
 
 # Expand a whitespace separated list that may contain globs, dropping entries
-# that match nothing.
+# that match nothing, and canonicalise what is left.
+#
+# Canonicalising matters: on a VPS with a data volume, /srv/sites is often a
+# symlink. The deletion gate requires a candidate to resolve to itself, so
+# scanning through the symlink would make every file below it unremovable —
+# safe, but silently useless. Resolving the root instead keeps the strict check
+# meaningful for symlinks found *below* it, which is where the risk actually is.
 sm_expand() {
-  local pattern out=""
+  local pattern match real
   local -a matches
   for pattern in $1; do
+    # Unquoted on purpose: this is where the glob expands.
     # shellcheck disable=SC2206
     matches=($pattern)
-    if [ "${#matches[@]}" -eq 1 ] && [ ! -e "${matches[0]}" ]; then
-      continue
-    fi
-    for out in "${matches[@]}"; do
-      [ -e "$out" ] && printf '%s\n' "$out"
+    for match in "${matches[@]}"; do
+      [ -e "$match" ] || continue
+      real="$(sm_realpath "$match")"
+      printf '%s\n' "${real:-$match}"
     done
-  done
+  done | awk '!seen[$0]++'
 }
 
 sm_realpath() { realpath -q -- "${1:-}" 2>/dev/null; }
@@ -1296,18 +1303,28 @@ sm_project_count() {
 # =========================================================================
 
 sm_category_begin() {
+  sm_disk_read >/dev/null 2>&1
   SM_CAT_FREE_BEFORE="$SM_DISK_FREE_MB"
-  sm_disk_read >/dev/null 2>&1 && SM_CAT_FREE_BEFORE="$SM_DISK_FREE_MB"
+  SM_CAT_RECLAIMED_BEFORE="$SM_RECLAIMED_MB"
 }
 
 sm_category_end() {
-  local name="$1" estimate="${2:-0}" delta=0
+  local name="$1" estimate="${2:-0}" delta=0 removed=0 df_delta=0
   if [ "$SM_DRY_RUN" = 1 ]; then
     delta="$estimate"
   else
+    # Bytes this category actually removed are exact. A category that removes
+    # nothing itself but hands the work to a tool (apt, journalctl, logrotate)
+    # is credited with the change in free space instead.
+    removed=$((SM_RECLAIMED_MB - SM_CAT_RECLAIMED_BEFORE))
     sm_disk_read >/dev/null 2>&1
-    delta=$((SM_DISK_FREE_MB - SM_CAT_FREE_BEFORE))
-    [ "$delta" -lt 0 ] && delta=0
+    df_delta=$((SM_DISK_FREE_MB - SM_CAT_FREE_BEFORE))
+    [ "$df_delta" -lt 0 ] && df_delta=0
+    if [ "$removed" -gt 0 ]; then
+      delta="$removed"
+    else
+      delta="$df_delta"
+    fi
   fi
   SM_CATEGORY_NAMES+=("$name")
   SM_CATEGORY_MB+=("$delta")
@@ -1322,6 +1339,7 @@ sm_clean_apt() {
     sm_action SKIPPED apt - "-" "apt-get not installed"
     return 0
   }
+  sm_category_begin
   local mb
   mb="$(sm_du_mb /var/cache/apt)"
   if [ "$mb" -lt 50 ]; then
@@ -1333,7 +1351,6 @@ sm_clean_apt() {
     sm_category_end apt 0
     return 0
   }
-  sm_category_begin
   # clean/autoclean only drop downloaded .deb archives. No package is removed,
   # nothing is reconfigured, and nothing on the system stops working.
   sm_run apt "drop downloaded package archives" apt-get -qq clean
@@ -1377,6 +1394,7 @@ sm_clean_journal() {
     sm_action SKIPPED journal - "-" "journalctl not installed"
     return 0
   }
+  sm_category_begin
   local mb cap excess
   mb="$(sm_journal_mb)"
   sm_is_int "$mb" || mb=0
@@ -1398,7 +1416,6 @@ sm_clean_journal() {
     sm_category_end journal 0
     return 0
   }
-  sm_category_begin
   # Vacuuming is the only supported way to shrink the journal. Deleting
   # /var/log/journal by hand corrupts it, so this program never does that.
   sm_run journal "vacuum the journal to $JOURNAL_MAX_SIZE" journalctl --vacuum-size="$JOURNAL_MAX_SIZE"
@@ -1421,6 +1438,7 @@ sm_clean_pm2_logs() {
     sm_action SKIPPED pm2_logs - "-" "ENABLE_PM2_LOG_ROTATION=false"
     return 0
   }
+  sm_category_begin
   local -a dirs=()
   local d
   while read -r d; do [ -n "$d" ] && dirs+=("$d"); done < <(sm_expand "$PM2_LOG_DIRS")
@@ -1429,7 +1447,6 @@ sm_clean_pm2_logs() {
     sm_category_end pm2_logs 0
     return 0
   fi
-  sm_category_begin
   local estimate=0 f mb
   for d in "${dirs[@]}"; do
     while read -r f; do
@@ -1460,19 +1477,21 @@ sm_clean_nginx_logs() {
     sm_action SKIPPED nginx_logs - "-" "ENABLE_NGINX_LOG_ROTATION=false"
     return 0
   }
-  [ -d "$NGINX_LOG_DIR" ] || {
+  sm_category_begin
+  local dir
+  dir="$(sm_realpath "$NGINX_LOG_DIR")"
+  [ -n "$dir" ] && [ -d "$dir" ] || {
     sm_action NOTE nginx_logs - "$NGINX_LOG_DIR" "directory not present"
     sm_category_end nginx_logs 0
     return 0
   }
-  sm_category_begin
   local estimate=0 f mb
   while read -r f; do
     [ -n "$f" ] || continue
     mb="$(sm_du_mb "$f")"
     estimate=$((estimate + mb))
-    sm_safe_remove "$f" nginx_logs "rotated nginx log older than ${LOG_RETENTION_DAYS}d" file "$NGINX_LOG_DIR"
-  done < <(sm_rotated_log_candidates "$NGINX_LOG_DIR" "$LOG_RETENTION_DAYS")
+    sm_safe_remove "$f" nginx_logs "rotated nginx log older than ${LOG_RETENTION_DAYS}d" file "$dir"
+  done < <(sm_rotated_log_candidates "$dir" "$LOG_RETENTION_DAYS")
   sm_category_end nginx_logs "$estimate"
 }
 
@@ -1481,22 +1500,24 @@ sm_clean_system_logs() {
     sm_action SKIPPED system_logs - "-" "ENABLE_SYSTEM_LOG_CLEANUP=false"
     return 0
   }
-  [ -d "$SYSTEM_LOG_DIR" ] || {
+  sm_category_begin
+  local dir
+  dir="$(sm_realpath "$SYSTEM_LOG_DIR")"
+  [ -n "$dir" ] && [ -d "$dir" ] || {
     sm_category_end system_logs 0
     return 0
   }
-  sm_category_begin
   local estimate=0 f mb rnginx
   rnginx="$(sm_realpath "$NGINX_LOG_DIR")"
   while read -r f; do
     [ -n "$f" ] || continue
-    # nginx logs have their own category above; the journal is never touched
-    # through the filesystem.
-    case "$f" in "$rnginx"/* | "$SYSTEM_LOG_DIR"/journal/*) continue ;; esac
+    # nginx logs have their own category above; the journal is only ever changed
+    # through journalctl, never through the filesystem.
+    case "$f" in "$rnginx"/* | "$dir"/journal/*) continue ;; esac
     mb="$(sm_du_mb "$f")"
     estimate=$((estimate + mb))
-    sm_safe_remove "$f" system_logs "rotated system log older than ${LOG_RETENTION_DAYS}d" file "$SYSTEM_LOG_DIR"
-  done < <(sm_rotated_log_candidates "$SYSTEM_LOG_DIR" "$LOG_RETENTION_DAYS")
+    sm_safe_remove "$f" system_logs "rotated system log older than ${LOG_RETENTION_DAYS}d" file "$dir"
+  done < <(sm_rotated_log_candidates "$dir" "$LOG_RETENTION_DAYS")
   sm_category_end system_logs "$estimate"
 }
 
@@ -1764,7 +1785,7 @@ sm_processes_under() {
 # =========================================================================
 
 sm_cleanup() {
-  local level level_name category free_before pct_before name arg
+  local level level_name category free_before pct_before name
   sm_disk_read || {
     sm_log ERROR "aborting: disk usage for $DISK_PATH is unreadable"
     return 1
@@ -2189,7 +2210,6 @@ sm_cmd_open_deleted() {
 sm_cmd_health() {
   local rc=0 detail
   sm_disk_read
-  local ok
   check() {
     local name="$1" status="$2" note="${3:-}"
     printf '%-22s %-8s %s\n' "$name" "$status" "$note"
@@ -2233,18 +2253,21 @@ sm_cmd_health() {
     check 'PROJECT DISCOVERY' WARN "no projects found under: $DISCOVERY_ROOTS"
   fi
 
-  if command -v systemctl >/dev/null 2>&1; then
+  local unit_file="/etc/systemd/system/$SM_PROGRAM.timer"
+  if command -v systemctl >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then
     if systemctl is-enabled "$SM_PROGRAM.timer" >/dev/null 2>&1; then
       detail="$(systemctl show -p NextElapseUSecRealtime --value "$SM_PROGRAM.timer" 2>/dev/null)"
       check 'SYSTEMD TIMER' OK "enabled${detail:+, next run $detail}"
-    elif systemctl list-unit-files "$SM_PROGRAM.timer" >/dev/null 2>&1 &&
-      systemctl cat "$SM_PROGRAM.timer" >/dev/null 2>&1; then
+    elif [ -f "$unit_file" ]; then
       check 'SYSTEMD TIMER' WARN "installed but not enabled (automatic operation is off)"
     else
       check 'SYSTEMD TIMER' WARN "not installed — run install-storage-manager.sh"
     fi
+  elif [ -f "$unit_file" ]; then
+    # Containers and chroots have systemctl without a reachable systemd.
+    check 'SYSTEMD TIMER' WARN "unit installed, but systemd is not reachable from here"
   else
-    check 'SYSTEMD TIMER' WARN "systemctl unavailable"
+    check 'SYSTEMD TIMER' WARN "not installed and systemd is not reachable"
   fi
 
   if [ -f "$SM_CONF" ]; then
