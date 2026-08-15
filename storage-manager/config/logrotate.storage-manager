@@ -1,0 +1,13 @@
+# Installed to /etc/logrotate.d/storage-manager.
+# The manager also rotates these itself by size, so its logs stay bounded even
+# if logrotate is missing or disabled.
+/var/log/storage-manager/*.log {
+    weekly
+    rotate 4
+    maxsize 20M
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}

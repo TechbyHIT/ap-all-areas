@@ -1,0 +1,42 @@
+[Unit]
+Description=Automatic zero-disturbance storage manager (check, clean safe data, report, exit)
+Documentation=file:///usr/local/share/doc/storage-manager/STORAGE-MANAGER.md
+# Do not fight a deploy for I/O or for the disk it is about to need.
+After=network-online.target
+ConditionPathExists=/usr/local/sbin/storage-manager
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/storage-manager cleanup --auto
+# One pass must always terminate. If it somehow does not, systemd kills it and
+# the next timer tick starts a clean run rather than leaving one resident.
+TimeoutStartSec=900
+# Never let disk hygiene compete with the sites for CPU or I/O.
+Nice=19
+IOSchedulingClass=idle
+CPUSchedulingPolicy=idle
+
+NoNewPrivileges=yes
+ProtectClock=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+MemoryDenyWriteExecute=no
+# PrivateTmp is deliberately off: /tmp and /var/tmp are cleanup targets, and a
+# private namespace would hide the very files this service is meant to see.
+PrivateTmp=no
+# ProtectHome is deliberately off: PM2 keeps its rotated logs under $HOME.
+ProtectHome=no
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=storage-manager
+
+# Exit 2 means "still critically full after safe cleanup" — a deliberate alert,
+# not a crash. Do not let it mark the unit failed and stop the timer chain.
+SuccessExitStatus=0 2
+
+[Install]
+WantedBy=multi-user.target

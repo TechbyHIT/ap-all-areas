@@ -1,0 +1,18 @@
+[Unit]
+Description=Run the storage manager every 15 minutes
+Documentation=file:///usr/local/share/doc/storage-manager/STORAGE-MANAGER.md
+
+[Timer]
+Unit=storage-manager.service
+# Give the box time to finish booting (and PM2 time to bring the sites up)
+# before the first pass.
+OnBootSec=5min
+OnUnitActiveSec=15min
+# Catch up after downtime instead of silently skipping a window.
+Persistent=true
+AccuracySec=1min
+# Spread the load a little so a fleet of VPSes does not all wake at :00.
+RandomizedDelaySec=60s
+
+[Install]
+WantedBy=timers.target
