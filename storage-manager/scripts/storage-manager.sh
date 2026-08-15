@@ -2444,25 +2444,24 @@ sm_main() {
     sm_cmd_projects "$force"
     ;;
   cleanup)
-    SM_DRY_RUN=1
+    # Two independent flags: which categories to consider, and whether to act.
+    # Acting has to be asked for, and --dry-run wins whatever the order.
+    local explicit=0 dry_asked=0
     SM_MODE="auto"
-    local explicit=0
+    SM_DRY_RUN=1
     for arg in "$@"; do
       case "$arg" in
-      --dry-run | -n) SM_DRY_RUN=1 ;;
+      --dry-run | -n) dry_asked=1 ;;
       --safe)
         SM_MODE="safe"
-        SM_DRY_RUN=0
         explicit=1
         ;;
       --full)
         SM_MODE="full"
-        SM_DRY_RUN=0
         explicit=1
         ;;
       --auto)
         SM_MODE="auto"
-        SM_DRY_RUN=0
         explicit=1
         ;;
       --quiet) SM_QUIET=1 ;;
@@ -2472,8 +2471,9 @@ sm_main() {
         ;;
       esac
     done
-    # --dry-run always wins, whatever order the flags came in.
-    for arg in "$@"; do case "$arg" in --dry-run | -n) SM_DRY_RUN=1 ;; esac done
+    if [ "$explicit" = 1 ] && [ "$dry_asked" = 0 ]; then
+      SM_DRY_RUN=0
+    fi
     if [ "$explicit" = 0 ] && [ "$SM_DRY_RUN" = 1 ]; then
       sm_say "No mode given, so this is a dry run. Use --safe, --auto or --full to act."
       sm_say ""
