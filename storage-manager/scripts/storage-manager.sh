@@ -81,6 +81,23 @@ ENABLE_APT_AUTOREMOVE=false
 # does change PM2 state, so it stays opt-in and never runs from the timer.
 PM2_LOGROTATE_AUTOCONFIGURE=false
 
+# A live Next.js site writes its rendered pages and optimised images into
+# .next/cache and never removes them. On a site with millions of crawlable URLs
+# that grows without a ceiling: this fleet lost a 193 GB disk to one project's
+# cache reaching 156 GB, while every other category reported nothing to reclaim.
+#
+# Enabling this puts a ceiling on it. What gets removed is only ever the
+# regeneratable subdirectories of a cache that is already over the cap — Next.js
+# rebuilds each entry on the next request that needs it, so a running site keeps
+# serving. .next itself, the standalone bundle and everything else are untouched.
+#
+# It defaults to off because it is the one action here that reaches into a
+# directory belonging to an ONLINE project. Turn it on if a runtime cache is what
+# fills your disk; deploy/disk-cleanup.sh already does the same thing for sites
+# under /srv/sites, and this covers the ones outside that layout too.
+ALLOW_ONLINE_CACHE_TRIM=false
+ISR_CACHE_MAX_MB=4096
+
 # Project-level cleanup. All default to false. Enabling one does not make it
 # unconditional: every guard in sm_project_cleanup_allowed still has to pass.
 ALLOW_NEXT_CACHE_CLEANUP=false
@@ -171,7 +188,8 @@ DISCOVERY_MAX_DEPTH SITE_REGISTRY SITE_ROOT CRITICAL_PROJECTS
 ENABLE_APT_CLEANUP ENABLE_JOURNAL_CLEANUP ENABLE_PM2_LOG_ROTATION
 ENABLE_NGINX_LOG_ROTATION ENABLE_SYSTEM_LOG_CLEANUP ENABLE_TEMP_CLEANUP
 ENABLE_PKG_CACHE_CLEANUP RUN_LOGROTATE_ON_PRESSURE ENABLE_APT_AUTOREMOVE
-PM2_LOGROTATE_AUTOCONFIGURE ALLOW_NEXT_CACHE_CLEANUP ALLOW_NEXT_BUILD_CLEANUP
+PM2_LOGROTATE_AUTOCONFIGURE ALLOW_ONLINE_CACHE_TRIM ISR_CACHE_MAX_MB
+ALLOW_NEXT_CACHE_CLEANUP ALLOW_NEXT_BUILD_CLEANUP
 ALLOW_NODE_MODULES_CLEANUP ALLOW_STALE_RELEASE_CLEANUP KEEP_RELEASES
 STATE_DIR LOG_DIR LOCK_FILE DEPLOY_LOCK_DIR GLOBAL_DEPLOY_LOCKS PM2_LOG_DIRS
 NGINX_LOG_DIR SYSTEM_LOG_DIR TEMP_DIRS PKG_CACHE_PATHS PROTECTED_PATHS
@@ -243,7 +261,7 @@ sm_validate_config() {
     TARGET_FREE_GB LOG_RETENTION_DAYS TEMP_RETENTION_DAYS DISCOVERY_MAX_DEPTH \
     KEEP_RELEASES PROJECT_SCAN_INTERVAL_MIN LARGE_FILE_SCAN_INTERVAL_MIN \
     LARGE_FILE_MIN_MB DEPLOY_RECENT_MIN NICE_LEVEL LOG_MAX_SIZE_MB LOG_KEEP \
-    INVESTIGATE_SAMPLE_SEC; do
+    INVESTIGATE_SAMPLE_SEC ISR_CACHE_MAX_MB; do
     value="${!name}"
     if ! sm_is_int "$value"; then
       printf 'ERROR: %s must be a whole number, got "%s"\n' "$name" "$value" >&2
@@ -766,9 +784,9 @@ sm_categories_for_level() {
   local level="$1"
   case "$level" in
   0) : ;;
-  1) printf 'apt journal pm2_logs nginx_logs system_logs\n' ;;
-  2) printf 'apt journal pm2_logs nginx_logs system_logs temp\n' ;;
-  3) printf 'apt journal pm2_logs nginx_logs system_logs temp pkg_caches logrotate project_optin\n' ;;
+  1) printf 'apt journal pm2_logs nginx_logs system_logs isr_cache\n' ;;
+  2) printf 'apt journal pm2_logs nginx_logs system_logs isr_cache temp\n' ;;
+  3) printf 'apt journal pm2_logs nginx_logs system_logs isr_cache temp pkg_caches logrotate project_optin\n' ;;
   4 | 5) printf 'apt journal pm2_logs nginx_logs system_logs temp pkg_caches logrotate\n' ;;
   esac
 }
@@ -1641,6 +1659,55 @@ sm_clean_pkg_caches() {
   sm_category_end pkg_caches "$estimate"
 }
 
+# Puts a ceiling on the runtime cache of a live site. Only the regeneratable
+# subdirectories of an over-cap cache go, never .next, never the bundle, never
+# the cache directory itself — a release may have it symlinked to shared storage.
+sm_clean_isr_cache() {
+  if ! sm_is_true "$ALLOW_ONLINE_CACHE_TRIM"; then
+    sm_action NOTE isr_cache - "-" "ALLOW_ONLINE_CACHE_TRIM=false: a runtime cache is never trimmed by default"
+    return 0
+  fi
+  sm_category_begin
+  local row dir kind slug state rest cache sub mb total=0
+  for row in "${SM_PROJECT_ROWS[@]:-}"; do
+    [ -n "$row" ] || continue
+    IFS=$'\t' read -r dir kind slug state rest <<<"$row"
+    case "$state" in
+    DEPLOYING)
+      sm_action PROTECTED isr_cache - "$dir" "a deployment is in progress"
+      continue
+      ;;
+    UNKNOWN)
+      sm_action PROTECTED isr_cache - "$dir" "project state could not be determined"
+      continue
+      ;;
+    esac
+    if sm_is_critical_project "$dir"; then
+      sm_action PROTECTED isr_cache - "$dir" "marked critical"
+      continue
+    fi
+    for cache in "$dir/.next/cache" "$dir/.next/standalone/.next/cache" \
+      "$dir/build/.next/cache" "$dir/shared/cache"; do
+      [ -d "$cache" ] || continue
+      mb="$(sm_du_mb "$cache")"
+      if [ "$mb" -le "$ISR_CACHE_MAX_MB" ]; then
+        sm_action NOTE isr_cache "$mb" "$cache" "within the ${ISR_CACHE_MAX_MB} MB cap"
+        continue
+      fi
+      sm_action NOTE isr_cache "$mb" "$cache" "over the ${ISR_CACHE_MAX_MB} MB cap — trimming its regeneratable parts"
+      for sub in images fetch-cache; do
+        [ -d "$cache/$sub" ] || continue
+        [ -L "$cache/$sub" ] && continue
+        mb="$(sm_du_mb "$cache/$sub")"
+        sm_safe_remove "$cache/$sub" isr_cache \
+          "regeneratable $sub of a cache over its cap; Next.js rebuilds entries on demand" \
+          dir "$dir" && total=$((total + mb))
+      done
+    done
+  done
+  sm_category_end isr_cache "$total"
+}
+
 sm_run_logrotate() {
   sm_is_true "$RUN_LOGROTATE_ON_PRESSURE" || {
     sm_action SKIPPED logrotate - "-" "RUN_LOGROTATE_ON_PRESSURE=false"
@@ -1863,7 +1930,7 @@ sm_cleanup() {
   # configuration: that is the moment to alert a human, not to delete more.
   if [ "$level" -ge 4 ]; then
     for name in ALLOW_NEXT_CACHE_CLEANUP ALLOW_NEXT_BUILD_CLEANUP \
-      ALLOW_NODE_MODULES_CLEANUP ALLOW_STALE_RELEASE_CLEANUP; do
+      ALLOW_NODE_MODULES_CLEANUP ALLOW_STALE_RELEASE_CLEANUP ALLOW_ONLINE_CACHE_TRIM; do
       if sm_is_true "${!name}"; then
         sm_action PROTECTED policy - "$name" "force-disabled at $level_name: application data is never deleted under pressure"
         printf -v "$name" '%s' false
@@ -1877,7 +1944,7 @@ sm_cleanup() {
     categories=(apt journal pm2_logs nginx_logs system_logs temp)
     ;;
   full | admin)
-    categories=(apt journal pm2_logs nginx_logs system_logs temp pkg_caches logrotate project_optin)
+    categories=(apt journal pm2_logs nginx_logs system_logs isr_cache temp pkg_caches logrotate project_optin)
     ;;
   auto | *)
     if [ "$level" = 0 ]; then
@@ -1913,6 +1980,7 @@ sm_cleanup() {
     pm2_logs) sm_clean_pm2_logs ;;
     nginx_logs) sm_clean_nginx_logs ;;
     system_logs) sm_clean_system_logs ;;
+    isr_cache) sm_clean_isr_cache ;;
     temp) sm_clean_temp ;;
     pkg_caches) sm_clean_pkg_caches ;;
     logrotate) sm_run_logrotate ;;
@@ -2075,6 +2143,7 @@ sm_cmd_report() {
   sm_clean_pm2_logs
   sm_clean_nginx_logs
   sm_clean_system_logs
+  sm_clean_isr_cache
   sm_clean_temp
   sm_clean_pkg_caches
   SM_QUIET="$saved_quiet"
@@ -2656,6 +2725,7 @@ Never done, at any level, for any reason:
   reboot
 
 Project-level cleanup is opt-in and currently:
+  ALLOW_ONLINE_CACHE_TRIM=$ALLOW_ONLINE_CACHE_TRIM (cap ${ISR_CACHE_MAX_MB} MB)
   ALLOW_NEXT_CACHE_CLEANUP=$ALLOW_NEXT_CACHE_CLEANUP
   ALLOW_NEXT_BUILD_CLEANUP=$ALLOW_NEXT_BUILD_CLEANUP
   ALLOW_NODE_MODULES_CLEANUP=$ALLOW_NODE_MODULES_CLEANUP

@@ -87,6 +87,24 @@ ENABLE_APT_AUTOREMOVE=false
 # --apply`, never from the timer.
 PM2_LOGROTATE_AUTOCONFIGURE=false
 
+# ------------------------------------------- runtime cache ceiling (recommended)
+# A live Next.js site writes every rendered page and optimised image into
+# .next/cache and never removes them. On a site with millions of crawlable URLs
+# that grows without limit: this fleet lost a 193 GB disk to one project's cache
+# reaching 156 GB, while every other category reported nothing to reclaim.
+#
+# With this on, a cache over the cap has its regeneratable subdirectories
+# (images, fetch-cache) removed. Next.js rebuilds each entry on the next request
+# that needs it, so the site keeps serving; the cost is CPU, not availability.
+# .next itself, the standalone bundle, and everything else are never touched.
+#
+# It defaults to off because it is the only action that reaches into a directory
+# belonging to an ONLINE project. Turn it on if a runtime cache is what fills
+# your disk. It is withdrawn automatically at CRITICAL and EMERGENCY, like every
+# other project-level action.
+ALLOW_ONLINE_CACHE_TRIM=false
+ISR_CACHE_MAX_MB=4096
+
 # ------------------------------------------------- project-level cleanup (opt-in)
 # All of these are false by default and should stay false unless you have a
 # specific reason. Enabling one does NOT make it unconditional: the project must

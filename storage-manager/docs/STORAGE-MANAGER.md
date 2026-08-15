@@ -400,6 +400,45 @@ trap 'rm -f /var/lock/my-site.deploy.lock' EXIT
 
 ---
 
+## The runtime cache ceiling
+
+This is the setting most likely to matter, and the one this program was extended
+to cover after a 193 GB disk on this fleet filled to 100%:
+
+```ini
+ALLOW_ONLINE_CACHE_TRIM=false     # recommended: true
+ISR_CACHE_MAX_MB=4096
+```
+
+A live Next.js site writes every rendered page and every optimised image into
+`.next/cache` and never removes them. On a site with millions of crawlable URLs,
+a crawler alone will grow that without limit. One project's cache reached 156 GB
+of the 160 GB it occupied, while apt, the journal, PM2 logs, nginx logs and temp
+files together offered under 1 GB — so every safe category correctly reported
+nothing to reclaim, right up to the disk being full.
+
+When enabled, a cache **over the cap** has only its regeneratable subdirectories
+removed:
+
+| Removed | Kept |
+|---|---|
+| `<cache>/images` | the `cache` directory itself (a release may symlink it) |
+| `<cache>/fetch-cache` | `.next` and everything under it |
+| | the standalone bundle, `node_modules`, source, `.env`, uploads |
+
+Checked in `.next/cache`, `.next/standalone/.next/cache`, `build/.next/cache` and
+`shared/cache`, so it covers sites inside the `/srv/sites` layout and outside it.
+
+Next.js rebuilds each entry on the next request that needs it, so the site keeps
+serving — the cost is CPU, not availability. `deploy/disk-cleanup.sh` has done the
+same thing to `/srv/sites/*/shared/cache` against this live fleet for a while;
+this covers the projects that layout misses, which is where the 156 GB was.
+
+It is off by default because it is the only action in this program that reaches
+into a directory belonging to an ONLINE project. A DEPLOYING or UNKNOWN project
+is still exempt, a project marked critical is exempt, and the whole thing is
+force-disabled at CRITICAL and EMERGENCY like every other project-level action.
+
 ## Opt-in project cleanup
 
 All four default to **false**, and should usually stay there. On this fleet
@@ -545,7 +584,7 @@ Everything runs under `nice -n 19` and `ionice -c3`, and the unit adds
 ## Tests
 
 ```bash
-bash tests/run-tests.sh                     # 41 tests
+bash tests/run-tests.sh                     # 42 tests
 bash tests/run-tests.sh --keep              # keep the sandbox afterwards
 bash tests/run-tests.sh --filter pm2        # only matching tests
 FAKE_PCT=92 bash tests/run-tests.sh --demo  # rehearse the validation report

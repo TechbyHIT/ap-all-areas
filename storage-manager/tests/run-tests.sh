@@ -417,6 +417,18 @@ conf_set() {
 
 drop_cache() { rm -f "$SANDBOX/var/lib/projects.tsv"; }
 
+# Freshly written files make a project look like a deploy in flight, which is
+# correct behaviour but hides everything else. This ages the paths the deploy
+# heuristic looks at.
+age_project() {
+  local dir="$SITES/$1"
+  touch -d '3 hours ago' "$dir" "$dir/build" "$dir/releases" 2>/dev/null
+  [ -d "$dir/.next" ] && touch -d '3 hours ago' "$dir/.next"
+  [ -d "$dir/build/.next" ] && touch -d '3 hours ago' "$dir/build/.next"
+  touch -h -d '3 hours ago' "$dir/current" 2>/dev/null
+  return 0
+}
+
 # Opt-in state is set at the start of every test that cares, never left to
 # whatever ran before: a leak here would quietly weaken the assertions.
 reset_optins() {
@@ -930,6 +942,73 @@ t_symlinked_root_still_works() {
   rm -rf "$link" "$SANDBOX/mnt" "$SANDBOX/tmp/old-link"
 }
 
+t_online_cache_cap() {
+  # The failure that took the real server down: an ONLINE site's Next.js cache
+  # grew to 156 GB while every other category reported nothing to reclaim.
+  reset_optins
+  conf_set ALLOW_ONLINE_CACHE_TRIM false
+  conf_set ISR_CACHE_MAX_MB 2
+  local cache="$SITES/site-1/.next/cache"
+  mkdir -p "$cache/images" "$cache/fetch-cache"
+  head -c 3000000 /dev/zero >"$cache/images/optimised.bin"
+  head -c 3000000 /dev/zero >"$cache/fetch-cache/page.bin"
+  age_project site-1
+  drop_cache
+
+  # Off by default: an online project's cache is not touched.
+  local out
+  out="$(FAKE_PCT=87 sm cleanup --full)"
+  assert_contains "$out" "ALLOW_ONLINE_CACHE_TRIM=false"
+  assert_exists "$cache/images/optimised.bin"
+
+  # Enabled: only the regeneratable subdirectories of an over-cap cache go.
+  conf_set ALLOW_ONLINE_CACHE_TRIM true
+  out="$(FAKE_PCT=87 sm cleanup --full)"
+  assert_contains "$out" "over the 2 MB cap"
+  assert_gone "$cache/images"
+  assert_gone "$cache/fetch-cache"
+  # The cache directory, the build and everything the app serves stay.
+  assert_exists "$cache"
+  assert_exists "$SITES/site-1/releases/20260101000000/server.js"
+  assert_exists "$SITES/site-1/shared/.env"
+  assert_exists "$SITES/site-1/build/node_modules/left-pad/index.js"
+  # And the app was not touched in any way.
+  assert_eq "$(spy_count "$SPY/pm2.log" '^(restart|reload|stop|delete|kill)')" 0 \
+    "trimming a cache must not disturb the app"
+
+  # Under the cap, nothing happens.
+  mkdir -p "$cache/images"
+  head -c 100000 /dev/zero >"$cache/images/small.bin"
+  age_project site-1
+  drop_cache
+  out="$(FAKE_PCT=87 sm cleanup --full)"
+  assert_contains "$out" "within the 2 MB cap"
+  assert_exists "$cache/images/small.bin"
+
+  # A deploying project is exempt even with the cap enabled.
+  local dcache="$SITES/site-8/.next/cache"
+  mkdir -p "$dcache/images"
+  head -c 3000000 /dev/zero >"$dcache/images/optimised.bin"
+  age_project site-8
+  drop_cache
+  out="$(FAKE_PCT=87 sm cleanup --full)"
+  assert_exists "$dcache/images/optimised.bin"
+
+  # And under real pressure it is withdrawn like every other project action.
+  mkdir -p "$cache/images"
+  head -c 3000000 /dev/zero >"$cache/images/optimised.bin"
+  age_project site-1
+  drop_cache
+  out="$(FAKE_PCT=96 sm cleanup --auto)"
+  assert_contains "$out" "force-disabled at EMERGENCY"
+  assert_exists "$cache/images/optimised.bin"
+
+  rm -rf "$SITES/site-1/.next" "$SITES/site-8/.next"
+  conf_set ALLOW_ONLINE_CACHE_TRIM false
+  conf_set ISR_CACHE_MAX_MB 4096
+  drop_cache
+}
+
 t_duplicate_dirs_do_not_both_look_online() {
   # A real server had the same site in two places. Matching PM2 apps on name
   # alone reported both copies as ONLINE, inflated the counts, and hid which
@@ -1299,6 +1378,7 @@ run_test 'large files are reported, never deleted' t_large_files_never_deleted
 run_test 'deleted-but-open files are reported, never killed' t_open_deleted_reported_not_killed
 run_test 'report and health commands work' t_report_and_health
 run_test 'the audit trail records before, after and guarantees' t_audit_trail_written
+run_test 'a live cache over its cap is trimmed, and only its regeneratable parts' t_online_cache_cap
 run_test 'duplicate directories do not both look online' t_duplicate_dirs_do_not_both_look_online
 run_test 'investigate names where the space actually is' t_investigate_finds_the_elephant
 run_test 'the report points at application data when safe cleanup cannot reach the target' t_report_points_at_application_data
