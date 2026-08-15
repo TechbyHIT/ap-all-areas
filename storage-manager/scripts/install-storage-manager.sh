@@ -72,6 +72,39 @@ for cmd in bash df du find stat realpath awk sed grep flock date; do
 done
 [ -z "$MISSING" ] || die "required commands not found:$MISSING"
 
+# Installing needs a few MB. On a disk that is already full the copy fails
+# half-way, which is a bad moment to discover that the tool meant to help is
+# itself broken — so refuse early and say what to do instead.
+FREE_MB="$(df -Pm / | awk 'NR==2 {print $(NF-2)}')"
+if [ "${FREE_MB:-0}" -lt 50 ]; then
+  printf 'ERROR: only %s MB free on / — too little to install safely.\n\n' "${FREE_MB:-0}" >&2
+  cat >&2 <<'EOF'
+This installer will not write a partial program onto a full disk. Free a little
+space first, with commands that need no disk space of their own:
+
+  # the biggest files, and any runaway log among them
+  sudo find /root /srv /var/www -xdev -type f -size +1G -printf '%10s  %p\n' \
+    2>/dev/null | sort -rn | head -20
+
+  # a log a process still holds open is emptied, never deleted
+  sudo truncate -s 0 '<huge log file>'
+
+  # a bundle nested inside another bundle is duplicate data; only the outer one
+  # is ever served, so this is safe while the site is live
+  sudo find /root /srv /var/www -maxdepth 12 -type d \
+    -path '*/.next/standalone/.next/standalone' -prune -print 2>/dev/null
+  sudo rm -rf --one-file-system '<path from above>'
+
+  # something still writing? stop that one process — a copy or build is not
+  # serving traffic
+  sudo ps -eo pid,etimes,args | grep -E ' cp | rsync |next build|npm ' | grep -v grep
+
+Then run this installer again.
+EOF
+  exit 1
+fi
+info "free space on /: ${FREE_MB} MB"
+
 log "Optional integrations"
 for cmd in pm2 nginx journalctl logrotate lsof git python3 node npm systemctl; do
   if command -v "$cmd" >/dev/null 2>&1; then
@@ -98,8 +131,15 @@ chmod 750 "$STATE_DIR" "$LOG_DIR"
 
 # --------------------------------------------------------------- 3. the program
 log "Installing $BIN_PATH"
-install -m 755 "$SRC_DIR/scripts/storage-manager.sh" "$BIN_PATH" ||
-  die "could not install $BIN_PATH"
+# Copy to a temporary name and move it into place, so a copy that fails part way
+# through cannot replace a working program with a truncated one.
+if install -m 755 "$SRC_DIR/scripts/storage-manager.sh" "$BIN_PATH.new" &&
+  bash -n "$BIN_PATH.new"; then
+  mv -f "$BIN_PATH.new" "$BIN_PATH" || die "could not move $BIN_PATH.new into place"
+else
+  rm -f "$BIN_PATH.new"
+  die "could not install $BIN_PATH (the previously installed copy, if any, is untouched)"
+fi
 
 log "Installing documentation to $DOC_DIR"
 for f in "$SRC_DIR/README.md" "$SRC_DIR/docs/STORAGE-MANAGER.md"; do

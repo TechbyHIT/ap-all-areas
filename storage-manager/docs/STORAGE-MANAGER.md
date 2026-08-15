@@ -647,6 +647,42 @@ closes it. The program reports the process and never kills it.
 
 ## Emergency recovery
 
+### The disk is 100% full and nothing will install
+
+At zero free space you cannot `git pull`, cannot install this program, and cannot
+write a file. Use commands that need no disk space of their own, in this order:
+
+```bash
+# 1. Is something still writing? A copy or build at the top of this list is the
+#    thing to stop. It is not serving traffic; the sites keep running.
+sudo ps -eo pid,etimes,args | grep -E ' cp | rsync |next build|npm ' | grep -v grep
+sudo kill <pid>
+
+# 2. The biggest files. A runaway log is the usual answer.
+sudo find /root /srv /var/www -xdev -type f -size +1G -printf '%10s  %p\n' \
+  2>/dev/null | sort -rn | head -20
+
+# 3. Empty a log in place — never rm it. A process holding it open would keep
+#    the space, and emptying needs no free space to succeed.
+sudo truncate -s 0 '<huge log file>'
+
+# 4. A bundle nested inside another bundle is duplicate data by definition, and
+#    only the outermost one is ever served, so this is safe while the site runs.
+sudo find /root /srv /var/www -maxdepth 12 -type d \
+  -path '*/.next/standalone/.next/standalone' -prune -print 2>/dev/null
+sudo rm -rf --one-file-system '<path from above>'
+
+# 5. Check, then install and let the timer keep it from happening again.
+df -h /
+```
+
+Do step 1 before the deletions, or what you free is written straight back.
+
+The installer refuses to run below 50 MB free rather than leaving a half-copied
+program behind, and prints this same list.
+
+### At 95% or above
+
 At 95% or above, the manager runs only system-level cleanup, then stops and
 writes `/var/log/storage-manager/CRITICAL-ALERT.txt`. It will not delete
 application data to save the disk. Manual sequence:

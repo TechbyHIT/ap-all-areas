@@ -1127,6 +1127,11 @@ t_installer_is_non_destructive() {
   done
   assert_contains "$body" "cleanup --dry-run"
   assert_contains "$body" 'read -r ANSWER'
+  # A full disk is exactly when this gets run, and a half-copied program is
+  # worse than none: refuse early, and never overwrite a working copy in place.
+  assert_contains "$body" "too little to install safely"
+  assert_contains "$body" '"$BIN_PATH.new"'
+  assert_contains "$body" 'mv -f "$BIN_PATH.new" "$BIN_PATH"'
 }
 
 t_uninstaller_preserves_data() {
