@@ -234,7 +234,9 @@ esac
 exit 0
 EOF
 
-  for c in npm yarn; do
+  # pnpm included deliberately: without a fake, a real `pnpm store prune` would
+  # run against the host's store, and the sandbox has to stay hermetic.
+  for c in npm yarn pnpm; do
     cat >"$FAKEBIN/$c" <<EOF
 #!/usr/bin/env bash
 printf '%s\n' "\$*" >>"\$SM_SPY/$c.log"
