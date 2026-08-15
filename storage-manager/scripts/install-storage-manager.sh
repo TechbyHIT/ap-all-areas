@@ -151,6 +151,35 @@ if [ -f "$CONF_FILE" ]; then
   log "Keeping the existing $CONF_FILE"
   info "the shipped example is at $CONF_DIR/storage-manager.conf.example — diff them if you want the new comments"
   install -m 644 "$SRC_DIR/config/storage-manager.conf.example" "$CONF_DIR/storage-manager.conf.example"
+
+  # A config written by an older version has none of the settings added since.
+  # Leaving them out entirely means an operator edits a key that is not there,
+  # sees no error, and believes a feature is on when it is off. Append the
+  # missing ones at their shipped defaults; existing values are never altered.
+  ADDED=""
+  while IFS= read -r line; do
+    case "$line" in
+    [A-Z]*=*) ;;
+    *) continue ;;
+    esac
+    key="${line%%=*}"
+    grep -q "^[[:space:]]*$key=" "$CONF_FILE" && continue
+    if [ -z "$ADDED" ]; then
+      {
+        printf '\n# ---------------------------------------------------------------\n'
+        printf '# Added by install-storage-manager.sh on %s: settings that did not\n' "$(date '+%F')"
+        printf '# exist when this file was written. All at their shipped defaults.\n'
+        printf '# See %s/storage-manager.conf.example for what each one does.\n' "$CONF_DIR"
+      } >>"$CONF_FILE"
+    fi
+    printf '%s\n' "$line" >>"$CONF_FILE"
+    ADDED="$ADDED $key"
+  done <"$SRC_DIR/config/storage-manager.conf.example"
+  if [ -n "$ADDED" ]; then
+    info "added new settings at their defaults:$ADDED"
+  else
+    info "no new settings to add"
+  fi
 else
   log "Installing $CONF_FILE"
   install -m 644 "$SRC_DIR/config/storage-manager.conf.example" "$CONF_FILE"

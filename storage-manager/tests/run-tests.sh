@@ -1270,6 +1270,11 @@ t_installer_is_non_destructive() {
   assert_contains "$body" "too little to install safely"
   assert_contains "$body" '"$BIN_PATH.new"'
   assert_contains "$body" 'mv -f "$BIN_PATH.new" "$BIN_PATH"'
+  # An existing config is never overwritten, but it must still gain settings
+  # added since it was written — otherwise an operator edits a key that is not
+  # there, sees no error, and believes a feature is on when it is off.
+  assert_contains "$body" "added new settings at their defaults"
+  assert_contains "$body" 'grep -q "^[[:space:]]*$key=" "$CONF_FILE" && continue'
 }
 
 t_uninstaller_preserves_data() {
