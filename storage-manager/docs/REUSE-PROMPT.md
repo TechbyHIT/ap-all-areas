@@ -5,6 +5,7 @@ Three things, in order of how urgently you are likely to need them:
 1. [Emergency runbook](#1-emergency-runbook-no-ai-needed) — the disk is full, act now
 2. [Emergency prompt](#2-emergency-prompt-disk-filling-or-full) — hand the incident to an agent
 3. [Safe-change prompt](#3-safe-change-prompt-storage-deploy-or-cleanup-work) — any future storage or deploy work
+4. [Build-cap prompt](#4-build-cap-prompt-a-site-whose-build-fills-the-disk) — a site whose build itself fills the disk
 
 The facts about this server are written into each prompt on purpose. An agent that
 has to guess the layout wastes your time and gives worse advice.
@@ -164,6 +165,63 @@ For building or changing anything that touches disk on this server.
 > would remove the need for the tool. On this server that answer was: cap the
 > prerender seed at build time. A cleanup tool that hides a build problem is a
 > worse outcome than fixing the build.
+
+---
+
+## 4. Build-cap prompt (a site whose build fills the disk)
+
+For the project that writes tens of GB of prerendered pages on every build. Paste
+this into a session opened **on that project's repository**, not this one.
+
+> **Role:** senior Next.js engineer working on a programmatic-SEO site (App
+> Router, `output: "standalone"`, deployed with PM2 behind nginx on a 193 GB VPS
+> shared with about a dozen other sites).
+>
+> **Problem:** this project's build prerenders far too many pages. On the server
+> it produced 156 GB under `.next/standalone/.next/server/app` as `.html`, `.rsc`
+> and `.meta` files — 71 GB under one city alone, 46 GB under the next — and
+> filled the disk to 100%. A sibling project in the same family had the identical
+> failure at 86 GB before it was capped.
+>
+> **Cause to confirm first, not assume:** a `generateStaticParams` that returns
+> the full cross-product of cities × areas × services/keywords. Find every
+> `generateStaticParams` in the repo and tell me how many paths each one returns
+> for the current data, before changing anything.
+>
+> **The fix, which a sibling repo already uses — copy the shape of it:**
+> - one config module (`src/config/prerender.ts`) exporting small integer caps
+>   read from env with **safe defaults baked in**, so a build with no environment
+>   set is already capped. The working values there are 2 cities, 8 areas per
+>   city, 8 keywords.
+> - every `generateStaticParams` truncates against those caps.
+> - `export const dynamicParams = true` on those routes, so any URL outside the
+>   seed still renders on the first request and is then cached by ISR.
+> - `export const revalidate = <seconds>` so cached pages refresh.
+>
+> **Hard constraints — do not trade SEO for disk:**
+> - No URL may stop working. The long tail must still return 200 on demand.
+> - Sitemaps must keep listing the full URL set. Only what is *prebuilt* shrinks;
+>   what is *reachable and indexable* does not change.
+> - Do not delete routes, change URL shapes, add `noindex`, or touch canonical
+>   tags, metadata or internal links.
+> - Do not reduce the seed to zero: keep the money pages prebuilt so the most
+>   valuable URLs are instant and never depend on a cold render.
+>
+> **Verify with numbers, not claims:**
+> ```bash
+> npm run build
+> du -sm .next/server/app                                    # target: under 1500
+> find .next/server/app -name '*.html' | wc -l               # prerendered count
+> # a URL deliberately outside the seed must still render:
+> npm run start & sleep 5
+> curl -s -o /dev/null -w '%{http_code}\n' 'http://localhost:3000/<uncapped-url>'
+> ```
+> Report the before and after for all three. A build over about 1.5 GB of
+> `server/app` on this fleet is still wrong.
+>
+> **Finally:** if this repo is simply an older clone of the sibling that already
+> has `src/config/prerender.ts`, say so instead of writing new code — the fix is
+> then a merge, not an implementation.
 
 ---
 
