@@ -10,6 +10,8 @@
 #   storage-manager cleanup --auto      threshold driven (what the timer runs)
 #   storage-manager cleanup --full      every enabled category, ignore thresholds
 #   storage-manager large-files         biggest files, never deleted automatically
+#   storage-manager investigate         where the space actually is, and what is
+#                                       still writing (read-only forensics)
 #   storage-manager open-deleted        deleted-but-still-open files
 #   storage-manager health              self check
 #   storage-manager explain             why it would do what it would do
@@ -108,6 +110,9 @@ PROJECT_SCAN_INTERVAL_MIN=360
 LARGE_FILE_SCAN_INTERVAL_MIN=1440
 LARGE_FILE_MIN_MB=500
 LARGE_FILE_SCAN_ROOTS="/"
+# Seconds `investigate` samples for, to measure whether the disk is still
+# filling and which process is writing.
+INVESTIGATE_SAMPLE_SEC=10
 # A recently touched build/release tree means a deploy may still be running.
 DEPLOY_RECENT_MIN=10
 NICE_LEVEL=19
@@ -171,8 +176,8 @@ ALLOW_NODE_MODULES_CLEANUP ALLOW_STALE_RELEASE_CLEANUP KEEP_RELEASES
 STATE_DIR LOG_DIR LOCK_FILE DEPLOY_LOCK_DIR GLOBAL_DEPLOY_LOCKS PM2_LOG_DIRS
 NGINX_LOG_DIR SYSTEM_LOG_DIR TEMP_DIRS PKG_CACHE_PATHS PROTECTED_PATHS
 PROJECT_SCAN_INTERVAL_MIN LARGE_FILE_SCAN_INTERVAL_MIN LARGE_FILE_MIN_MB
-LARGE_FILE_SCAN_ROOTS DEPLOY_RECENT_MIN NICE_LEVEL LOG_MAX_SIZE_MB LOG_KEEP
-ALERT_COMMAND"
+LARGE_FILE_SCAN_ROOTS INVESTIGATE_SAMPLE_SEC DEPLOY_RECENT_MIN NICE_LEVEL
+LOG_MAX_SIZE_MB LOG_KEEP ALERT_COMMAND"
 
 sm_conf_key_known() {
   local key="$1" known
@@ -237,7 +242,8 @@ sm_validate_config() {
     AGGRESSIVE_USAGE_PERCENT CRITICAL_USAGE_PERCENT EMERGENCY_USAGE_PERCENT \
     TARGET_FREE_GB LOG_RETENTION_DAYS TEMP_RETENTION_DAYS DISCOVERY_MAX_DEPTH \
     KEEP_RELEASES PROJECT_SCAN_INTERVAL_MIN LARGE_FILE_SCAN_INTERVAL_MIN \
-    LARGE_FILE_MIN_MB DEPLOY_RECENT_MIN NICE_LEVEL LOG_MAX_SIZE_MB LOG_KEEP; do
+    LARGE_FILE_MIN_MB DEPLOY_RECENT_MIN NICE_LEVEL LOG_MAX_SIZE_MB LOG_KEEP \
+    INVESTIGATE_SAMPLE_SEC; do
     value="${!name}"
     if ! sm_is_int "$value"; then
       printf 'ERROR: %s must be a whole number, got "%s"\n' "$name" "$value" >&2
@@ -773,6 +779,8 @@ sm_categories_for_level() {
 
 SM_PM2_AVAILABLE=0
 SM_PM2_TSV=""
+SM_PM2_CLAIMED=" "
+declare -A SM_PM2_MATCH=()
 
 sm_pm2_load() {
   SM_PM2_TSV=""
@@ -848,36 +856,73 @@ process.stdin.on("end", () => {
   return 2
 }
 
-# Echoes "name status pid uptime restarts" (tab separated) for the PM2 app whose
-# working directory belongs to $1, or nothing.
+# Echoes "name status pid uptime restarts" (tab separated) for the PM2 app that
+# belongs to directory $1, or nothing.
+#
+# mode=strict  only a real match: the app's cwd or executable lives in the tree
+# mode=name    the weaker fallback of app name == directory name, used only for
+#              a directory nothing claimed and an app nobody claimed
+#
+# The distinction matters on a server where the same site exists in two places
+# (say /root/x and /srv/sites/x): matching on name alone would report both as
+# ONLINE, inflate the project counts, and hide which copy is actually served.
 sm_pm2_for_dir() {
-  local dir="$1" rdir name status pid cwd uptime restarts exec_path rcwd
+  local dir="$1" mode="${2:-strict}"
+  local rdir name status pid cwd uptime restarts exec_path rcwd rexec
   [ "$SM_PM2_AVAILABLE" = 1 ] || return 1
   rdir="$(sm_realpath "$dir")"
   [ -n "$rdir" ] || return 1
   while IFS=$'\t' read -r name status pid cwd uptime restarts exec_path; do
     [ -n "$name" ] || continue
-    if [ -n "$cwd" ]; then
-      rcwd="$(sm_realpath "$cwd")"
-      if [ -n "$rcwd" ] && sm_path_within "$rcwd" "$rdir"; then
-        printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$status" "$pid" "$uptime" "$restarts"
-        return 0
+    if [ "$mode" = "strict" ]; then
+      if [ -n "$cwd" ]; then
+        rcwd="$(sm_realpath "$cwd")"
+        if [ -n "$rcwd" ] && sm_path_within "$rcwd" "$rdir"; then
+          printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$status" "$pid" "$uptime" "$restarts"
+          return 0
+        fi
       fi
-    fi
-    if [ -n "$exec_path" ]; then
-      local rexec
-      rexec="$(sm_realpath "$exec_path")"
-      if [ -n "$rexec" ] && sm_path_within "$rexec" "$rdir"; then
-        printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$status" "$pid" "$uptime" "$restarts"
-        return 0
+      if [ -n "$exec_path" ]; then
+        rexec="$(sm_realpath "$exec_path")"
+        if [ -n "$rexec" ] && sm_path_within "$rexec" "$rdir"; then
+          printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$status" "$pid" "$uptime" "$restarts"
+          return 0
+        fi
       fi
+      continue
     fi
     if [ "$name" = "$(basename -- "$rdir")" ]; then
+      case "$SM_PM2_CLAIMED" in *" $name "*) continue ;; esac
       printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$status" "$pid" "$uptime" "$restarts"
       return 0
     fi
   done <<<"$SM_PM2_TSV"
   return 1
+}
+
+# Assigns PM2 apps to directories in two passes so that a real cwd match always
+# wins over a name coincidence. Fills SM_PM2_MATCH, keyed by directory.
+sm_pm2_assign() {
+  SM_PM2_MATCH=()
+  SM_PM2_CLAIMED=" "
+  local dir row name
+  for dir in "$@"; do
+    [ -n "$dir" ] || continue
+    if row="$(sm_pm2_for_dir "$dir" strict)"; then
+      SM_PM2_MATCH["$dir"]="$row"
+      name="${row%%$'\t'*}"
+      SM_PM2_CLAIMED="$SM_PM2_CLAIMED$name "
+    fi
+  done
+  for dir in "$@"; do
+    [ -n "$dir" ] || continue
+    [ -n "${SM_PM2_MATCH[$dir]:-}" ] && continue
+    if row="$(sm_pm2_for_dir "$dir" name)"; then
+      SM_PM2_MATCH["$dir"]="$row"
+      name="${row%%$'\t'*}"
+      SM_PM2_CLAIMED="$SM_PM2_CLAIMED$name "
+    fi
+  done
 }
 
 sm_pm2_count() {
@@ -1137,8 +1182,14 @@ sm_projects_analyze() {
   SM_PROJECT_ROWS=()
   local dir slug kind state pm2_row pm2_name pm2_status pm2_pid pm2_uptime
   local restarts git_row repo branch dirty commit size protect reason
+  local -a dirs=()
 
   while read -r dir; do
+    [ -n "$dir" ] && dirs+=("$dir")
+  done < <(sm_project_dirs)
+  sm_pm2_assign "${dirs[@]:-}"
+
+  for dir in "${dirs[@]:-}"; do
     [ -n "$dir" ] || continue
     slug="$(basename -- "$dir")"
     kind="$(sm_project_kind "$dir")"
@@ -1154,7 +1205,8 @@ sm_projects_analyze() {
       protect="deploying: $reason"
     fi
 
-    if pm2_row="$(sm_pm2_for_dir "$dir")"; then
+    pm2_row="${SM_PM2_MATCH[$dir]:-}"
+    if [ -n "$pm2_row" ]; then
       IFS=$'\t' read -r pm2_name pm2_status pm2_pid pm2_uptime restarts <<<"$pm2_row"
       if [ "$state" != "DEPLOYING" ]; then
         case "$pm2_status" in
@@ -1232,9 +1284,14 @@ sm_projects_load() {
 }
 
 sm_projects_refresh_volatile() {
-  local -a out=()
+  local -a out=() dirs=()
   local row dir kind slug state pm2_name pm2_status pm2_pid restarts branch dirty commit size protect
   local pm2_row reason pm2_uptime
+  for row in "${SM_PROJECT_ROWS[@]:-}"; do
+    [ -n "$row" ] || continue
+    dirs+=("$(printf '%s' "$row" | cut -f1)")
+  done
+  sm_pm2_assign "${dirs[@]:-}"
   for row in "${SM_PROJECT_ROWS[@]:-}"; do
     [ -n "$row" ] || continue
     IFS=$'\t' read -r dir kind slug state pm2_name pm2_status pm2_pid restarts branch dirty commit size protect <<<"$row"
@@ -1251,7 +1308,8 @@ sm_projects_refresh_volatile() {
       state="DEPLOYING"
       protect="deploying: $reason"
     fi
-    if pm2_row="$(sm_pm2_for_dir "$dir")"; then
+    pm2_row="${SM_PM2_MATCH[$dir]:-}"
+    if [ -n "$pm2_row" ]; then
       IFS=$'\t' read -r pm2_name pm2_status pm2_pid pm2_uptime restarts <<<"$pm2_row"
       if [ "$state" != "DEPLOYING" ]; then
         case "$pm2_status" in
@@ -2055,6 +2113,35 @@ sm_cmd_report() {
     total=$((total + SM_CATEGORY_MB[i]))
   done
   printf '\n  %-16s %10s\n' "TOTAL SAFE" "$(sm_mb_human "$total")"
+
+  # A report that stops here is useless in the situation that matters most: the
+  # disk full of application data, safe categories offering nothing. Say so, and
+  # say where the space actually is.
+  local need=$((TARGET_FREE_GB * 1024 - SM_DISK_FREE_MB))
+  if [ "$need" -gt 0 ] && [ "$total" -lt "$need" ]; then
+    sm_say ""
+    printf '  Safe cleanup cannot reach the target on its own: %s short, %s available.\n' \
+      "$(sm_mb_human "$need")" "$(sm_mb_human "$total")"
+    sm_say "  The rest of the disk is application data, which is never removed"
+    sm_say "  automatically. The largest of it:"
+    sm_say ""
+    local row dir kind slug state rest size
+    while IFS=$'\t' read -r size dir slug state; do
+      [ -n "$dir" ] || continue
+      printf '    %10s  %-24s %-9s %s\n' "$(sm_mb_human "$size")" "${slug:0:24}" "$state" "$dir"
+    done < <(
+      for row in "${SM_PROJECT_ROWS[@]:-}"; do
+        [ -n "$row" ] || continue
+        IFS=$'\t' read -r dir kind slug state rest <<<"$row"
+        size="$(printf '%s' "$row" | cut -f12)"
+        printf '%s\t%s\t%s\t%s\n' "${size:-0}" "$dir" "$slug" "$state"
+      done | sort -rn | head -5
+    )
+    sm_say ""
+    sm_say "  For what is inside those, whether the disk is still filling, which"
+    sm_say "  process is writing, and which parts are duplicates:"
+    sm_say "      storage-manager investigate"
+  fi
   sm_say ""
   sm_hr
   sm_say "PROTECTED — never removed automatically"
@@ -2183,6 +2270,208 @@ sm_large_file_verdict() {
   esac
 }
 
+# Read-only forensics for the case safe cleanup cannot solve: the disk is full
+# of application data. It answers two questions the report deliberately will not
+# act on — where the space actually is, and whether something is still writing.
+# It deletes nothing and prints the command for each finding instead.
+sm_cmd_investigate() {
+  local sample="${1:-$INVESTIGATE_SAMPLE_SEC}"
+  sm_disk_read || return 1
+  local free_before="$SM_DISK_FREE_MB"
+
+  sm_rule
+  sm_say " INVESTIGATE — where the space is, and what is taking it"
+  sm_say " Read-only. Nothing here is deleted; each finding prints its own fix."
+  sm_rule
+
+  # ------------------------------------------------------------------ growth
+  sm_say ""
+  sm_say "DISK"
+  printf '  %s total, %s used, %s free (%s%%)\n' \
+    "$(sm_mb_human "$SM_DISK_SIZE_MB")" "$(sm_mb_human "$SM_DISK_USED_MB")" \
+    "$(sm_mb_human "$SM_DISK_FREE_MB")" "$SM_DISK_PCT"
+
+  local -A io_before=()
+  local pid io_pid bytes
+  if [ -r /proc/self/io ]; then
+    for pid in /proc/[0-9]*; do
+      io_pid="${pid#/proc/}"
+      [ -r "$pid/io" ] || continue
+      bytes="$(awk '/^write_bytes:/ {print $2}' "$pid/io" 2>/dev/null)"
+      [ -n "$bytes" ] && io_before[$io_pid]="$bytes"
+    done
+  fi
+
+  sleep "$sample"
+  sm_disk_read || true
+  local delta=$((free_before - SM_DISK_FREE_MB))
+  local rate
+  rate="$(awk -v d="$delta" -v s="$sample" 'BEGIN { printf "%.1f", (d * 1024) / s }')"
+  if [ "$delta" -gt 0 ]; then
+    printf '  growth:  %s MB used in %ss  =  %s KB/s still being written\n' \
+      "$delta" "$sample" "$rate"
+    if [ "$delta" -gt 0 ]; then
+      local eta
+      eta="$(awk -v free="$SM_DISK_FREE_MB" -v d="$delta" -v s="$sample" \
+        'BEGIN { printf "%.0f", (free / d) * s / 60 }')"
+      printf '  FULL IN ABOUT %s MINUTES at this rate — find the writer below first\n' "$eta"
+    fi
+  elif [ "$delta" -lt 0 ]; then
+    printf '  trend:   %s MB freed during the %ss sample\n' "$((-delta))" "$sample"
+  else
+    printf '  trend:   flat over %ss — nothing is writing hard right now\n' "$sample"
+  fi
+
+  # ----------------------------------------------------------- top writers
+  if [ "${#io_before[@]}" -gt 0 ]; then
+    sm_say ""
+    sm_say "TOP WRITERS (bytes written during the sample)"
+    local out_lines
+    out_lines="$(
+      for pid in /proc/[0-9]*; do
+        io_pid="${pid#/proc/}"
+        [ -r "$pid/io" ] || continue
+        bytes="$(awk '/^write_bytes:/ {print $2}' "$pid/io" 2>/dev/null)"
+        [ -n "$bytes" ] || continue
+        local prev="${io_before[$io_pid]:-}"
+        [ -n "$prev" ] || continue
+        local diff=$((bytes - prev))
+        [ "$diff" -gt 0 ] || continue
+        local args
+        args="$(tr '\0' ' ' <"$pid/cmdline" 2>/dev/null | cut -c1-90)"
+        [ -n "$args" ] || args="$(cat "$pid/comm" 2>/dev/null)"
+        printf '%s\t%s\t%s\n' "$diff" "$io_pid" "$args"
+      done | sort -rn | head -8
+    )"
+    if [ -n "$out_lines" ]; then
+      printf '%s\n' "$out_lines" | while IFS=$'\t' read -r diff io_pid args; do
+        printf '  %8s KB/s  pid %-7s %s\n' \
+          "$(awk -v d="$diff" -v s="$sample" 'BEGIN { printf "%.0f", d / 1024 / s }')" \
+          "$io_pid" "$args"
+      done
+      sm_say "  A deploy, build or copy at the top of this list is the thing to stop."
+      sm_say "  A serving node process near the top is usually writing its own log."
+    else
+      sm_say "  nothing measurable"
+    fi
+  else
+    sm_say ""
+    sm_say "TOP WRITERS: /proc/<pid>/io is unreadable — run this as root to see them"
+  fi
+
+  # -------------------------------------------------------- biggest projects
+  sm_pm2_load || true
+  sm_deploy_scan
+  sm_projects_load "${2:-0}"
+  sm_say ""
+  sm_say "LARGEST PROJECTS (application data — never touched automatically)"
+  local row dir kind slug state rest size
+  local -a biggest=()
+  while IFS=$'\t' read -r size dir slug state; do
+    [ -n "$dir" ] || continue
+    printf '  %10s  %-26s %-9s %s\n' "$(sm_mb_human "$size")" "${slug:0:26}" "$state" "$dir"
+    biggest+=("$dir")
+  done < <(
+    for row in "${SM_PROJECT_ROWS[@]:-}"; do
+      [ -n "$row" ] || continue
+      IFS=$'\t' read -r dir kind slug state rest <<<"$row"
+      size="$(printf '%s' "$row" | cut -f12)"
+      printf '%s\t%s\t%s\t%s\n' "${size:-0}" "$dir" "$slug" "$state"
+    done | sort -rn | head -8
+  )
+
+  # ------------------------------------------- what is big inside the biggest
+  local target="${biggest[0]:-}"
+  if [ -n "$target" ]; then
+    sm_say ""
+    printf 'INSIDE %s (largest first)\n' "$target"
+    sm_nice du -xm --max-depth=3 "$target" 2>/dev/null | sort -rn | head -12 |
+      while read -r mb path; do
+        printf '  %10s  %s\n' "$(sm_mb_human "$mb")" "$path"
+      done
+  fi
+
+  # ------------------------------------------------ nested standalone bundles
+  # A standalone bundle inside another standalone bundle is always an artifact:
+  # a prepare step copied its destination into itself, so each build wrapped the
+  # previous copy in another layer. Only the outermost bundle is ever served.
+  sm_say ""
+  sm_say "NESTED STANDALONE BUNDLES (a bundle inside a bundle)"
+  local found=0 nested root
+  while read -r root; do
+    [ -d "$root" ] || continue
+    while read -r nested; do
+      [ -n "$nested" ] || continue
+      found=1
+      printf '  %10s  %s\n' "$(sm_mb_human "$(sm_du_mb "$nested")")" "$nested"
+    done < <(sm_nice find "$root" -maxdepth 10 -type d \
+      -path '*/.next/standalone/.next/standalone' -prune -print 2>/dev/null)
+  done < <(sm_expand "$DISCOVERY_ROOTS")
+  if [ "$found" = 1 ]; then
+    cat <<'EOF'
+  These are duplicates of the bundle already being served, and they grow by one
+  layer on every build. Only the outermost bundle is ever loaded, so removing
+  the nested copies does not affect a running site. This is not done for you:
+  it is inside a live project, so it stays an operator decision.
+
+      sudo rm -rf --one-file-system <path from the list above>
+
+  Then fix the cause, or it comes back on the next build: the project's
+  prepare/copy step is copying .next/standalone into itself. It must copy
+  .next/static and public INTO the bundle, never the bundle into itself.
+EOF
+  else
+    sm_say "  none found"
+  fi
+
+  # ------------------------------------------------------------- duplicates
+  sm_say ""
+  sm_say "DUPLICATE PROJECT DIRECTORIES (same name under more than one root)"
+  local -A seen_slug=()
+  local dup=0
+  for row in "${SM_PROJECT_ROWS[@]:-}"; do
+    [ -n "$row" ] || continue
+    IFS=$'\t' read -r dir kind slug state rest <<<"$row"
+    if [ -n "${seen_slug[$slug]:-}" ]; then
+      dup=1
+      printf '  %s\n' "$slug"
+      printf '      %s\n' "${seen_slug[$slug]}"
+      printf '      %s (%s)\n' "$dir" "$state"
+    else
+      seen_slug[$slug]="$dir ($state)"
+    fi
+  done
+  if [ "$dup" = 1 ]; then
+    sm_say "  Two copies of the same site cost twice the disk. Confirm which one PM2"
+    sm_say "  actually serves before touching either:"
+    sm_say "      pm2 describe <app> | grep -E 'script path|exec cwd'"
+  else
+    sm_say "  none found"
+  fi
+
+  # ------------------------------------------------------- phantom space
+  sm_say ""
+  sm_say "DELETED BUT STILL OPEN"
+  sm_cmd_open_deleted | sed 's/^/  /'
+
+  sm_say ""
+  sm_rule
+  sm_say " SUGGESTED ORDER OF WORK"
+  sm_rule
+  cat <<'EOF'
+  1. If a copy, build or deploy process is at the top of TOP WRITERS, stop that
+     one process. It is not serving traffic; the sites keep running.
+  2. Remove any nested standalone bundle listed above. That is usually the whole
+     problem, and it is duplicate data by definition.
+  3. Re-check:  storage-manager status
+  4. Only then consider the duplicate project directories, one at a time, after
+     confirming which copy PM2 serves.
+  5. When there is headroom again, enable the timer so preventive cleanup keeps
+     the disk from reaching this state:
+         systemctl enable --now storage-manager.timer
+EOF
+}
+
 sm_cmd_open_deleted() {
   if ! command -v lsof >/dev/null 2>&1; then
     sm_say "lsof is not installed, so deleted-but-open files cannot be detected."
@@ -2193,8 +2482,10 @@ sm_cmd_open_deleted() {
   sm_say "process closes them — and this program never kills a process to do it."
   sm_say ""
   local out
+  # lsof appends "(deleted)" after the path, so the path is the field before it.
   out="$(lsof -nP +L1 2>/dev/null | awk 'NR > 1 && $7 + 0 > 10485760 {
-    printf "%-14s %-8s %12.1f MB  %s\n", $1, $2, $7 / 1048576, $NF
+    path = ($NF == "(deleted)" && NF > 1) ? $(NF - 1) : $NF
+    printf "%-14s %-8s %12.1f MB  %s\n", $1, $2, $7 / 1048576, path
   }' | sort -k3 -rn | head -40)"
   if [ -z "$out" ]; then
     sm_say "None over 10 MB."
@@ -2484,6 +2775,15 @@ sm_main() {
   large-files)
     for arg in "$@"; do [ "$arg" = "--force" ] && force=1; done
     sm_cmd_large_files "$force"
+    ;;
+  investigate)
+    for arg in "$@"; do [ "$arg" = "--force" ] && force=1; done
+    local sample="$INVESTIGATE_SAMPLE_SEC"
+    for arg in "$@"; do
+      case "$arg" in --sample=*) sample="${arg#--sample=}" ;; esac
+    done
+    SM_DRY_RUN=1
+    sm_cmd_investigate "$sample" "$force"
     ;;
   open-deleted | deleted-open) sm_cmd_open_deleted ;;
   health) sm_cmd_health ;;

@@ -930,6 +930,72 @@ t_symlinked_root_still_works() {
   rm -rf "$link" "$SANDBOX/mnt" "$SANDBOX/tmp/old-link"
 }
 
+t_duplicate_dirs_do_not_both_look_online() {
+  # A real server had the same site in two places. Matching PM2 apps on name
+  # alone reported both copies as ONLINE, inflated the counts, and hid which
+  # copy was actually being served. The copy PM2 runs from must win.
+  local twin="$SITES/extra/site-1"
+  mkdir -p "$twin"
+  printf '{"name":"site-1"}\n' >"$twin/package.json"
+  drop_cache
+  local out
+  out="$(FAKE_PCT=50 sm projects --force)"
+  # site-1 proper is ONLINE (PM2's cwd resolves into it); the twin is not.
+  printf '%s' "$out" | grep -qE '^site-1 +nextjs +ONLINE' || fail "the served copy should be ONLINE"
+  # However many sites earlier tests added, ONLINE can never exceed the number of
+  # apps PM2 actually reports as online.
+  local online expected
+  online="$(printf '%s' "$out" | grep -c ' ONLINE ')"
+  expected="$(grep -c "$(printf '\tonline\t')" "$SM_PM2_SPEC")"
+  assert_eq "$online" "$expected" "ONLINE count must match the running PM2 apps"
+  printf '%s' "$out" | grep -A2 "$twin" | grep -q 'no PM2 process maps to this directory' ||
+    fail "the unserved twin should report that no PM2 process maps to it"
+  rm -rf "$SITES/extra"
+  drop_cache
+}
+
+t_investigate_finds_the_elephant() {
+  # The case safe cleanup cannot solve: the disk is full of application data.
+  # investigate has to name where it is instead of reporting 0 MB reclaimable.
+  local nested="$SITES/site-1/.next/standalone/.next/standalone"
+  mkdir -p "$nested/chunks"
+  head -c 2000000 /dev/zero >"$nested/chunks/duplicate.js" 2>/dev/null
+  local out
+  out="$(FAKE_PCT=99 sm investigate --sample=1 --force)"
+  assert_contains "$out" "NESTED STANDALONE BUNDLES"
+  assert_contains "$out" "$nested"
+  assert_contains "$out" "LARGEST PROJECTS"
+  assert_contains "$out" "INSIDE"
+  assert_contains "$out" "DELETED BUT STILL OPEN"
+  assert_contains "$out" "SUGGESTED ORDER OF WORK"
+  # Read-only: the finding is reported, never acted on.
+  assert_exists "$nested/chunks/duplicate.js"
+  assert_exists "$SITES/site-1/shared/.env"
+  rm -rf "$SITES/site-1/.next"
+  drop_cache
+}
+
+t_report_points_at_application_data() {
+  reset_optins
+  drop_cache
+  local out
+  out="$(FAKE_PCT=99 sm report --force)"
+  assert_contains "$out" "Safe cleanup cannot reach the target on its own"
+  assert_contains "$out" "storage-manager investigate"
+  # And when the disk is fine, that advice must not appear.
+  out="$(FAKE_PCT=50 sm report)"
+  assert_not_contains "$out" "Safe cleanup cannot reach the target"
+}
+
+t_open_deleted_shows_the_path() {
+  local out
+  out="$(sm open-deleted)"
+  # The fake reports "/var/log/deleted-by-someone.log (deleted)". lsof puts the
+  # marker last, so a naive $NF prints "(deleted)" instead of the file.
+  assert_contains "$out" "deleted-by-someone.log"
+  assert_not_contains "$out" "MB  (deleted)"
+}
+
 t_category_accounting() {
   reset_optins
   drop_cache
@@ -1228,6 +1294,10 @@ run_test 'large files are reported, never deleted' t_large_files_never_deleted
 run_test 'deleted-but-open files are reported, never killed' t_open_deleted_reported_not_killed
 run_test 'report and health commands work' t_report_and_health
 run_test 'the audit trail records before, after and guarantees' t_audit_trail_written
+run_test 'duplicate directories do not both look online' t_duplicate_dirs_do_not_both_look_online
+run_test 'investigate names where the space actually is' t_investigate_finds_the_elephant
+run_test 'the report points at application data when safe cleanup cannot reach the target' t_report_points_at_application_data
+run_test 'open-deleted prints the file path, not the marker' t_open_deleted_shows_the_path
 run_test 'a symlinked root is handled, a symlink below it is refused' t_symlinked_root_still_works
 run_test 'per-category totals are accounted honestly' t_category_accounting
 run_test 'the safety gate holds when running as root' t_root_pass_when_available

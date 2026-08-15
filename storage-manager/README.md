@@ -23,7 +23,7 @@ storage-manager/
 ├── config/
 │   ├── storage-manager.conf.example    every threshold and path
 │   └── logrotate.storage-manager       so its own logs stay bounded
-├── tests/run-tests.sh                  37 tests in a sandbox with fake pm2/df
+├── tests/run-tests.sh                  41 tests in a sandbox with fake pm2/df
 └── docs/STORAGE-MANAGER.md             the full manual
 ```
 
@@ -47,6 +47,7 @@ storage-manager projects            # every project, its state, why it is protec
 storage-manager cleanup --dry-run   # decide everything, change nothing
 storage-manager cleanup --safe      # system-level cleanup, ignore thresholds
 storage-manager large-files         # biggest files, never deleted automatically
+storage-manager investigate         # where the space actually is, what is writing
 storage-manager open-deleted        # space held by deleted-but-open files
 storage-manager health              # disk, PM2, nginx, timer, config, locks
 storage-manager explain             # why it would do what it would do
@@ -92,7 +93,7 @@ loses the evidence of why it is crashing.
 ## Tests
 
 ```bash
-bash storage-manager/tests/run-tests.sh              # 37 tests
+bash storage-manager/tests/run-tests.sh              # 41 tests
 bash storage-manager/tests/run-tests.sh --keep       # keep the sandbox to poke at
 FAKE_PCT=92 bash storage-manager/tests/run-tests.sh --demo
 ```
@@ -107,6 +108,31 @@ Everything runs in a throwaway sandbox with fake `df`, `pm2`, `journalctl`,
 `apt-get`, `logrotate`, `lsof`, `nginx` and `systemctl` on `PATH`. The fakes
 double as spies, so the suite can assert that no application-disturbing command
 was issued even once across every scenario, including a full run at 97% full.
+
+## When safe cleanup is not enough
+
+Safe categories only reclaim what the operating system owns — on a healthy box
+that is a few GB. If the disk is full of *application* data, the report says so
+rather than reporting nothing useful, and points at `investigate`:
+
+```bash
+storage-manager investigate
+```
+
+Read-only forensics for that case. It samples the disk to show whether space is
+still being lost and at what rate, ranks the processes actually writing, lists
+the largest projects and what is big inside the biggest one, then flags two
+specific pathologies with the command to fix each:
+
+- **nested standalone bundles** — a `.next/standalone` inside another one. Always
+  an artifact of a prepare step copying its destination into itself, growing by a
+  layer per build. Only the outermost bundle is served, so the inner copies are
+  duplicates. One site in this fleet's history reached 84 GB this way.
+- **duplicate project directories** — the same site under two roots, costing
+  twice the disk, where PM2 only serves one.
+
+Neither is ever removed automatically: both live inside live projects, so they
+stay operator decisions.
 
 ## Relationship to `deploy/disk-guard.sh`
 

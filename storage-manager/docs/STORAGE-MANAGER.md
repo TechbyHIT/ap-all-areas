@@ -468,6 +468,7 @@ reason:
 | `cleanup --auto` | threshold driven, stops at the target (what the timer runs) |
 | `cleanup --full` | every enabled category including opt-ins, regardless of thresholds |
 | `large-files` | files over `LARGE_FILE_MIN_MB` with owner, project, open state and a verdict; deletes nothing |
+| `investigate` | read-only forensics for a disk full of application data: growth rate, top writers, largest projects, nested standalone bundles, duplicate directories, phantom space |
 | `open-deleted` | deleted-but-still-open files and the processes holding them |
 | `health` | disk, PM2, nginx, discovery, timer, config, logging, lock, state, legacy cron |
 | `explain` | the ladder, the current level, and everything that never happens |
@@ -544,7 +545,7 @@ Everything runs under `nice -n 19` and `ionice -c3`, and the unit adds
 ## Tests
 
 ```bash
-bash tests/run-tests.sh                     # 37 tests
+bash tests/run-tests.sh                     # 41 tests
 bash tests/run-tests.sh --keep              # keep the sandbox afterwards
 bash tests/run-tests.sh --filter pm2        # only matching tests
 FAKE_PCT=92 bash tests/run-tests.sh --demo  # rehearse the validation report
@@ -608,6 +609,30 @@ journalctl -u storage-manager.service --since today
 **`[FAILED]` records in the log.** One operation failed — permissions, or a file
 that vanished mid-run. The pass continues with the remaining categories and never
 falls back to anything more destructive. The reason is in the record.
+
+**Full of application data, and safe cleanup offers nothing.** This is the case
+the safe categories cannot solve, and the report says so explicitly instead of
+printing a reassuring zero:
+
+```bash
+storage-manager investigate
+```
+
+It samples the disk over `INVESTIGATE_SAMPLE_SEC` seconds to show whether space
+is still being lost and how fast, ranks processes by bytes actually written
+(from `/proc/<pid>/io`, so run it as root), lists the largest projects and what
+is big inside the biggest, and flags two specific pathologies:
+
+- a `.next/standalone` nested inside another `.next/standalone`, which is always
+  a prepare step copying its destination into itself and grows a layer per build
+- the same project under two roots, where PM2 serves only one copy
+
+Both are reported with the command to fix them and neither is ever removed
+automatically: they live inside live projects.
+
+If a copy, build or deploy process is at the top of the writer list, stopping
+that one process is safe — it is not serving traffic. That remains your call,
+not the program's.
 
 **Disk full but `du` shows nothing.**
 
