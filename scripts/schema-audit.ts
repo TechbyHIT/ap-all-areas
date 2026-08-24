@@ -9,8 +9,8 @@ async function main() {
     {
       name: "breadcrumb",
       data: breadcrumbSchema([
-        { name: "Home", url: "http://localhost:3000/" },
-        { name: "Services", url: "http://localhost:3000/services/" },
+        { name: "Home", url: "http://localhost:3001/" },
+        { name: "Services", url: "http://localhost:3001/services/" },
       ]),
     },
   ];

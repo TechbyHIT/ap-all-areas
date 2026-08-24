@@ -8,7 +8,7 @@
     "prepare:standalone": "node scripts/prepare-standalone.mjs",
     "build:standalone": "npm run build && npm run prepare:standalone",
     "start": "next start -p 3001",
-    "start:standalone": "node .next/standalone/server.js",
+    "start:standalone": "PORT=${PORT:-3001} HOSTNAME=${HOSTNAME:-localhost} node .next/standalone/server.js",
     "pm2:start": "pm2 start ecosystem.config.cjs",
     "pm2:reload": "pm2 reload ecosystem.config.cjs --update-env",
     "pm2:stop": "pm2 stop sk-invisible-grills",

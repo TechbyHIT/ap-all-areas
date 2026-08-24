@@ -232,6 +232,19 @@ else
 fi
 pm2 save >/dev/null 2>&1 || warn "pm2 save failed"
 
+# Keep nginx able to reach Next on whichever loopback family it bound, without
+# regenerating the vhost (that would wipe certbot's TLS server block).
+VHOST="$AP_NGINX_AVAILABLE/$SLUG.conf"
+if [ -f "$VHOST" ]; then
+  log "Syncing nginx upstream for $SLUG on port $PORT (IPv4 + IPv6 loopback)"
+  if out="$(sync_nginx_upstream "$VHOST" "$SLUG" "$PORT")"; then
+    [ -n "$out" ] && info "$out"
+    nginx_reload || warn "nginx reload failed after upstream sync — health check may 502"
+  else
+    warn "nginx upstream sync failed for $SLUG"
+  fi
+fi
+
 # If PM2 did not read the file as config it will have run it as a script, so no
 # app called $SLUG exists and the health check below would fail for a reason
 # that has nothing to do with the app.

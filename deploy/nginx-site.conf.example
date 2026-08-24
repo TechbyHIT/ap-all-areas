@@ -1,13 +1,16 @@
-# nginx reverse proxy → PM2 Next.js standalone (port 3000)
+# nginx reverse proxy → PM2 Next.js standalone (port 3001)
 # Copy to: /etc/nginx/sites-available/skinvisiblegrills.conf
 # Enable:  ln -s /etc/nginx/sites-available/skinvisiblegrills.conf /etc/nginx/sites-enabled/
 # Test:    nginx -t && systemctl reload nginx
 #
 # Multi-site: one server{} block per domain, change server_name + proxy_pass port
-# (3000, 3001, 3002…).
+# (3001, 3002, 3003…).
 
 upstream sk_invisible_grills_node {
-    server 127.0.0.1:3000;
+    # HOSTNAME=localhost binds one loopback family; list both so nginx 502s
+    # do not appear when the kernel prefers IPv4 or IPv6.
+    server [::1]:3001 max_fails=1 fail_timeout=10s;
+    server 127.0.0.1:3001 max_fails=1 fail_timeout=10s;
     keepalive 64;
 }
 

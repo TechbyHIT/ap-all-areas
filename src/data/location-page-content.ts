@@ -95,10 +95,6 @@ function joinNearby(nearbyPlaces?: string[]): string {
   return `${nearbyPlaces.slice(0, -1).join(", ")} and ${nearbyPlaces[nearbyPlaces.length - 1]}`;
 }
 
-function districtPhrase(district?: string): string {
-  return district ? ` in ${district} district` : " in Andhra Pradesh";
-}
-
 function coverageSentence(locationName: string): string {
   return `We provide installation services across ${locationName} subject to site accessibility, measurements, technician availability and project requirements.`;
 }

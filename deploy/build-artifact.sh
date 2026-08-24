@@ -70,7 +70,10 @@ git clone --depth 1 --branch "$BRANCH" "$REPO" "$WORK"
 
 (
   cd "$WORK"
-  npm ci --no-audit --no-fund --prefer-offline
+  npm ci --no-audit --no-fund --prefer-offline || {
+    echo "WARN: npm ci failed (lock drift) — falling back to npm install" >&2
+    npm install --no-audit --no-fund
+  }
   export NODE_ENV=production
   export NEXT_TELEMETRY_DISABLED=1
   export NODE_OPTIONS="--max-old-space-size=$AP_NODE_MAX_OLD_SPACE"

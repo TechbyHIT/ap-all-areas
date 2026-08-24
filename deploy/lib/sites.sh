@@ -156,6 +156,49 @@ render_template() {
   printf '%s\n' "$body" >"$dest"
 }
 
+# Patch an existing vhost's upstream {} to both IPv4 and IPv6 loopback.
+# Regenerating the whole file from the template would wipe certbot's 443
+# block, so only the upstream stanza is replaced.
+#
+#   sync_nginx_upstream <vhost> <slug> <port>
+sync_nginx_upstream() {
+  local vhost="$1" slug="$2" port="$3"
+  [ -f "$vhost" ] || return 0
+  if ! command -v python3 >/dev/null 2>&1; then
+    warn "python3 missing — skip nginx upstream sync for $slug"
+    return 0
+  fi
+  python3 - "$vhost" "$slug" "$port" <<'PY'
+import pathlib, re, sys
+
+path = pathlib.Path(sys.argv[1])
+slug = sys.argv[2]
+port = sys.argv[3]
+name = f"{slug}_upstream"
+text = path.read_text()
+block = (
+    f"upstream {name} {{\n"
+    f"    # Next with HOSTNAME=localhost binds one loopback family. List both\n"
+    f"    # so nginx does not 502 when the kernel prefers IPv4 or IPv6.\n"
+    f"    server [::1]:{port} max_fails=1 fail_timeout=10s;\n"
+    f"    server 127.0.0.1:{port} max_fails=1 fail_timeout=10s;\n"
+    f"    keepalive 32;\n"
+    f"}}"
+)
+new_text, n = re.subn(
+    rf"upstream\s+{re.escape(name)}\s*\{{.*?\}}",
+    block,
+    text,
+    count=1,
+    flags=re.S,
+)
+if n == 0 or new_text == text:
+    sys.exit(0)
+path.write_text(new_text)
+print(f"updated {path} upstream to [::1]+127.0.0.1:{port}")
+PY
+}
+
 pm2_app_exists() { pm2 describe "$1" >/dev/null 2>&1; }
 
 # The default branch of a remote, e.g. "master". Hardcoding "main" makes the
