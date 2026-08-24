@@ -1,11 +1,13 @@
 # Managed by deploy/site-add.sh — regenerating a site overwrites this file.
-# Site: __SLUG__  ->  127.0.0.1:__PORT__
+# Site: __SLUG__  ->  loopback:__PORT__ (IPv6 and IPv4)
 
 upstream __SLUG___upstream {
-    # PM2 sets HOSTNAME=localhost. On Ubuntu that often binds Next to IPv6
-    # [::1] only — nginx to 127.0.0.1 then gets connection refused and every
-    # request is a 502. Pin the upstream to the same address Next listens on.
-    server [::1]:__PORT__;
+    # PM2 sets HOSTNAME=localhost. Next then binds *one* loopback family —
+    # [::1] on some Ubuntu hosts, 127.0.0.1 on others. Listing only one
+    # address 502s whenever the kernel prefers the other. Both are cheap
+    # (connection refused is immediate); max_fails skips the dead family.
+    server [::1]:__PORT__ max_fails=1 fail_timeout=10s;
+    server 127.0.0.1:__PORT__ max_fails=1 fail_timeout=10s;
     keepalive 32;
 }
 

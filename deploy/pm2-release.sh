@@ -7,7 +7,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 echo "==> Install deps"
-npm ci
+if ! npm ci --no-audit --no-fund; then
+  echo "WARN: npm ci failed (lock drift) — falling back to npm install"
+  npm install --no-audit --no-fund
+fi
 
 echo "==> Prisma generate + schema sync"
 npx prisma generate
@@ -37,4 +40,4 @@ fi
 pm2 save
 pm2 status
 
-echo "Done. nginx should proxy to 127.0.0.1:\$PORT (default 3000)."
+echo "Done. nginx should proxy to loopback:\$PORT (default 3001)."

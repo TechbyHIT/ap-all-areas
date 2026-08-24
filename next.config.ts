@@ -43,16 +43,24 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
+    const imageHeaders = {
+      source: "/images/:path*",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "public, max-age=31536000, immutable",
+        },
+      ],
+    };
+
+    // Next.js owns Cache-Control for /_next/static in `next dev`. Overriding
+    // it there breaks HMR; only set the immutable header in production.
+    if (process.env.NODE_ENV !== "production") {
+      return [imageHeaders];
+    }
+
     return [
-      {
-        source: "/images/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
+      imageHeaders,
       {
         source: "/_next/static/:path*",
         headers: [

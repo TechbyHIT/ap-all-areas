@@ -1,7 +1,7 @@
 /**
  * PM2 — Next.js standalone (no Docker)
  *
- * Default site: port 3000
+ * Default site: port 3001 (matches `npm run dev` / `npm start`)
  * Extra sites: duplicate the app block, change name + PORT + cwd
  *
  * Start:   npm run pm2:start
@@ -45,7 +45,10 @@ function siteEnv(port) {
     ...fileEnv,
     NODE_ENV: "production",
     PORT: String(port),
-    HOSTNAME: "0.0.0.0",
+    // Must be the string "localhost" (not 127.0.0.1 / 0.0.0.0). Next.js only
+    // keeps proxy rewrites internal when the origin matches the bind host;
+    // 0.0.0.0 also exposes the app port past nginx/TLS.
+    HOSTNAME: "localhost",
   };
 }
 
@@ -59,11 +62,11 @@ module.exports = {
       exec_mode: "fork",
       autorestart: true,
       max_memory_restart: "512M",
-      env: siteEnv(3000),
-      env_production: siteEnv(3000),
+      env: siteEnv(3001),
+      env_production: siteEnv(3001),
     },
 
-    // Multi-site examples — own folder + own PORT (3001, 3002, …)
+    // Multi-site examples — own folder + own PORT (3002, 3003, …)
     // {
     //   name: "site-b",
     //   cwd: "/var/www/site-b/.next/standalone",
@@ -72,7 +75,7 @@ module.exports = {
     //   exec_mode: "fork",
     //   autorestart: true,
     //   max_memory_restart: "512M",
-    //   env: { ...loadEnvFile("/var/www/site-b/.env"), NODE_ENV: "production", PORT: "3001", HOSTNAME: "0.0.0.0" },
+    //   env: { ...loadEnvFile("/var/www/site-b/.env"), NODE_ENV: "production", PORT: "3002", HOSTNAME: "localhost" },
     // },
   ],
 };

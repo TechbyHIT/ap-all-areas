@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { BUSINESS_CONFIG } from "@/config/business";
 import { ROUTES } from "@/config/routes";
 import {
@@ -73,10 +73,13 @@ export function ServicesMegaMenu({
     closeTimer.current = setTimeout(() => setIsOpen(false), 140);
   };
 
-  const close = () => {
-    clearCloseTimer();
+  const close = useCallback(() => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
     setIsOpen(false);
-  };
+  }, []);
 
   useEffect(() => () => clearCloseTimer(), []);
 
@@ -101,7 +104,7 @@ export function ServicesMegaMenu({
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, close]);
 
   return (
     <div
