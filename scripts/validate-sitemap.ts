@@ -13,13 +13,16 @@ import {
   buildSitemapChunks,
   buildSitemapRegistry,
   countAllSitemapUrls,
-  getSitemapFile,
   isSitemapRedirectPath,
+  listSitemapFiles,
   listSitemapIndexNames,
   SITEMAP_CHUNK_SIZE,
-  SCALE_SITEMAP_CHUNK,
   type SitemapRegistryEntry,
 } from "../src/lib/seo/sitemap-registry";
+import {
+  countKeywordSitemapFiles,
+  SCALE_SITEMAP_CHUNK,
+} from "../src/lib/seo/sitemap-scale";
 
 type Issue = { url: string; message: string };
 
@@ -64,6 +67,9 @@ function assertRegistryIntegrity(registry: SitemapRegistryEntry[]): Issue[] {
     if (!entry.url.startsWith("https://")) {
       issues.push({ url: entry.url, message: "URL must be absolute HTTPS" });
     }
+    if (!entry.url.startsWith("https://hiranayaenterprises.in/")) {
+      issues.push({ url: entry.url, message: "URL must use production host" });
+    }
     if (!entry.url.endsWith("/") || !entry.path.endsWith("/")) {
       issues.push({ url: entry.url, message: "URL/path must use trailing slash" });
     }
@@ -82,6 +88,11 @@ function assertRegistryIntegrity(registry: SitemapRegistryEntry[]): Issue[] {
     seen.add(entry.url);
   }
 
+  return issues;
+}
+
+function assertChunkCoverage(registry: SitemapRegistryEntry[]): Issue[] {
+  const issues: Issue[] = [];
   const chunks = buildSitemapChunks();
   for (const chunk of chunks) {
     if (chunk.length > SITEMAP_CHUNK_SIZE) {
@@ -205,21 +216,17 @@ async function main() {
   const registry = buildSitemapRegistry();
   console.log(`Core registry URLs: ${registry.length}`);
   console.log(`Full sitemap URLs: ${countAllSitemapUrls().toLocaleString("en-IN")}`);
-  console.log(`Child sitemaps: ${listSitemapIndexNames().length}`);
-  console.log(`Core chunks: ${buildSitemapChunks().length} (max ${SITEMAP_CHUNK_SIZE})`);
-  console.log(`Keyword child cap: ${SCALE_SITEMAP_CHUNK}`);
-
-  const issues = assertRegistryIntegrity(registry);
-  const keywordSample = getSitemapFile("andhra-pradesh-keywords-1");
-  if (keywordSample) {
-    issues.push(...assertRegistryIntegrity(keywordSample.entries.slice(0, 20)));
-    if (keywordSample.entries.length > SCALE_SITEMAP_CHUNK) {
-      issues.push({
-        url: "(andhra-pradesh-keywords-1)",
-        message: `Keyword child exceeds ${SCALE_SITEMAP_CHUNK}`,
-      });
-    }
+  console.log(`Main index children: ${listSitemapIndexNames().join(", ")}`);
+  for (const file of listSitemapFiles()) {
+    console.log(`  ${file.name}.xml: ${file.entries.length} URLs`);
   }
+  console.log(`Core chunks: ${buildSitemapChunks().length} (max ${SITEMAP_CHUNK_SIZE})`);
+  console.log(`Keyword child files: ${countKeywordSitemapFiles()} (cap ${SCALE_SITEMAP_CHUNK})`);
+
+  const issues = [
+    ...assertRegistryIntegrity(registry),
+    ...assertChunkCoverage(registry),
+  ];
 
   const httpEnabled = parseBool(process.env.SITEMAP_VALIDATE_HTTP, true);
   const base =

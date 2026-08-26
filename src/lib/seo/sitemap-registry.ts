@@ -7,17 +7,12 @@ import { PLACEHOLDER_BLOG_POSTS } from "@/data/placeholder-content";
 import { PROBLEMS } from "@/data/problems";
 import { PROPERTY_TYPES } from "@/data/property-types";
 import { SUB_SERVICE_SLUGS } from "@/data/sub-services";
+import { INSTALLATION_PHOTOS } from "@/config/installation-photos";
 import { ROUTES } from "@/config/routes";
 import { matchLegacySiloRedirect } from "@/lib/routing/location-silo";
+import { STATE_SLUG } from "@/config/geo";
+import { shouldGeneratePage } from "@/lib/seo/page-decision";
 import { buildCanonicalUrl, buildFileUrl } from "@/lib/routing/paths";
-import {
-  buildKeywordLocalityChunk,
-  countKeywordLocalityUrls,
-  countKeywordSitemapFiles,
-  listKeywordSitemapFileNames,
-  parseKeywordSitemapPart,
-  SCALE_SITEMAP_CHUNK,
-} from "@/lib/seo/sitemap-scale";
 
 /** Keep each sitemap file under Search Console / config limits. */
 export const SITEMAP_CHUNK_SIZE = Math.min(
@@ -33,16 +28,13 @@ export type SitemapRegistryEntry = MetadataRoute.Sitemap[number] & {
 };
 
 export type SitemapFileName =
-  | "pages"
-  | "locations"
+  | "core"
   | "services"
-  | "guides"
-  | "blog"
-  | "projects"
-  | "states"
-  | "cities"
+  | "city-services"
+  | "societies"
+  | "images"
   | "areas"
-  | "local-services";
+  | "area-services";
 
 export type SitemapFile = {
   name: string;
@@ -105,7 +97,6 @@ function buildPageEntries(): SitemapRegistryEntry[] {
       { path: "/about/", priority: 0.7 },
       { path: "/contact/", priority: 0.7 },
       { path: "/solutions/", priority: 0.7 },
-      { path: "/property-types/", priority: 0.7 },
       { path: "/faq/", priority: 0.7 },
       { path: "/gallery/", priority: 0.65 },
       { path: "/testimonials/", priority: 0.6 },
@@ -132,24 +123,6 @@ function buildPageEntries(): SitemapRegistryEntry[] {
     entries.push(
       makeEntry(ROUTES.solution(problem.slug), 0.68, { kind: "hub" }),
     );
-  }
-
-  for (const propertyType of PROPERTY_TYPES) {
-    if (
-      propertyType.publicationStatus !== "published" ||
-      !propertyType.allowIndexing
-    ) {
-      continue;
-    }
-    for (const serviceSlug of propertyType.suitableServices) {
-      entries.push(
-        makeEntry(
-          ROUTES.propertyTypeService(propertyType.slug, serviceSlug),
-          0.66,
-          { kind: "hub" },
-        ),
-      );
-    }
   }
 
   return entries;
@@ -220,15 +193,33 @@ function siloCities() {
 }
 
 function buildCityEntries(): SitemapRegistryEntry[] {
-  return siloCities().map((city) =>
-    makeEntry(ROUTES.location(city.citySlug), 0.75, { kind: "hub" }),
-  );
+  return siloCities()
+    .filter((city) =>
+      shouldGeneratePage({
+        kind: "city",
+        stateSlug: STATE_SLUG,
+        citySlug: city.citySlug,
+      }).generate,
+    )
+    .map((city) =>
+      makeEntry(ROUTES.location(city.citySlug), 0.75, { kind: "hub" }),
+    );
 }
 
 function buildAreaEntries(): SitemapRegistryEntry[] {
   const entries: SitemapRegistryEntry[] = [];
   for (const city of siloCities()) {
     for (const area of city.areas) {
+      if (
+        !shouldGeneratePage({
+          kind: "area",
+          stateSlug: STATE_SLUG,
+          citySlug: city.citySlug,
+          areaSlug: area.slug,
+        }).generate
+      ) {
+        continue;
+      }
       entries.push(
         makeEntry(ROUTES.area(city.citySlug, area.slug), 0.6, {
           kind: "money",
@@ -239,12 +230,21 @@ function buildAreaEntries(): SitemapRegistryEntry[] {
   return entries;
 }
 
-function buildLocalServiceEntries(): SitemapRegistryEntry[] {
+function buildCityServiceEntries(): SitemapRegistryEntry[] {
   const entries: SitemapRegistryEntry[] = [];
-
   for (const city of siloCities()) {
     for (const service of INITIAL_SERVICES) {
       if (!service.allowIndexing) continue;
+      if (
+        !shouldGeneratePage({
+          kind: "city-service",
+          stateSlug: STATE_SLUG,
+          citySlug: city.citySlug,
+          serviceSlug: service.slug,
+        }).generate
+      ) {
+        continue;
+      }
       entries.push(
         makeEntry(ROUTES.cityService(city.citySlug, service.slug), 0.8, {
           kind: "money",
@@ -252,19 +252,26 @@ function buildLocalServiceEntries(): SitemapRegistryEntry[] {
       );
     }
   }
+  return entries;
+}
 
+function buildAreaServiceEntries(): SitemapRegistryEntry[] {
+  const entries: SitemapRegistryEntry[] = [];
   for (const city of siloCities()) {
-    for (const service of INITIAL_SERVICES) {
-      if (!service.allowIndexing) continue;
-      entries.push(
-        makeEntry(ROUTES.cityService(city.citySlug, service.slug), 0.8, {
-          kind: "money",
-        }),
-      );
-    }
     for (const area of city.areas) {
       for (const service of INITIAL_SERVICES) {
         if (!service.allowIndexing) continue;
+        if (
+          !shouldGeneratePage({
+            kind: "area-service",
+            stateSlug: STATE_SLUG,
+            citySlug: city.citySlug,
+            areaSlug: area.slug,
+            serviceSlug: service.slug,
+          }).generate
+        ) {
+          continue;
+        }
         entries.push(
           makeEntry(
             ROUTES.areaService(city.citySlug, area.slug, service.slug),
@@ -275,8 +282,76 @@ function buildLocalServiceEntries(): SitemapRegistryEntry[] {
       }
     }
   }
-
   return entries;
+}
+
+function buildSocietyEntries(): SitemapRegistryEntry[] {
+  const entries: SitemapRegistryEntry[] = [
+    makeEntry("/property-types/", 0.7, { kind: "hub" }),
+  ];
+  for (const propertyType of PROPERTY_TYPES) {
+    if (
+      propertyType.publicationStatus !== "published" ||
+      !propertyType.allowIndexing
+    ) {
+      continue;
+    }
+    for (const serviceSlug of propertyType.suitableServices) {
+      entries.push(
+        makeEntry(
+          ROUTES.propertyTypeService(propertyType.slug, serviceSlug),
+          0.66,
+          { kind: "hub" },
+        ),
+      );
+    }
+  }
+  return entries;
+}
+
+function buildCoreEntries(): SitemapRegistryEntry[] {
+  return [
+    ...buildPageEntries(),
+    ...buildLocationHubEntries(),
+    ...buildStateEntries(),
+    ...buildCityEntries(),
+    ...buildBlogEntries(),
+    ...buildProjectEntries(),
+    ...buildGuideEntries(),
+  ];
+}
+
+function xmlEscape(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+/** Google image sitemap for real installation photos (no fake society URLs). */
+export function buildImagesUrlsetXml(): string {
+  const lastmod = revisionDate().toISOString();
+  const loc = xmlEscape(buildCanonicalUrl("/gallery/"));
+  const images = INSTALLATION_PHOTOS.map((photo) => {
+    const imageLoc = xmlEscape(buildFileUrl(photo.src));
+    const title = xmlEscape(photo.alt);
+    return `    <image:image>
+      <image:loc>${imageLoc}</image:loc>
+      <image:title>${title}</image:title>
+    </image:image>`;
+  }).join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>${loc}</loc>
+    <lastmod>${lastmod}</lastmod>
+${images}
+  </url>
+</urlset>
+`;
 }
 
 /** Deduplicate by absolute URL; first wins. */
@@ -293,27 +368,36 @@ export function dedupeSitemapEntries(
   return out;
 }
 
+function isAllowedSitemapUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") return false;
+    if (parsed.search || parsed.hash) return false;
+    const host = parsed.hostname.replace(/^www\./, "");
+    return host === "hiranayaenterprises.in";
+  } catch {
+    return false;
+  }
+}
+
 function finalize(entries: SitemapRegistryEntry[]): SitemapRegistryEntry[] {
   return dedupeSitemapEntries(entries).filter(
     (entry) =>
       !isSitemapRedirectPath(entry.path) &&
-      entry.url.startsWith("https://") &&
+      isAllowedSitemapUrl(entry.url) &&
       entry.path.endsWith("/"),
   );
 }
 
 export function buildSitemapGroups(): Record<SitemapFileName, SitemapRegistryEntry[]> {
   return {
-    pages: finalize(buildPageEntries()),
-    locations: finalize(buildLocationHubEntries()),
+    core: finalize(buildCoreEntries()),
     services: finalize(buildServiceEntries()),
-    guides: finalize(buildGuideEntries()),
-    blog: finalize(buildBlogEntries()),
-    projects: finalize(buildProjectEntries()),
-    states: finalize(buildStateEntries()),
-    cities: finalize(buildCityEntries()),
+    "city-services": finalize(buildCityServiceEntries()),
+    societies: finalize(buildSocietyEntries()),
+    images: [],
     areas: finalize(buildAreaEntries()),
-    "local-services": finalize(buildLocalServiceEntries()),
+    "area-services": finalize(buildAreaServiceEntries()),
   };
 }
 
@@ -336,54 +420,52 @@ function splitNamedGroup(
   return files;
 }
 
+/** Named urlsets listed in `/sitemap.xml` — same shape as a small sitemap index. */
+const MAIN_INDEX_ORDER: SitemapFileName[] = [
+  "core",
+  "services",
+  "city-services",
+  "societies",
+  "images",
+  "areas",
+  "area-services",
+];
+
 /** Core named sitemap files (hubs + silo money). Keyword scale files are lazy. */
 export function listSitemapFiles(): SitemapFile[] {
   const groups = buildSitemapGroups();
-  const order: SitemapFileName[] = [
-    "pages",
-    "locations",
-    "services",
-    "guides",
-    "blog",
-    "projects",
-    "states",
-    "cities",
-    "areas",
-    "local-services",
-  ];
-  return order.flatMap((name) => splitNamedGroup(name, groups[name]));
+  return MAIN_INDEX_ORDER.flatMap((name) =>
+    name === "images" ? [] : splitNamedGroup(name, groups[name]),
+  );
 }
 
-/** Child sitemap names listed in `/sitemap.xml` (core + AP keyword slices). */
+/**
+ * Child names in `/sitemap.xml` — a small named index like core / services /
+ * city-services / societies / images / areas / area-services.
+ * Keyword expansion files are not listed here (not submitted to Search Console).
+ */
 export function listSitemapIndexNames(): string[] {
-  return [
-    ...listSitemapFiles().map((file) => file.name),
-    ...listKeywordSitemapFileNames(),
-  ];
+  const groups = buildSitemapGroups();
+  return MAIN_INDEX_ORDER.flatMap((name) =>
+    name === "images"
+      ? ["images"]
+      : splitNamedGroup(name, groups[name]).map((file) => file.name),
+  );
 }
 
 export function getSitemapFile(name: string): SitemapFile | null {
-  const part = parseKeywordSitemapPart(name);
-  if (part !== null) {
-    if (part > countKeywordSitemapFiles()) return null;
-    const entries = buildKeywordLocalityChunk(part);
-    if (entries.length === 0) return null;
-    return { name, entries };
-  }
   return listSitemapFiles().find((file) => file.name === name) ?? null;
 }
 
-/** Core indexable URLs only — do not flatten the 21-lakh keyword matrix. */
+/** Core indexable URLs listed from the master sitemap index. */
 export function buildSitemapRegistry(): SitemapRegistryEntry[] {
   return listSitemapFiles().flatMap((file) => file.entries);
 }
 
-/** Core + keyword×locality URL count (full sitemap index). */
+/** URL count Google discovers from `/sitemap.xml` children (excludes keyword matrix). */
 export function countAllSitemapUrls(): number {
-  return buildSitemapRegistry().length + countKeywordLocalityUrls();
+  return buildSitemapRegistry().length;
 }
-
-export { SCALE_SITEMAP_CHUNK, countKeywordLocalityUrls, countKeywordSitemapFiles };
 
 export function chunkSitemapEntries<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -420,6 +502,7 @@ ${body}
 
 export function buildUrlsetXml(entries: SitemapRegistryEntry[]): string {
   const body = entries
+    .filter((entry) => isAllowedSitemapUrl(entry.url))
     .map((entry) => {
       const raw =
         entry.lastModified instanceof Date

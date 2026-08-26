@@ -198,7 +198,7 @@ describe("seo page records", () => {
       city: "visakhapatnam",
       service: "invisible-grills",
       indexable: true,
-      sitemap: "local-services",
+      sitemap: "city-services",
     });
     expect(vizag!.seoScore).toBeGreaterThanOrEqual(SEO_PUBLISH_MIN_SCORE);
   });

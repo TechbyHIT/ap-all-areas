@@ -56,7 +56,9 @@ describe("routing paths", () => {
   });
 
   it("builds canonical URLs", () => {
-    expect(buildCanonicalUrl("/about/")).toContain("/about/");
+    expect(buildCanonicalUrl("/about/")).toBe(
+      "https://hiranayaenterprises.in/about/",
+    );
   });
 });
 

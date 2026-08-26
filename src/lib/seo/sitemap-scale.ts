@@ -5,7 +5,7 @@
 
 import { KEYWORD_INTENTS } from "@/data/keyword-intents";
 import { listScaleLocalities } from "@/data/ap-locality-expansion";
-import { buildCanonicalUrl } from "@/lib/routing/paths";
+import { buildCanonicalUrl, buildFileUrl } from "@/lib/routing/paths";
 import { SEO_CONFIG } from "@/config/seo";
 
 /** URLs per child sitemap. ~3k keeps Chrome from OOM; Google allows 50k. */
@@ -123,4 +123,23 @@ export function buildKeywordLocalityUrlsetXml(part: number): string | null {
 
   lines.push(`</urlset>`);
   return `${lines.join("\n")}\n`;
+}
+
+export function buildKeywordSitemapIndexXml(): string {
+  const names = listKeywordSitemapFileNames();
+  const now = revisionDate().toISOString();
+  const body = names
+    .map((name) => {
+      return `  <sitemap>
+    <loc>${buildFileUrl(`/sitemaps/${name}.xml`)}</loc>
+    <lastmod>${now}</lastmod>
+  </sitemap>`;
+    })
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${body}
+</sitemapindex>
+`;
 }

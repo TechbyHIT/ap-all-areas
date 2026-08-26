@@ -10,8 +10,13 @@ import {
   listSitemapFiles,
   listSitemapIndexNames,
   SITEMAP_CHUNK_SIZE,
-  SCALE_SITEMAP_CHUNK,
 } from "@/lib/seo/sitemap-registry";
+import {
+  buildKeywordLocalityChunk,
+  buildKeywordSitemapIndexXml,
+  countKeywordLocalityUrls,
+  SCALE_SITEMAP_CHUNK,
+} from "@/lib/seo/sitemap-scale";
 
 describe("sitemap registry", () => {
   it("never emits service-in-city or legacy silo redirect paths", () => {
@@ -73,29 +78,41 @@ describe("sitemap registry", () => {
     expect(buildSitemapRegistry().length).toBeLessThanOrEqual(50000);
   });
 
-  it("builds a sitemap index pointing at /sitemaps/*.xml files that exist", () => {
+  it("builds a small named sitemap index like core / services / city-services", () => {
     const xml = buildSitemapIndexXml();
     expect(xml).toContain("<sitemapindex");
     expect(xml).not.toContain("<urlset");
-    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/pages.xml");
-    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/locations.xml");
+    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/core.xml");
+    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/services.xml");
     expect(xml).toContain(
-      "https://hiranayaenterprises.in/sitemaps/local-services.xml",
+      "https://hiranayaenterprises.in/sitemaps/city-services.xml",
     );
+    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/societies.xml");
+    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/images.xml");
+    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/areas.xml");
     expect(xml).toContain(
-      "https://hiranayaenterprises.in/sitemaps/andhra-pradesh-keywords-1.xml",
+      "https://hiranayaenterprises.in/sitemaps/area-services.xml",
     );
+    expect(xml).not.toContain("andhra-pradesh-keywords-1.xml");
     expect(xml).not.toMatch(/\/sitemaps\/[^<]+\.xml\//);
+    expect(xml).not.toContain("localhost");
+    expect(xml).not.toContain("http://hiranayaenterprises.in");
+    expect(xml).not.toContain("http://127.");
 
     const files = listSitemapFiles();
-    expect(files.some((f) => f.name === "pages")).toBe(true);
+    expect(files.some((f) => f.name === "core")).toBe(true);
     expect(files.every((f) => f.entries.length > 0)).toBe(true);
 
     const names = listSitemapIndexNames();
-    expect(names[0]).toBe("pages");
-    expect(names.some((name) => name.startsWith("andhra-pradesh-keywords-"))).toBe(
-      true,
-    );
+    expect(names).toEqual([
+      "core",
+      "services",
+      "city-services",
+      "societies",
+      "images",
+      "areas",
+      "area-services",
+    ]);
   });
 
   it("includes indexable hubs and excludes thank-you", () => {
@@ -107,6 +124,7 @@ describe("sitemap registry", () => {
     expect(paths.has("/testimonials/")).toBe(true);
     expect(paths.has("/thank-you/")).toBe(false);
     expect(paths.has("/guides/invisible-grills-buying-guide/")).toBe(true);
+    expect(paths.has("/property-types/")).toBe(true);
     expect(paths.has("/locations/")).toBe(true);
   });
 
@@ -116,24 +134,42 @@ describe("sitemap registry", () => {
     expect(xml).toContain("<sitemapindex");
     expect(xml).not.toContain("<urlset");
     expect(xml).not.toContain("<url>");
-    expect(xml.length).toBeLessThan(250_000);
-    expect(childCount).toBeGreaterThan(600);
-    expect(childCount).toBeLessThan(800);
+    expect(xml.length).toBeLessThan(8_000);
+    expect(childCount).toBe(7);
     expect(listSitemapIndexNames().length).toBe(childCount);
   });
 
-  it("indexes the full AP keyword × locality matrix across child sitemaps", () => {
+  it("resolves every named child except images via the registry", () => {
+    for (const name of listSitemapIndexNames()) {
+      if (name === "images") continue;
+      const file = getSitemapFile(name);
+      expect(file, name).not.toBeNull();
+      expect(file!.entries.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("lists keyword chunks in a separate keywords index", () => {
+    const xml = buildKeywordSitemapIndexXml();
+    expect(xml).toContain("<sitemapindex");
+    expect(xml).toContain(
+      "https://hiranayaenterprises.in/sitemaps/andhra-pradesh-keywords-1.xml",
+    );
+    expect((xml.match(/<sitemap>/g) ?? []).length).toBeGreaterThan(600);
+  });
+
+  it("does not put the keyword matrix in the master sitemap index", () => {
     const total = countAllSitemapUrls();
-    expect(total).toBeGreaterThan(2_000_000);
-    expect(total).toBeLessThan(3_000_000);
+    expect(total).toBe(buildSitemapRegistry().length);
+    expect(total).toBeGreaterThan(50);
+    expect(total).toBeLessThan(8000);
+    expect(countKeywordLocalityUrls()).toBeGreaterThan(2_000_000);
 
-    const first = getSitemapFile("andhra-pradesh-keywords-1");
-    expect(first).not.toBeNull();
-    expect(first!.entries.length).toBe(SCALE_SITEMAP_CHUNK);
-    expect(first!.entries[0].path).toMatch(/^\/[a-z0-9-]+-in-[a-z0-9-]+\/$/);
-    expect(first!.entries[0].url.startsWith("https://")).toBe(true);
-    expect(isSitemapRedirectPath(first!.entries[0].path)).toBe(false);
+    const first = buildKeywordLocalityChunk(1);
+    expect(first.length).toBe(SCALE_SITEMAP_CHUNK);
+    expect(first[0].path).toMatch(/^\/[a-z0-9-]+-in-[a-z0-9-]+\/$/);
+    expect(first[0].url.startsWith("https://")).toBe(true);
+    expect(isSitemapRedirectPath(first[0].path)).toBe(false);
 
-    expect(getSitemapFile("andhra-pradesh-keywords-9999")).toBeNull();
+    expect(getSitemapFile("andhra-pradesh-keywords-1")).toBeNull();
   });
 });

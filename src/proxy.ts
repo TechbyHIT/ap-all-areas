@@ -33,10 +33,12 @@ function internalUrl(request: NextRequest, pathname: string) {
 export function proxy(request: NextRequest) {
   let { pathname } = request.nextUrl;
 
+  if (/^\/sitemap\.xml\/?$/i.test(pathname)) {
+    return NextResponse.rewrite(internalUrl(request, "/sitemap.xml"));
+  }
+
   if (pathname.length > 1 && pathname.endsWith(".xml/")) {
-    const url = request.nextUrl.clone();
-    url.pathname = pathname.slice(0, -1);
-    return NextResponse.redirect(url, 308);
+    return NextResponse.rewrite(internalUrl(request, pathname.slice(0, -1)));
   }
 
   if (

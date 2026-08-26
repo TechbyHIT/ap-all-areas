@@ -42,6 +42,28 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["zod"],
   },
 
+  /**
+   * Serve `/sitemaps/{name}.xml` through the App Router handler at
+   * `/sitemaps/{name}` so Google gets XML even if the network proxy is stale.
+   * Slash variants rewrite internally — no redirect chain for Googlebot.
+   */
+  async rewrites() {
+    return [
+      {
+        source: "/sitemap.xml/",
+        destination: "/sitemap.xml",
+      },
+      {
+        source: "/sitemaps/:name.xml/",
+        destination: "/sitemaps/:name",
+      },
+      {
+        source: "/sitemaps/:name.xml",
+        destination: "/sitemaps/:name",
+      },
+    ];
+  },
+
   async headers() {
     const imageHeaders = {
       source: "/images/:path*",
