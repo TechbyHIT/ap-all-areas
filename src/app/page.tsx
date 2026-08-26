@@ -20,7 +20,7 @@ import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { INITIAL_SERVICES } from "@/data/initial-services";
 import { SERVICE_DIRECTORY } from "@/data/service-directory";
 import { HOMEPAGE_CONTENT } from "@/data/static-page-content";
-import { KEYWORD_INTENT_MAP } from "@/data/keyword-intents";
+import { SUB_SERVICE_MAP } from "@/data/sub-services";
 import { ROUTES } from "@/config/routes";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -31,8 +31,8 @@ const SUB_SERVICE_DIRECTORY = INITIAL_SERVICES.map((service) => ({
   href: ROUTES.service(service.slug),
   links: service.subServices.map((sub) => ({
     label: sub.name,
-    href: KEYWORD_INTENT_MAP[sub.slug]
-      ? ROUTES.keywordInGeo(sub.slug, "visakhapatnam")
+    href: SUB_SERVICE_MAP[sub.slug]
+      ? ROUTES.service(sub.slug)
       : ROUTES.service(service.slug),
   })),
 }));

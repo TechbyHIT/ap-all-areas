@@ -1,5 +1,6 @@
 /**
- * Validates the live App Router sitemap registry (same source as `/sitemap.xml`).
+ * Validates the live App Router sitemap registry (same source as `/sitemap.xml`
+ * index + `/sitemaps/*.xml` urlsets).
  *
  * Usage:
  *   npm run seo:validate-sitemap
@@ -11,8 +12,12 @@
 import {
   buildSitemapChunks,
   buildSitemapRegistry,
+  countAllSitemapUrls,
+  getSitemapFile,
   isSitemapRedirectPath,
+  listSitemapIndexNames,
   SITEMAP_CHUNK_SIZE,
+  SCALE_SITEMAP_CHUNK,
   type SitemapRegistryEntry,
 } from "../src/lib/seo/sitemap-registry";
 
@@ -198,10 +203,23 @@ async function validateHttp(
 
 async function main() {
   const registry = buildSitemapRegistry();
-  console.log(`Registry URLs: ${registry.length}`);
-  console.log(`Chunks: ${buildSitemapChunks().length} (max ${SITEMAP_CHUNK_SIZE})`);
+  console.log(`Core registry URLs: ${registry.length}`);
+  console.log(`Full sitemap URLs: ${countAllSitemapUrls().toLocaleString("en-IN")}`);
+  console.log(`Child sitemaps: ${listSitemapIndexNames().length}`);
+  console.log(`Core chunks: ${buildSitemapChunks().length} (max ${SITEMAP_CHUNK_SIZE})`);
+  console.log(`Keyword child cap: ${SCALE_SITEMAP_CHUNK}`);
 
   const issues = assertRegistryIntegrity(registry);
+  const keywordSample = getSitemapFile("andhra-pradesh-keywords-1");
+  if (keywordSample) {
+    issues.push(...assertRegistryIntegrity(keywordSample.entries.slice(0, 20)));
+    if (keywordSample.entries.length > SCALE_SITEMAP_CHUNK) {
+      issues.push({
+        url: "(andhra-pradesh-keywords-1)",
+        message: `Keyword child exceeds ${SCALE_SITEMAP_CHUNK}`,
+      });
+    }
+  }
 
   const httpEnabled = parseBool(process.env.SITEMAP_VALIDATE_HTTP, true);
   const base =

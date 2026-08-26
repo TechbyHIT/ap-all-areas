@@ -14,6 +14,13 @@ export function buildCanonicalUrl(path: string): string {
   return `${base}${normalizePath(path)}`;
 }
 
+/** Absolute URL for a file path such as `/sitemap.xml`. Never adds a trailing slash. */
+export function buildFileUrl(path: string): string {
+  const base = SITE_CONFIG.url.replace(/\/$/, "");
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${normalized.replace(/\/+$/, "")}`;
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

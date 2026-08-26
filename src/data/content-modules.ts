@@ -282,6 +282,26 @@ export const CONTENT_MODULE_MAP: Record<string, ContentModule | FaqContentModule
     [...SAMPLE_CONTENT_MODULES, SAMPLE_FAQ_MODULE].map((item) => [item.id, item]),
   );
 
+export function selectContentModules(options: {
+  pageType: string;
+  serviceSlug?: string;
+  maxModules?: number;
+}): Array<ContentModule | FaqContentModule> {
+  const max = options.maxModules ?? 6;
+  const all: Array<ContentModule | FaqContentModule> = [
+    ...SAMPLE_CONTENT_MODULES,
+    SAMPLE_FAQ_MODULE,
+  ];
+  return all
+    .filter((module) => module.applicablePageTypes.includes(options.pageType))
+    .filter((module) => {
+      if (!options.serviceSlug || !module.applicableServices?.length) return true;
+      return module.applicableServices.includes(options.serviceSlug);
+    })
+    .sort((a, b) => a.priority - b.priority)
+    .slice(0, max);
+}
+
 export const CONTENT_MODULES_BY_TYPE: Record<
   ContentModule["type"],
   Array<ContentModule | FaqContentModule>

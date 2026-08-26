@@ -32,6 +32,7 @@ import {
 } from "@/data/initial-services";
 import { SERVICE_PAGE_CONTENT } from "@/data/service-page-content";
 import { SERVICE_FAQS } from "@/data/service-faqs";
+import { SUB_SERVICE_MAP, SUB_SERVICE_SLUGS } from "@/data/sub-services";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import {
   generateDescription,
@@ -57,19 +58,59 @@ function toProcessSteps(items: readonly string[]) {
 }
 
 export async function generateStaticParams() {
-  return INITIAL_SERVICE_SLUGS.map((serviceSlug) => ({ serviceSlug }));
+  return [...INITIAL_SERVICE_SLUGS, ...SUB_SERVICE_SLUGS].map((serviceSlug) => ({
+    serviceSlug,
+  }));
+}
+
+function resolveServicePage(serviceSlug: string) {
+  const core = INITIAL_SERVICE_MAP[serviceSlug];
+  if (core) {
+    const content = SERVICE_PAGE_CONTENT[serviceSlug];
+    if (!content) return null;
+    return {
+      service: core,
+      content,
+      faqs: SERVICE_FAQS[serviceSlug] ?? [],
+      mediaSlug: core.slug,
+      h1: `${core.name} Installation in Andhra Pradesh`,
+    };
+  }
+
+  const sub = SUB_SERVICE_MAP[serviceSlug];
+  if (!sub) return null;
+  const parent = INITIAL_SERVICE_MAP[sub.parentSlug];
+  const parentContent = SERVICE_PAGE_CONTENT[sub.parentSlug];
+  if (!parent || !parentContent) return null;
+  return {
+    service: {
+      ...parent,
+      slug: sub.slug,
+      name: sub.name,
+      summary: sub.summary,
+    },
+    content: {
+      ...parentContent,
+      slug: sub.slug,
+      uniqueIntroduction: sub.intro,
+    },
+    faqs: SERVICE_FAQS[sub.parentSlug] ?? [],
+    mediaSlug: parent.slug,
+    h1: sub.h1,
+  };
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { serviceSlug } = await params;
-  const service = INITIAL_SERVICE_MAP[serviceSlug];
-  if (!service) return {};
+  const resolved = resolveServicePage(serviceSlug);
+  if (!resolved) return {};
+  const { service } = resolved;
 
   return generatePageMetadata({
     title: generateTitle(`${service.name} in Andhra Pradesh`, "service"),
     metaDescription: generateDescription(service.name),
     canonicalUrl: buildCanonicalUrl(`/services/${service.slug}/`),
-    openGraphImage: getServiceMedia(service.slug).image,
+    openGraphImage: getServiceMedia(resolved.mediaSlug).image,
     publicationStatus: service.publicationStatus,
     allowIndexing: service.allowIndexing,
     qualityScore: service.qualityScore,
@@ -88,16 +129,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ServiceDetailPage({ params }: PageProps) {
   const { serviceSlug } = await params;
-  const service = INITIAL_SERVICE_MAP[serviceSlug];
-  if (!service) notFound();
+  const resolved = resolveServicePage(serviceSlug);
+  if (!resolved) notFound();
 
-  const content = SERVICE_PAGE_CONTENT[serviceSlug];
-  if (!content) notFound();
-
-  const faqs = SERVICE_FAQS[serviceSlug] ?? [];
-  const relatedServices = INITIAL_SERVICES.filter((s) => s.slug !== service.slug);
+  const { service, content, faqs, mediaSlug, h1 } = resolved;
+  const parentSlug = SUB_SERVICE_MAP[serviceSlug]?.parentSlug;
+  const relatedServices = INITIAL_SERVICES.filter((item) =>
+    parentSlug ? item.slug !== parentSlug : item.slug !== service.slug,
+  );
   const canonical = buildCanonicalUrl(`/services/${service.slug}/`);
-  const media = getServiceMedia(service.slug);
+  const media = getServiceMedia(mediaSlug);
 
   const crumbs = [
     { name: "Home", url: buildCanonicalUrl("/") },
@@ -147,9 +188,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
       <ServiceHero
         badge="Andhra Pradesh"
-        title={`${service.name} Installation in Andhra Pradesh`}
+        title={h1}
         description={service.summary}
-        serviceSlug={service.slug}
+        serviceSlug={mediaSlug}
         image={{
           src: media.image,
           alt: media.alt,

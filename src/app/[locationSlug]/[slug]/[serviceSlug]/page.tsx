@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getServiceMedia } from "@/config/design";
 import { ROUTES } from "@/config/routes";
+import { STATE_NAME, STATE_SLUG } from "@/config/geo";
+import { SEO_CONFIG } from "@/config/seo";
 import { ServiceHero } from "@/components/sections/ServiceHero";
 import { BenefitsSection } from "@/components/sections/BenefitsSection";
 import { FeaturesSection } from "@/components/sections/FeaturesSection";
@@ -20,9 +22,6 @@ import { SeoEncyclopediaSections } from "@/components/sections/SeoEncyclopediaSe
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
-  P0_MONEY_CITY_SLUGS,
-} from "@/data/city-local-profiles";
-import {
   INITIAL_SERVICE_MAP,
   INITIAL_SERVICES,
 } from "@/data/initial-services";
@@ -35,6 +34,7 @@ import {
   getAreasForCity,
   getCityBySlug,
 } from "@/lib/data/locations";
+import { shouldGeneratePage } from "@/lib/seo/page-decision";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import {
   breadcrumbSchema,
@@ -44,12 +44,8 @@ import {
 import {
   generateDescription,
   generatePageMetadata,
-  generateTitle,
 } from "@/lib/seo/generate-page-metadata";
-import {
-  moneyPageIndexability,
-  seedLocationIndexability,
-} from "@/lib/seo/page-indexability";
+import { moneyPageIndexability } from "@/lib/seo/page-indexability";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -95,14 +91,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const service = INITIAL_SERVICE_MAP[serviceSlug];
   if (!city || !area || !service) return {};
 
-  const title = generateTitle(
-    `${service.name} in ${area.name}, ${city.name}`,
-    "service-area",
-  );
-
-  const isP0 = (P0_MONEY_CITY_SLUGS as readonly string[]).includes(
-    locationSlug,
-  );
+  const title = `${service.name} in ${area.name}, ${city.name} ${SEO_CONFIG.titleSuffix}`;
+  const decision = shouldGeneratePage({
+    kind: "area-service",
+    stateSlug: STATE_SLUG,
+    citySlug: locationSlug,
+    areaSlug,
+    serviceSlug,
+  });
+  if (!decision.generate) return {};
 
   return generatePageMetadata({
     title,
@@ -111,11 +108,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       `${area.name}, ${city.name}`,
     ),
     canonicalUrl: buildCanonicalUrl(
-      `/${locationSlug}/${areaSlug}/${serviceSlug}/`,
+      ROUTES.areaService(locationSlug, areaSlug, serviceSlug),
     ),
-    ...(isP0
-      ? moneyPageIndexability("locality-service")
-      : seedLocationIndexability()),
+    ...moneyPageIndexability("locality-service"),
   });
 }
 
@@ -126,6 +121,15 @@ export default async function AreaServicePage({ params }: PageProps) {
   const service = INITIAL_SERVICE_MAP[serviceSlug];
 
   if (!city || !area || !service) notFound();
+
+  const decision = shouldGeneratePage({
+    kind: "area-service",
+    stateSlug: STATE_SLUG,
+    citySlug: locationSlug,
+    areaSlug,
+    serviceSlug,
+  });
+  if (!decision.generate) notFound();
 
   const areaFact = getAreaLocalFact(locationSlug, areaSlug);
   const content = buildAreaServiceContent({
@@ -147,14 +151,11 @@ export default async function AreaServicePage({ params }: PageProps) {
   const relatedServices = INITIAL_SERVICES.filter((s) => s.slug !== service.slug);
   const media = getServiceMedia(service.slug);
   const pageUrl = buildCanonicalUrl(
-    `/${locationSlug}/${areaSlug}/${serviceSlug}/`,
+    ROUTES.areaService(locationSlug, areaSlug, serviceSlug),
   );
   const metaDescription = generateDescription(
     service.name,
     `${area.name}, ${city.name}`,
-  );
-  const isP0 = (P0_MONEY_CITY_SLUGS as readonly string[]).includes(
-    locationSlug,
   );
 
   const installationSteps =
@@ -179,7 +180,7 @@ export default async function AreaServicePage({ params }: PageProps) {
   return (
     <>
       <FaqJsonLd faqs={faqs} />
-      {isP0 ? (
+      {decision.index ? (
         <JsonLd
           data={[
             webPageSchema({
@@ -195,6 +196,8 @@ export default async function AreaServicePage({ params }: PageProps) {
             }),
             breadcrumbSchema([
               { name: "Home", url: buildCanonicalUrl("/") },
+              { name: "Locations", url: buildCanonicalUrl(ROUTES.locations) },
+              { name: STATE_NAME, url: buildCanonicalUrl(ROUTES.state) },
               {
                 name: city.name,
                 url: buildCanonicalUrl(ROUTES.location(locationSlug)),
@@ -221,6 +224,8 @@ export default async function AreaServicePage({ params }: PageProps) {
         gallery={media.gallery.map((src) => ({ src, alt: media.alt }))}
         breadcrumbItems={[
           { label: "Home", href: "/" },
+          { label: "Locations", href: ROUTES.locations },
+          { label: STATE_NAME, href: ROUTES.state },
           { label: city.name, href: ROUTES.location(locationSlug) },
           { label: area.name, href: ROUTES.area(locationSlug, areaSlug) },
           { label: service.name },

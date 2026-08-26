@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isPageIndexable } from "@/lib/publishing/indexability";
+import { isPageIndexable, getRobotsDirective } from "@/lib/publishing/indexability";
 import { slugify, buildCanonicalUrl, normalizePath } from "@/lib/routing/paths";
 import { isPhoneValidForProduction } from "@/config/business";
 
@@ -34,8 +34,13 @@ describe("indexability", () => {
     expect(isPageIndexable({ ...validPage, qualityScore: 50 })).toBe(false);
   });
 
-  it("returns false when similarity is too high", () => {
-    expect(isPageIndexable({ ...validPage, similarityScore: 0.9 })).toBe(false);
+  it("indexes published pages that allow indexing even below the quality floor", () => {
+    expect(
+      getRobotsDirective({ ...validPage, qualityScore: 50 }).index,
+    ).toBe(true);
+    expect(getRobotsDirective({ ...validPage, allowIndexing: false }).index).toBe(
+      false,
+    );
   });
 });
 

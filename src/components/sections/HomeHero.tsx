@@ -6,7 +6,7 @@ import {
 } from "@/config/business";
 import { ROUTES } from "@/config/routes";
 import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
-import { KEYWORD_INTENTS } from "@/data/keyword-intents";
+import { INITIAL_SERVICES } from "@/data/initial-services";
 import { Button } from "@/components/ui/Button";
 
 const SERVICE_LINKS = [
@@ -40,10 +40,10 @@ export function HomeHero() {
   const wa = getWhatsAppLink(
     "Hello, I am sharing balcony photos for a free estimate in Andhra Pradesh.",
   );
-  const keywordSamples = KEYWORD_INTENTS.filter((k) => k.priority === 0).slice(
-    0,
-    12,
-  );
+  const localSamples = INITIAL_SERVICES.map((service) => ({
+    label: `${service.shortName} in Visakhapatnam`,
+    href: ROUTES.cityService("visakhapatnam", service.slug),
+  }));
   const cities = HIGH_PRIORITY_CITY_AREAS;
 
   return (
@@ -138,13 +138,9 @@ export function HomeHero() {
           <div>
             <h2>Popular local searches</h2>
             <ul>
-              {keywordSamples.map((keyword) => (
-                <li key={keyword.slug}>
-                  <Link
-                    href={ROUTES.keywordInGeo(keyword.slug, "visakhapatnam")}
-                  >
-                    {keyword.phrase} in Visakhapatnam
-                  </Link>
+              {localSamples.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href}>{item.label}</Link>
                 </li>
               ))}
             </ul>

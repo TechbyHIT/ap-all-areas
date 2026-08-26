@@ -260,12 +260,13 @@ export function PillarPageView({ pillar }: PillarPageViewProps) {
         gallery={media.gallery.map((src) => ({ src, alt: media.alt }))}
         breadcrumbItems={[
           { label: "Home", href: "/" },
-          { label: "Services", href: ROUTES.services },
+          { label: "Locations", href: ROUTES.locations },
+          { label: "Andhra Pradesh", href: ROUTES.state },
           {
-            label: "Invisible Grills",
-            href: ROUTES.service(pillar.serviceSlug),
+            label: "Visakhapatnam",
+            href: ROUTES.location("visakhapatnam"),
           },
-          { label: "Visakhapatnam" },
+          { label: "Invisible Grills" },
         ]}
         quoteHref={`${ROUTES.contact}?service=${encodeURIComponent(pillar.serviceSlug)}&city=Visakhapatnam`}
       />

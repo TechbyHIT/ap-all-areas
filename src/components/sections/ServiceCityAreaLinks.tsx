@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ROUTES } from "@/config/routes";
+import { listAreaFactsForCity } from "@/data/area-local-facts";
 import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
@@ -66,10 +67,14 @@ export function ServiceCityAreaLinks({
 
         <div className="svc-geo-stack">
           {cities.map((city) => {
+            const factSlugs = new Set(
+              listAreaFactsForCity(city.citySlug).map((f) => f.areaSlug),
+            );
+            const noted = city.areas.filter((area) => factSlugs.has(area.slug));
             const areas = capAreas
-              ? city.areas.slice(0, maxAreasPerCity)
-              : city.areas;
-            const remaining = city.areas.length - areas.length;
+              ? noted.slice(0, maxAreasPerCity)
+              : noted;
+            const remainingHubs = city.areas.length - noted.length;
 
             return (
               <article key={city.citySlug} className="svc-geo-city">
@@ -101,10 +106,10 @@ export function ServiceCityAreaLinks({
                       </Link>
                     </li>
                   ))}
-                  {remaining > 0 && (
+                  {remainingHubs > 0 && (
                     <li>
                       <Link href={ROUTES.location(city.citySlug)}>
-                        +{remaining} more areas in {city.cityName}
+                        +{remainingHubs} more area hubs in {city.cityName}
                       </Link>
                     </li>
                   )}

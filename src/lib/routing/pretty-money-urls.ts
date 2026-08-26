@@ -3,12 +3,10 @@
  * Keep this file free of Prisma / Node-only imports.
  */
 
-import { KEYWORD_SLUGS } from "@/data/keyword-intents";
+import { AREA_MONEY_LANDING_KEYS } from "@/config/geo";
+import { KEYWORD_INTENT_MAP, KEYWORD_SLUGS } from "@/data/keyword-intents";
 
-/** Keep in sync with `src/data/landings/index.ts` area landings. */
-const AREA_LANDING_KEYS = new Set([
-  "invisible-grills/andhra-pradesh/visakhapatnam/gajuwaka",
-]);
+const AREA_LANDING_KEYS = new Set<string>(AREA_MONEY_LANDING_KEYS);
 
 const SERVICE_SLUG_SET = new Set([
   "invisible-grills",
@@ -75,8 +73,32 @@ export function matchServiceInCityPrettyPath(
   return {
     serviceSlug,
     citySlug,
-    canonicalPath: `/${citySlug}/${serviceSlug}/`,
+    canonicalPath: `/locations/andhra-pradesh/${citySlug}/${serviceSlug}/`,
   };
+}
+
+/**
+ * Keyword × P0-city URLs that share intent with a city+service hub.
+ * Consolidate to one canonical instead of competing doorway landings.
+ */
+export function matchKeywordCityConsolidatePath(
+  pathname: string,
+): string | null {
+  const match = pathname.match(/^\/([a-z0-9-]+)-in-([a-z0-9-]+)\/?$/);
+  if (!match) return null;
+
+  const keywordSlug = match[1];
+  const citySlug = match[2];
+  if (!CITY_SLUG_SET.has(citySlug)) return null;
+
+  if (SERVICE_SLUG_SET.has(keywordSlug)) {
+    return `/locations/andhra-pradesh/${citySlug}/${keywordSlug}/`;
+  }
+
+  const keyword = KEYWORD_INTENT_MAP[keywordSlug];
+  if (!keyword) return null;
+
+  return `/locations/andhra-pradesh/${citySlug}/${keyword.serviceSlug}/`;
 }
 
 /** `/{service}/{state}/{city}/{area}/` → internal landings route */

@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: guide.title,
     metaDescription: guide.summary,
     canonicalUrl: buildCanonicalUrl(`/guides/${guide.slug}/`),
-    ...staticPageIndexability(false),
+    ...staticPageIndexability(true),
   });
 }
 

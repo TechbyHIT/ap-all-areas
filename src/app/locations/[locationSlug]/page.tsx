@@ -17,6 +17,7 @@ import { PricingFactors } from "@/components/sections/PricingFactors";
 import { CoverageSection } from "@/components/sections/CoverageSection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
+import { RelatedGuides } from "@/components/sections/RelatedGuides";
 import { SeoEncyclopediaSections } from "@/components/sections/SeoEncyclopediaSections";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { Container } from "@/components/ui/Container";
@@ -24,20 +25,24 @@ import { Section } from "@/components/ui/Section";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
 import { INITIAL_SERVICES } from "@/data/initial-services";
 import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
-import { KEYWORD_INTENTS } from "@/data/keyword-intents";
+import { PLACEHOLDER_GUIDES } from "@/data/placeholder-content";
+import { SUB_SERVICES } from "@/data/sub-services";
 import { buildLocationPageContent } from "@/data/location-page-content";
+import { getCity } from "@/lib/data/location-catalog";
 import {
   findLocationBySlug,
   getAreasForCity,
   getDistrictBySlug,
   getMainCitySlugs,
 } from "@/lib/data/locations";
+import { STATE_NAME, STATE_SLUG } from "@/config/geo";
+import { SEO_CONFIG } from "@/config/seo";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbSchema } from "@/lib/schema";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
+import { canonicalCitySlug } from "@/lib/routing/location-silo";
 import { generatePageMetadata, generateTitle } from "@/lib/seo/generate-page-metadata";
-import {
-  moneyPageIndexability,
-  seedLocationIndexability,
-} from "@/lib/seo/page-indexability";
+import { moneyPageIndexability } from "@/lib/seo/page-indexability";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -57,17 +62,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const location = findLocationBySlug(locationSlug);
   if (!location) return {};
 
-  const isPriority = HIGH_PRIORITY_CITY_AREAS.some(
-    (c) => c.citySlug === locationSlug,
-  );
+  const siloCity = canonicalCitySlug(locationSlug);
+  const canonicalPath = siloCity
+    ? ROUTES.location(siloCity)
+    : `/locations/${locationSlug}/`;
+  const title = siloCity
+    ? `Safety Nets, Invisible Grills & Balcony Solutions in ${location.name} ${SEO_CONFIG.titleSuffix}`
+    : generateTitle(location.name, "location");
 
   return generatePageMetadata({
-    title: generateTitle(location.name, "location"),
+    title,
     metaDescription: `Invisible grills, safety nets, sports nets and cloth drying hanger installation service available in ${location.name}, Andhra Pradesh. Coverage subject to site confirmation — not a claimed local branch.`,
-    canonicalUrl: buildCanonicalUrl(`/locations/${locationSlug}/`),
-    ...(isPriority
-      ? moneyPageIndexability("city")
-      : seedLocationIndexability()),
+    canonicalUrl: buildCanonicalUrl(canonicalPath),
+    ...(moneyPageIndexability("city")),
   });
 }
 
@@ -106,31 +113,52 @@ export default async function LocationDetailPage({ params }: PageProps) {
     isPriorityCity,
   });
   const profile = getCityLocalProfile(locationSlug);
-  const cityKeywords = isPriorityCity
-    ? KEYWORD_INTENTS.filter((k) => k.priority === 0).slice(0, 18)
-    : [];
+  const siblingCities = HIGH_PRIORITY_CITY_AREAS.filter(
+    (city) => city.citySlug !== locationSlug,
+  ).slice(0, 8);
 
   const heroMedia = getServiceMedia("safety-nets");
   const services = INITIAL_SERVICES.map((service) => {
     const media = getServiceMedia(service.slug);
+    const catalogCity = getCity(STATE_SLUG, locationSlug);
     return {
       name: service.name,
       slug: service.slug,
       summary: `${service.summary} Installation service is available in ${displayName} subject to site confirmation.`,
       benefits: service.benefits.slice(0, 3),
       image: media.image,
-      href: ROUTES.cityService(locationSlug, service.slug),
+      href: catalogCity
+        ? ROUTES.cityService(locationSlug, service.slug)
+        : ROUTES.service(service.slug),
       quoteHref: `${ROUTES.contact}?service=${encodeURIComponent(service.slug)}&city=${encodeURIComponent(displayName)}`,
     };
   });
 
+  const isSiloCity = Boolean(canonicalCitySlug(locationSlug));
+  const heroTitle = isSiloCity
+    ? `Safety Nets, Invisible Grills & Balcony Solutions in ${displayName}`
+    : `${displayName} — Safety Nets, Invisible Grills & Local Installation`;
+  const cityCanonical = buildCanonicalUrl(
+    isSiloCity ? ROUTES.location(locationSlug) : `/locations/${locationSlug}/`,
+  );
+
   return (
     <>
       <FaqJsonLd faqs={content.faqs} />
+      {isSiloCity ? (
+        <JsonLd
+          data={breadcrumbSchema([
+            { name: "Home", url: buildCanonicalUrl("/") },
+            { name: "Locations", url: buildCanonicalUrl(ROUTES.locations) },
+            { name: STATE_NAME, url: buildCanonicalUrl(ROUTES.state) },
+            { name: displayName, url: cityCanonical },
+          ])}
+        />
+      ) : null}
 
       <LocationHero
         badge={districtName ?? "Andhra Pradesh"}
-        title={`${displayName} — Safety Nets, Invisible Grills & Local Installation`}
+        title={heroTitle}
         description={
           profile
             ? `${profile.climateLead} Installation support in ${displayName} is confirmed after site review — this page is not a local branch claim.`
@@ -140,11 +168,20 @@ export default async function LocationDetailPage({ params }: PageProps) {
           src: heroMedia.image,
           alt: heroMedia.alt,
         }}
-        breadcrumbItems={[
-          { label: "Home", href: "/" },
-          { label: "Locations", href: "/locations/" },
-          { label: displayName },
-        ]}
+        breadcrumbItems={
+          isSiloCity
+            ? [
+                { label: "Home", href: "/" },
+                { label: "Locations", href: ROUTES.locations },
+                { label: STATE_NAME, href: ROUTES.state },
+                { label: displayName },
+              ]
+            : [
+                { label: "Home", href: "/" },
+                { label: "Locations", href: ROUTES.locations },
+                { label: displayName },
+              ]
+        }
       />
 
       <MaterialsSection
@@ -237,32 +274,42 @@ export default async function LocationDetailPage({ params }: PageProps) {
             citySlug={locationSlug}
             cityName={displayName}
             areas={areas}
-            title={`Every area in ${displayName} × all services`}
-            description={`Full internal links: each of the ${areas.length} localities includes Invisible Grills, Safety Nets, Sports Nets and Cloth Hangers.`}
+            title={`Local service pages in ${displayName}`}
+            description={`Dedicated service+area pages exist only where we have verified locality notes. Other neighbourhoods still have an area hub for coverage planning.`}
             variant="muted"
           />
         </>
       ) : null}
 
-      {cityKeywords.length > 0 ? (
+      {isPriorityCity ? (
         <Section variant="muted">
           <Container>
-            <h2 className="ds-h2">
-              High-probability searches in {displayName}
-            </h2>
+            <h2 className="ds-h2">Service types people ask about in {displayName}</h2>
             <p className="prose-readable mt-3 text-[var(--muted-foreground)]">
-              Local keyword pages for balcony safety nets, invisible grills,
-              bird control, sports nets and cloth hangers across {displayName},
-              Andhra Pradesh.
+              These specialised pages explain balcony, window, child, pet, pigeon
+              and sports options. For {displayName}-specific installation, open
+              the matching city service page rather than a keyword variation.
             </p>
             <ul className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {cityKeywords.map((keyword) => (
-                <li key={keyword.slug}>
+              {INITIAL_SERVICES.map((service) => (
+                <li key={service.slug}>
                   <Link
-                    href={ROUTES.keywordInGeo(keyword.slug, locationSlug)}
+                    href={ROUTES.cityService(locationSlug, service.slug)}
                     className="text-[var(--color-link)] hover:underline"
                   >
-                    {keyword.phrase} in {displayName}
+                    {service.name} in {displayName}
+                  </Link>
+                </li>
+              ))}
+              {SUB_SERVICES.filter((sub) =>
+                ["balcony-invisible-grills", "window-invisible-grills", "children-safety-nets", "pet-safety-nets", "pigeon-safety-nets", "cricket-practice-nets", "balcony-cloth-hangers"].includes(sub.slug),
+              ).map((sub) => (
+                <li key={sub.slug}>
+                  <Link
+                    href={ROUTES.service(sub.slug)}
+                    className="text-[var(--color-link)] hover:underline"
+                  >
+                    {sub.name}
                   </Link>
                 </li>
               ))}
@@ -275,6 +322,30 @@ export default async function LocationDetailPage({ params }: PageProps) {
           </Container>
         </Section>
       ) : null}
+
+      {isSiloCity && siblingCities.length > 0 ? (
+        <LocationCards
+          title="Other Andhra Pradesh city hubs"
+          description="Each city page covers local building patterns for that place. They are service-area pages, not branch listings."
+          locations={siblingCities.map((city) => ({
+            name: city.cityName,
+            href: ROUTES.location(city.citySlug),
+            parentLabel: STATE_NAME,
+            description: `Installation support in ${city.cityName} is confirmed after site review.`,
+          }))}
+          variant="muted"
+        />
+      ) : null}
+
+      <RelatedGuides
+        title="Guides that help before a site visit"
+        description="Read these before sending photos if you are still comparing invisible grills, nets or hangers."
+        guides={PLACEHOLDER_GUIDES.map((guide) => ({
+          title: guide.title,
+          href: ROUTES.guide(guide.slug),
+          summary: guide.summary,
+        }))}
+      />
 
       {nearbyPlaces.length > 0 ? (
         <NearbyLocations

@@ -11,7 +11,7 @@ import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
 import { AP_DISTRICTS, HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
-import { KEYWORD_INTENTS } from "@/data/keyword-intents";
+import { INITIAL_SERVICES } from "@/data/initial-services";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
 import { staticPageIndexability } from "@/lib/seo/page-indexability";
@@ -24,10 +24,6 @@ export const metadata: Metadata = generatePageMetadata({
   canonicalUrl: buildCanonicalUrl("/locations/"),
   ...staticPageIndexability(true),
 });
-
-const HIGH_PROBABILITY_KEYWORDS = KEYWORD_INTENTS.filter(
-  (k) => k.priority === 0,
-).slice(0, 24);
 
 export default function LocationsPage() {
   const priorityCities = HIGH_PRIORITY_CITY_AREAS.map((city) => {
@@ -73,6 +69,7 @@ export default function LocationsPage() {
         title="How statewide coverage works"
         coverageText="We provide installation services across Andhra Pradesh subject to site accessibility, measurements, technician availability and project requirements. City and area pages help with local planning context. Listing a place supports visit routing—it is not proof of a permanent neighbourhood office."
         links={[
+          { label: "Andhra Pradesh hub", href: ROUTES.state },
           { label: "View services", href: ROUTES.services },
           { label: "Check coverage & quote", href: ROUTES.contact },
         ]}
@@ -87,48 +84,44 @@ export default function LocationsPage() {
 
       <Section>
         <Container>
-          <h2 className="ds-h2">High-probability keyword coverage</h2>
+          <h2 className="ds-h2">City service pages worth opening first</h2>
           <p className="prose-readable mt-3 text-[var(--muted-foreground)]">
-            These commercial intents map across cities and curated areas in
-            Andhra Pradesh. Open a city first, then use area or keyword pages for
-            a tighter local brief.
+            Local commercial searches such as “invisible grills in Visakhapatnam”
+            are answered on city+service hubs—not on a separate keyword URL for
+            every phrasing. Start with a city, then a service.
           </p>
-          <ul className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {HIGH_PROBABILITY_KEYWORDS.map((keyword) => (
-              <li key={keyword.slug}>
-                <Link
-                  href={ROUTES.keywordInGeo(keyword.slug, "visakhapatnam")}
-                  className="text-[var(--color-link)] hover:underline"
-                >
-                  {keyword.phrase} in Visakhapatnam
-                </Link>
-                <span className="text-[var(--muted-foreground)]">
-                  {" "}
-                  · also in other AP cities
-                </span>
-              </li>
-            ))}
-          </ul>
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {HIGH_PRIORITY_CITY_AREAS.map((city) => (
               <div key={city.citySlug}>
                 <h3 className="font-semibold text-[var(--foreground)]">
-                  {city.cityName} areas
+                  {city.cityName}
                 </h3>
-                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                <ul className="mt-2 space-y-1 text-sm">
+                  {INITIAL_SERVICES.map((service) => (
+                    <li key={`${city.citySlug}-${service.slug}`}>
+                      <Link
+                        href={ROUTES.cityService(city.citySlug, service.slug)}
+                        className="text-[var(--color-link)] hover:underline"
+                      >
+                        {service.shortName}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-sm text-[var(--muted-foreground)]">
                   {city.areas
-                    .slice(0, 6)
+                    .slice(0, 5)
                     .map((a) => a.name)
                     .join(", ")}
-                  {city.areas.length > 6
-                    ? ` +${city.areas.length - 6} more`
+                  {city.areas.length > 5
+                    ? ` +${city.areas.length - 5} areas`
                     : ""}
                 </p>
                 <Link
                   href={ROUTES.location(city.citySlug)}
                   className="mt-2 inline-block text-sm text-[var(--color-link)] hover:underline"
                 >
-                  View {city.cityName} coverage
+                  {city.cityName} hub
                 </Link>
               </div>
             ))}

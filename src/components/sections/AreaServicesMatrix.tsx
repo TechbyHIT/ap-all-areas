@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ROUTES } from "@/config/routes";
+import { listAreaFactsForCity } from "@/data/area-local-facts";
 import { INITIAL_SERVICES } from "@/data/initial-services";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
@@ -33,7 +34,8 @@ const SERVICE_SHORT: Record<string, string> = {
 };
 
 /**
- * Full internal link mesh: every area → area hub + all core service pages.
+ * Area hubs plus service links only where local facts exist.
+ * Avoids a full area×service mesh of near-duplicate URLs.
  */
 export function AreaServicesMatrix({
   citySlug,
@@ -47,6 +49,9 @@ export function AreaServicesMatrix({
   className = "",
   excludeAreaSlug,
 }: AreaServicesMatrixProps) {
+  const factAreas = new Set(
+    listAreaFactsForCity(citySlug).map((fact) => fact.areaSlug),
+  );
   const list = excludeAreaSlug
     ? areas.filter((area) => area.slug !== excludeAreaSlug)
     : areas;
@@ -57,6 +62,8 @@ export function AreaServicesMatrix({
     slug: service.slug,
     name: SERVICE_SHORT[service.slug] ?? service.shortName,
   }));
+  const withLocalNotes = list.filter((area) => factAreas.has(area.slug));
+  const hubOnly = list.filter((area) => !factAreas.has(area.slug));
 
   return (
     <Section variant={variant} className={className}>
@@ -65,21 +72,21 @@ export function AreaServicesMatrix({
           eyebrow={eyebrow}
           title={
             title ??
-            `All areas in ${cityName} with every installation service`
+            `Local service pages in ${cityName}`
           }
           description={
             description ??
-            `Each locality lists all ${services.length} core services. Coverage is confirmed after site review—not a branch in every neighbourhood.`
+            `Service+area pages are published only where we have verified locality notes. Other neighbourhoods still have an area hub for coverage planning.`
           }
         />
 
         <div className="area-svc-matrix">
-          {list.map((area) => (
+          {withLocalNotes.map((area) => (
             <article key={area.slug} className="area-svc-matrix-card">
               <h3>
                 <Link href={ROUTES.area(citySlug, area.slug)}>{area.name}</Link>
               </h3>
-              <p className="area-svc-matrix-meta">{cityName}</p>
+              <p className="area-svc-matrix-meta">{cityName} · local notes</p>
               <ul className="area-svc-matrix-links">
                 {services.map((service) => {
                   const href = ROUTES.areaService(
@@ -113,6 +120,24 @@ export function AreaServicesMatrix({
             </article>
           ))}
         </div>
+        {hubOnly.length > 0 ? (
+          <p className="mt-6 max-w-3xl text-sm leading-relaxed text-zinc-600">
+            Additional area hubs in {cityName}:{" "}
+            {hubOnly.map((area, index) => (
+              <span key={area.slug}>
+                {index > 0 ? ", " : null}
+                <Link
+                  href={ROUTES.area(citySlug, area.slug)}
+                  className="text-[var(--color-link)] hover:underline"
+                >
+                  {area.name}
+                </Link>
+              </span>
+            ))}
+            . Use the city hub or send photos if your locality is not listed with
+            a dedicated service page.
+          </p>
+        ) : null}
       </Container>
     </Section>
   );

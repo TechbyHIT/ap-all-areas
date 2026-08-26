@@ -19,8 +19,9 @@ export function staticPageIndexability(indexable = true): PageIndexabilityInput 
   };
 }
 
+/** Public location pages that used to be draft/noindex — now indexable. */
 export function seedLocationIndexability(): PageIndexabilityInput {
-  return staticPageIndexability(false);
+  return staticPageIndexability(true);
 }
 
 /** Indexable money / hub pages using tier floors (not padded maxima). */

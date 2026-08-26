@@ -45,10 +45,12 @@ import {
 import {
   generateDescription,
   generatePageMetadata,
-  generateTitle,
 } from "@/lib/seo/generate-page-metadata";
 import { moneyPageIndexability } from "@/lib/seo/page-indexability";
 import { BUSINESS_CONFIG } from "@/config/business";
+import { STATE_NAME, STATE_SLUG } from "@/config/geo";
+import { SEO_CONFIG } from "@/config/seo";
+import { shouldGeneratePage } from "@/lib/seo/page-decision";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -82,12 +84,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const service = INITIAL_SERVICE_MAP[serviceSlug];
   if (!city || !service) return {};
 
+  const decision = shouldGeneratePage({
+    kind: "city-service",
+    stateSlug: STATE_SLUG,
+    citySlug: locationSlug,
+    serviceSlug,
+  });
+  if (!decision.generate) return {};
+
   const pillar = getPillarPage(locationSlug, serviceSlug);
   if (pillar) {
     return generatePageMetadata({
       title: pillar.metaTitle,
       metaDescription: pillar.metaDescription,
-      canonicalUrl: buildCanonicalUrl(`/${locationSlug}/${serviceSlug}/`),
+      canonicalUrl: buildCanonicalUrl(
+        ROUTES.cityService(locationSlug, serviceSlug),
+      ),
       openGraphTitle: pillar.openGraphTitle,
       openGraphDescription: pillar.openGraphDescription,
       openGraphImage: BUSINESS_CONFIG.defaultOpenGraphImage,
@@ -98,15 +110,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     });
   }
 
-  const title = generateTitle(
-    `${service.name} in ${city.name}`,
-    "service-location",
-  );
+  const title = `${service.name} in ${city.name} ${SEO_CONFIG.titleSuffix}`;
 
   return generatePageMetadata({
     title,
     metaDescription: generateDescription(service.name, city.name),
-    canonicalUrl: buildCanonicalUrl(`/${locationSlug}/${serviceSlug}/`),
+    canonicalUrl: buildCanonicalUrl(
+      ROUTES.cityService(locationSlug, serviceSlug),
+    ),
     ...moneyPageIndexability("city-service"),
   });
 }
@@ -118,9 +129,19 @@ export default async function CityServicePage({ params }: PageProps) {
 
   if (!city || !service) notFound();
 
+  const decision = shouldGeneratePage({
+    kind: "city-service",
+    stateSlug: STATE_SLUG,
+    citySlug: locationSlug,
+    serviceSlug,
+  });
+  if (!decision.generate) notFound();
+
   const pillar = getPillarPage(locationSlug, serviceSlug);
   if (pillar) {
-    const pageUrl = buildCanonicalUrl(`/${locationSlug}/${serviceSlug}/`);
+    const pageUrl = buildCanonicalUrl(
+      ROUTES.cityService(locationSlug, serviceSlug),
+    );
     const faqSection = pillar.sections.find((s) => s.kind === "faq");
     const processSection = pillar.sections.find((s) => s.kind === "process");
     const areaGraph = pillar.sections.find(
@@ -143,21 +164,22 @@ export default async function CityServicePage({ params }: PageProps) {
               name: pillar.keyword,
               description: pillar.metaDescription,
               url: pageUrl,
-              areaServed: "Visakhapatnam, Andhra Pradesh, India",
+              areaServed: `${city.name}, Andhra Pradesh, India`,
             }),
             breadcrumbSchema([
               { name: "Home", url: buildCanonicalUrl("/") },
-              { name: "Services", url: buildCanonicalUrl("/services/") },
+              { name: "Locations", url: buildCanonicalUrl(ROUTES.locations) },
+              { name: STATE_NAME, url: buildCanonicalUrl(ROUTES.state) },
               {
-                name: "Invisible Grills",
-                url: buildCanonicalUrl(ROUTES.service("invisible-grills")),
+                name: city.name,
+                url: buildCanonicalUrl(ROUTES.location(locationSlug)),
               },
-              { name: "Visakhapatnam", url: pageUrl },
+              { name: service.name, url: pageUrl },
             ]),
             ...(processSection && processSection.kind === "process"
               ? [
                   howToSchema({
-                    name: `How invisible grill installation works in Visakhapatnam`,
+                    name: `How ${service.name.toLowerCase()} installation works in ${city.name}`,
                     description: processSection.lead,
                     steps: processSection.steps,
                   }),
@@ -166,7 +188,7 @@ export default async function CityServicePage({ params }: PageProps) {
             ...(areaGraph && areaGraph.kind === "link-graph"
               ? [
                   itemListSchema({
-                    name: "Invisible grills by Visakhapatnam locality",
+                    name: `${service.name} by ${city.name} locality`,
                     items: areaGraph.links.map((link) => ({
                       name: link.label,
                       url: buildCanonicalUrl(link.href),
@@ -182,8 +204,8 @@ export default async function CityServicePage({ params }: PageProps) {
           cityName={city.name}
           areas={getAreasForCity(locationSlug)}
           highlightServiceSlug={service.slug}
-          title={`All ${city.name} areas × every service`}
-          description={`Complete internal links for ${service.name} and the other core services across every curated locality in ${city.name}.`}
+          title={`Local ${service.name} pages in ${city.name}`}
+          description={`Area+service pages are linked only where verified locality notes exist. Other neighbourhoods remain on the city hub and area hubs.`}
           variant="muted"
         />
       </>
@@ -194,7 +216,9 @@ export default async function CityServicePage({ params }: PageProps) {
   const areas = getAreasForCity(locationSlug);
   const areaNames = areas.map((a) => a.name);
   const media = getServiceMedia(service.slug);
-  const pageUrl = buildCanonicalUrl(`/${locationSlug}/${serviceSlug}/`);
+  const pageUrl = buildCanonicalUrl(
+    ROUTES.cityService(locationSlug, serviceSlug),
+  );
   const metaDescription = generateDescription(service.name, city.name);
 
   const content = buildCityServiceContent({
@@ -242,12 +266,13 @@ export default async function CityServicePage({ params }: PageProps) {
           }),
           breadcrumbSchema([
             { name: "Home", url: buildCanonicalUrl("/") },
-            { name: "Services", url: buildCanonicalUrl("/services/") },
+            { name: "Locations", url: buildCanonicalUrl(ROUTES.locations) },
+            { name: STATE_NAME, url: buildCanonicalUrl(ROUTES.state) },
             {
-              name: service.name,
-              url: buildCanonicalUrl(ROUTES.service(service.slug)),
+              name: city.name,
+              url: buildCanonicalUrl(ROUTES.location(locationSlug)),
             },
-            { name: city.name, url: pageUrl },
+            { name: service.name, url: pageUrl },
           ]),
         ]}
       />
@@ -264,9 +289,10 @@ export default async function CityServicePage({ params }: PageProps) {
         gallery={media.gallery.map((src) => ({ src, alt: media.alt }))}
         breadcrumbItems={[
           { label: "Home", href: "/" },
-          { label: "Services", href: "/services/" },
-          { label: service.name, href: ROUTES.service(service.slug) },
-          { label: city.name },
+          { label: "Locations", href: ROUTES.locations },
+          { label: STATE_NAME, href: ROUTES.state },
+          { label: city.name, href: ROUTES.location(locationSlug) },
+          { label: service.name },
         ]}
         quoteHref={`${ROUTES.contact}?service=${encodeURIComponent(service.slug)}&city=${encodeURIComponent(city.name)}`}
         whatsappMessage={`Hello, I am sharing opening photos for ${service.name} estimate in ${city.name}, Andhra Pradesh.`}
@@ -373,8 +399,8 @@ export default async function CityServicePage({ params }: PageProps) {
           cityName={city.name}
           areas={areas}
           highlightServiceSlug={service.slug}
-          title={`${service.name} — all areas in ${city.name}`}
-          description={`Every curated locality in ${city.name} with links to ${service.name} plus the other three core services.`}
+          title={`${service.name} in ${city.name} — areas with local notes`}
+          description={`Dedicated ${service.name.toLowerCase()} pages exist only for neighbourhoods with verified local context. Other areas are covered from the city hub.`}
           variant="muted"
         />
       ) : null}

@@ -13,7 +13,7 @@ import {
 } from "@/config/prerender";
 import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 import { INITIAL_SERVICE_MAP } from "@/data/initial-services";
-import { findScaleLocality, pathKeywordInGeo } from "@/lib/seo/url-matrix";
+import { findScaleLocality } from "@/lib/seo/url-matrix";
 import { isScaleLocalityIndexable } from "@/lib/seo/keyword-geo-indexability";
 import { ServiceHero } from "@/components/sections/ServiceHero";
 import { FAQSection } from "@/components/sections/FAQSection";
@@ -31,10 +31,7 @@ import {
   webPageSchema,
 } from "@/lib/schema";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
-import {
-  moneyPageIndexability,
-  seedLocationIndexability,
-} from "@/lib/seo/page-indexability";
+import { staticPageIndexability } from "@/lib/seo/page-indexability";
 
 
 type PageProps = {
@@ -115,19 +112,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!geo) return {};
 
   const content = buildKeywordGeoContent(keyword, geo);
-  const path = pathKeywordInGeo(keywordSlug, geoSlug);
   const heroImage = getIntentHeroImage(keyword.slug, keyword.serviceSlug);
+  const canonicalPath = ROUTES.keywordInGeo(keywordSlug, geoSlug);
 
   return generatePageMetadata({
     title: content.metaTitle,
     metaDescription: content.metaDescription,
-    canonicalUrl: buildCanonicalUrl(path),
+    canonicalUrl: buildCanonicalUrl(canonicalPath),
     openGraphTitle: `${keyword.phrase} in ${geo.name} | ${BUSINESS_CONFIG.name}`,
     openGraphDescription: content.metaDescription,
     openGraphImage: heroImage.src,
-    ...(geo.indexable
-      ? moneyPageIndexability("locality-service")
-      : seedLocationIndexability()),
+    ...staticPageIndexability(true),
   });
 }
 
@@ -140,8 +135,8 @@ export default async function KeywordGeoLandingPage({ params }: PageProps) {
   if (!geo || !service) notFound();
 
   const content = buildKeywordGeoContent(keyword, geo);
-  const path = pathKeywordInGeo(keywordSlug, geoSlug);
-  const pageUrl = buildCanonicalUrl(path);
+  const canonicalPath = ROUTES.keywordInGeo(keywordSlug, geoSlug);
+  const pageUrl = buildCanonicalUrl(canonicalPath);
   const heroImage = getIntentHeroImage(keyword.slug, service.slug);
 
   const related = Object.values(INITIAL_SERVICE_MAP)
@@ -156,13 +151,6 @@ export default async function KeywordGeoLandingPage({ params }: PageProps) {
         image: media.image,
       };
     });
-
-  const siblingKeywords = KEYWORD_INTENTS.filter(
-    (k) =>
-      k.serviceSlug === keyword.serviceSlug &&
-      k.slug !== keyword.slug &&
-      k.priority <= 1,
-  ).slice(0, 8);
 
   return (
     <>
@@ -294,28 +282,6 @@ export default async function KeywordGeoLandingPage({ params }: PageProps) {
           </p>
         </Container>
       </Section>
-
-      {siblingKeywords.length > 0 ? (
-        <Section variant="muted">
-          <Container>
-            <h2 className="ds-h2">
-              Related {service.name.toLowerCase()} searches in {geo.name}
-            </h2>
-            <ul className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {siblingKeywords.map((item) => (
-                <li key={item.slug}>
-                  <Link
-                    href={ROUTES.keywordInGeo(item.slug, geoSlug)}
-                    className="text-[var(--color-link)] hover:underline"
-                  >
-                    {item.phrase} in {geo.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Container>
-        </Section>
-      ) : null}
 
       <ServiceCityAreaLinks
         serviceSlug={service.slug}

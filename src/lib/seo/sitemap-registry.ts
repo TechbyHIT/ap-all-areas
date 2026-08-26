@@ -1,28 +1,23 @@
 import type { MetadataRoute } from "next";
-import {
-  SITEMAP_ALL_CURATED_AREA_SERVICES,
-  SITEMAP_KEYWORD_AREA_PRIORITY_MAX,
-  SITEMAP_KEYWORD_CITY_PRIORITY_MAX,
-  SITEMAP_SCALE_P0_URL_LIMIT,
-} from "@/config/programmatic-scale";
 import { SEO_CONFIG } from "@/config/seo";
 import { P0_MONEY_CITY_SLUGS } from "@/data/city-local-profiles";
-import { listAreaMoneyLandings } from "@/data/landings";
 import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 import { INITIAL_SERVICES } from "@/data/initial-services";
-import { KEYWORD_INTENTS } from "@/data/keyword-intents";
 import { PLACEHOLDER_BLOG_POSTS } from "@/data/placeholder-content";
 import { PROBLEMS } from "@/data/problems";
 import { PROPERTY_TYPES } from "@/data/property-types";
+import { SUB_SERVICE_SLUGS } from "@/data/sub-services";
 import { ROUTES } from "@/config/routes";
-import { matchServiceInCityPrettyPath } from "@/lib/routing/pretty-money-urls";
-import { buildCanonicalUrl } from "@/lib/routing/paths";
-import { getIndexableScaleLocalitySlugSet } from "@/lib/seo/keyword-geo-indexability";
+import { matchLegacySiloRedirect } from "@/lib/routing/location-silo";
+import { buildCanonicalUrl, buildFileUrl } from "@/lib/routing/paths";
 import {
-  listCuratedAreaServiceUrls,
-  listKeywordCityUrls,
-  pathKeywordInGeo,
-} from "@/lib/seo/url-matrix";
+  buildKeywordLocalityChunk,
+  countKeywordLocalityUrls,
+  countKeywordSitemapFiles,
+  listKeywordSitemapFileNames,
+  parseKeywordSitemapPart,
+  SCALE_SITEMAP_CHUNK,
+} from "@/lib/seo/sitemap-scale";
 
 /** Keep each sitemap file under Search Console / config limits. */
 export const SITEMAP_CHUNK_SIZE = Math.min(
@@ -35,6 +30,23 @@ export type SitemapRegistryEntry = MetadataRoute.Sitemap[number] & {
   path: string;
   /** Hub vs money — used for stratified HTTP sampling. */
   kind: "hub" | "money";
+};
+
+export type SitemapFileName =
+  | "pages"
+  | "locations"
+  | "services"
+  | "guides"
+  | "blog"
+  | "projects"
+  | "states"
+  | "cities"
+  | "areas"
+  | "local-services";
+
+export type SitemapFile = {
+  name: string;
+  entries: SitemapRegistryEntry[];
 };
 
 type ChangeFrequency = SitemapRegistryEntry["changeFrequency"];
@@ -74,26 +86,28 @@ function makeEntry(
   };
 }
 
-/** True when `/{service}-in-{city}/` would 308 to `/{city}/{service}/`. */
+/** True when the path 308s to a different canonical (must not appear in sitemaps). */
 export function isSitemapRedirectPath(path: string): boolean {
-  return matchServiceInCityPrettyPath(path) !== null;
+  const keywordCity = path.match(/^\/([a-z0-9-]+)-in-([a-z0-9-]+)\/?$/);
+  if (keywordCity && P0_CITY_SET.has(keywordCity[2])) {
+    const isCoreService = INITIAL_SERVICES.some(
+      (service) => service.slug === keywordCity[1],
+    );
+    if (isCoreService) return true;
+  }
+  return matchLegacySiloRedirect(path) !== null;
 }
 
-function buildHubEntries(): SitemapRegistryEntry[] {
+function buildPageEntries(): SitemapRegistryEntry[] {
   const corePaths: Array<{ path: string; priority: number; freq?: ChangeFrequency }> =
     [
       { path: "/", priority: 1, freq: "daily" },
       { path: "/about/", priority: 0.7 },
       { path: "/contact/", priority: 0.7 },
-      { path: "/services/", priority: 0.75 },
-      { path: "/locations/", priority: 0.75 },
       { path: "/solutions/", priority: 0.7 },
       { path: "/property-types/", priority: 0.7 },
-      { path: "/guides/", priority: 0.65 },
-      { path: "/blog/", priority: 0.65 },
       { path: "/faq/", priority: 0.7 },
       { path: "/gallery/", priority: 0.65 },
-      { path: "/projects/", priority: 0.65 },
       { path: "/testimonials/", priority: 0.6 },
       { path: "/pricing-guide/", priority: 0.7 },
       { path: "/materials-guide/", priority: 0.7 },
@@ -110,22 +124,6 @@ function buildHubEntries(): SitemapRegistryEntry[] {
       kind: "hub",
     }),
   );
-
-  for (const service of INITIAL_SERVICES) {
-    if (!service.allowIndexing) continue;
-    entries.push(
-      makeEntry(`/services/${service.slug}/`, 0.85, { kind: "hub" }),
-    );
-  }
-
-  for (const post of PLACEHOLDER_BLOG_POSTS) {
-    entries.push(
-      makeEntry(`/blog/${post.slug}/`, 0.65, {
-        kind: "hub",
-        lastModified: parseIsoDay(post.publishedAt),
-      }),
-    );
-  }
 
   for (const problem of PROBLEMS) {
     if (problem.publicationStatus !== "published" || !problem.allowIndexing) {
@@ -157,95 +155,124 @@ function buildHubEntries(): SitemapRegistryEntry[] {
   return entries;
 }
 
-function buildLocationMoneyEntries(): SitemapRegistryEntry[] {
+function buildServiceEntries(): SitemapRegistryEntry[] {
+  const entries: SitemapRegistryEntry[] = [
+    makeEntry("/services/", 0.75, { kind: "hub" }),
+  ];
+
+  for (const service of INITIAL_SERVICES) {
+    if (!service.allowIndexing) continue;
+    entries.push(
+      makeEntry(`/services/${service.slug}/`, 0.85, { kind: "hub" }),
+    );
+  }
+
+  for (const slug of SUB_SERVICE_SLUGS) {
+    entries.push(makeEntry(`/services/${slug}/`, 0.78, { kind: "hub" }));
+  }
+
+  return entries;
+}
+
+function buildGuideEntries(): SitemapRegistryEntry[] {
+  const entries: SitemapRegistryEntry[] = [
+    makeEntry("/guides/", 0.65, { kind: "hub" }),
+  ];
+  for (const slug of [
+    "invisible-grills-buying-guide",
+    "safety-nets-installation-guide",
+    "choosing-cloth-drying-hangers",
+  ]) {
+    entries.push(makeEntry(`/guides/${slug}/`, 0.7, { kind: "hub" }));
+  }
+  return entries;
+}
+
+function buildLocationHubEntries(): SitemapRegistryEntry[] {
+  return [makeEntry("/locations/", 0.75, { kind: "hub" })];
+}
+
+function buildBlogEntries(): SitemapRegistryEntry[] {
+  const entries: SitemapRegistryEntry[] = [
+    makeEntry("/blog/", 0.65, { kind: "hub" }),
+  ];
+  for (const post of PLACEHOLDER_BLOG_POSTS) {
+    entries.push(
+      makeEntry(`/blog/${post.slug}/`, 0.65, {
+        kind: "hub",
+        lastModified: parseIsoDay(post.publishedAt),
+      }),
+    );
+  }
+  return entries;
+}
+
+function buildProjectEntries(): SitemapRegistryEntry[] {
+  return [makeEntry("/projects/", 0.65, { kind: "hub" })];
+}
+
+function buildStateEntries(): SitemapRegistryEntry[] {
+  return [makeEntry(ROUTES.state, 0.8, { kind: "hub" })];
+}
+
+function siloCities() {
+  return HIGH_PRIORITY_CITY_AREAS.filter((city) => P0_CITY_SET.has(city.citySlug));
+}
+
+function buildCityEntries(): SitemapRegistryEntry[] {
+  return siloCities().map((city) =>
+    makeEntry(ROUTES.location(city.citySlug), 0.75, { kind: "hub" }),
+  );
+}
+
+function buildAreaEntries(): SitemapRegistryEntry[] {
+  const entries: SitemapRegistryEntry[] = [];
+  for (const city of siloCities()) {
+    for (const area of city.areas) {
+      entries.push(
+        makeEntry(ROUTES.area(city.citySlug, area.slug), 0.6, {
+          kind: "money",
+        }),
+      );
+    }
+  }
+  return entries;
+}
+
+function buildLocalServiceEntries(): SitemapRegistryEntry[] {
   const entries: SitemapRegistryEntry[] = [];
 
-  for (const city of HIGH_PRIORITY_CITY_AREAS) {
-    const cityIndexable = P0_CITY_SET.has(city.citySlug);
-    if (!cityIndexable) continue;
-
-    entries.push(
-      makeEntry(`/locations/${city.citySlug}/`, 0.75, { kind: "hub" }),
-    );
-
+  for (const city of siloCities()) {
     for (const service of INITIAL_SERVICES) {
       if (!service.allowIndexing) continue;
       entries.push(
-        makeEntry(`/${city.citySlug}/${service.slug}/`, 0.8, { kind: "money" }),
-      );
-    }
-
-    for (const area of city.areas) {
-      entries.push(
-        makeEntry(`/locations/${city.citySlug}/${area.slug}/`, 0.6, {
+        makeEntry(ROUTES.cityService(city.citySlug, service.slug), 0.8, {
           kind: "money",
         }),
       );
     }
   }
 
-  for (const landing of listAreaMoneyLandings()) {
-    entries.push(makeEntry(landing.slugPath, 0.78, { kind: "money" }));
-  }
-
-  return entries;
-}
-
-function buildAreaServiceEntries(): SitemapRegistryEntry[] {
-  if (!SITEMAP_ALL_CURATED_AREA_SERVICES) return [];
-  return listCuratedAreaServiceUrls()
-    .filter((row) => row.citySlug && P0_CITY_SET.has(row.citySlug))
-    .map((row) => makeEntry(row.path, 0.72, { kind: "money" }));
-}
-
-function buildKeywordCityEntries(): SitemapRegistryEntry[] {
-  return listKeywordCityUrls(SITEMAP_KEYWORD_CITY_PRIORITY_MAX)
-    .filter((row) => !isSitemapRedirectPath(row.path))
-    .map((row) =>
-      makeEntry(row.path, row.indexCandidate ? 0.74 : 0.55, { kind: "money" }),
-    );
-}
-
-function buildKeywordAreaEntries(): SitemapRegistryEntry[] {
-  const keywords = KEYWORD_INTENTS.filter(
-    (k) => k.priority <= SITEMAP_KEYWORD_AREA_PRIORITY_MAX,
-  );
-  const entries: SitemapRegistryEntry[] = [];
-
-  for (const city of HIGH_PRIORITY_CITY_AREAS) {
-    if (!P0_CITY_SET.has(city.citySlug)) continue;
+  for (const city of siloCities()) {
+    for (const service of INITIAL_SERVICES) {
+      if (!service.allowIndexing) continue;
+      entries.push(
+        makeEntry(ROUTES.cityService(city.citySlug, service.slug), 0.8, {
+          kind: "money",
+        }),
+      );
+    }
     for (const area of city.areas) {
-      for (const keyword of keywords) {
-        const path = pathKeywordInGeo(keyword.slug, area.slug);
-        if (isSitemapRedirectPath(path)) continue;
+      for (const service of INITIAL_SERVICES) {
+        if (!service.allowIndexing) continue;
         entries.push(
-          makeEntry(path, keyword.priority === 0 ? 0.68 : 0.58, {
-            kind: "money",
-          }),
+          makeEntry(
+            ROUTES.areaService(city.citySlug, area.slug, service.slug),
+            0.72,
+            { kind: "money" },
+          ),
         );
       }
-    }
-  }
-
-  return entries;
-}
-
-/** P0 keyword × scale localities (capped, indexable). */
-function buildKeywordScaleEntries(): SitemapRegistryEntry[] {
-  const p0Keywords = KEYWORD_INTENTS.filter((k) => k.priority === 0);
-  if (p0Keywords.length === 0 || SITEMAP_SCALE_P0_URL_LIMIT <= 0) return [];
-
-  const localitySlugs = [...getIndexableScaleLocalitySlugSet()];
-  const entries: SitemapRegistryEntry[] = [];
-
-  for (const geoSlug of localitySlugs) {
-    for (const keyword of p0Keywords) {
-      if (entries.length >= SITEMAP_SCALE_P0_URL_LIMIT) {
-        return entries;
-      }
-      const path = pathKeywordInGeo(keyword.slug, geoSlug);
-      if (isSitemapRedirectPath(path)) continue;
-      entries.push(makeEntry(path, 0.52, { kind: "money" }));
     }
   }
 
@@ -266,24 +293,97 @@ export function dedupeSitemapEntries(
   return out;
 }
 
-/** Full flat list of indexable, non-redirect sitemap URLs. */
-export function buildSitemapRegistry(): SitemapRegistryEntry[] {
-  const raw = [
-    ...buildHubEntries(),
-    ...buildLocationMoneyEntries(),
-    ...buildAreaServiceEntries(),
-    ...buildKeywordCityEntries(),
-    ...buildKeywordAreaEntries(),
-    ...buildKeywordScaleEntries(),
-  ];
-
-  return dedupeSitemapEntries(raw).filter(
+function finalize(entries: SitemapRegistryEntry[]): SitemapRegistryEntry[] {
+  return dedupeSitemapEntries(entries).filter(
     (entry) =>
       !isSitemapRedirectPath(entry.path) &&
       entry.url.startsWith("https://") &&
       entry.path.endsWith("/"),
   );
 }
+
+export function buildSitemapGroups(): Record<SitemapFileName, SitemapRegistryEntry[]> {
+  return {
+    pages: finalize(buildPageEntries()),
+    locations: finalize(buildLocationHubEntries()),
+    services: finalize(buildServiceEntries()),
+    guides: finalize(buildGuideEntries()),
+    blog: finalize(buildBlogEntries()),
+    projects: finalize(buildProjectEntries()),
+    states: finalize(buildStateEntries()),
+    cities: finalize(buildCityEntries()),
+    areas: finalize(buildAreaEntries()),
+    "local-services": finalize(buildLocalServiceEntries()),
+  };
+}
+
+function splitNamedGroup(
+  baseName: string,
+  entries: SitemapRegistryEntry[],
+): SitemapFile[] {
+  if (entries.length === 0) return [];
+  if (entries.length <= SITEMAP_CHUNK_SIZE) {
+    return [{ name: baseName, entries }];
+  }
+  const files: SitemapFile[] = [];
+  for (let i = 0; i < entries.length; i += SITEMAP_CHUNK_SIZE) {
+    const part = Math.floor(i / SITEMAP_CHUNK_SIZE) + 1;
+    files.push({
+      name: `${baseName}-${part}`,
+      entries: entries.slice(i, i + SITEMAP_CHUNK_SIZE),
+    });
+  }
+  return files;
+}
+
+/** Core named sitemap files (hubs + silo money). Keyword scale files are lazy. */
+export function listSitemapFiles(): SitemapFile[] {
+  const groups = buildSitemapGroups();
+  const order: SitemapFileName[] = [
+    "pages",
+    "locations",
+    "services",
+    "guides",
+    "blog",
+    "projects",
+    "states",
+    "cities",
+    "areas",
+    "local-services",
+  ];
+  return order.flatMap((name) => splitNamedGroup(name, groups[name]));
+}
+
+/** Child sitemap names listed in `/sitemap.xml` (core + AP keyword slices). */
+export function listSitemapIndexNames(): string[] {
+  return [
+    ...listSitemapFiles().map((file) => file.name),
+    ...listKeywordSitemapFileNames(),
+  ];
+}
+
+export function getSitemapFile(name: string): SitemapFile | null {
+  const part = parseKeywordSitemapPart(name);
+  if (part !== null) {
+    if (part > countKeywordSitemapFiles()) return null;
+    const entries = buildKeywordLocalityChunk(part);
+    if (entries.length === 0) return null;
+    return { name, entries };
+  }
+  return listSitemapFiles().find((file) => file.name === name) ?? null;
+}
+
+/** Core indexable URLs only — do not flatten the 21-lakh keyword matrix. */
+export function buildSitemapRegistry(): SitemapRegistryEntry[] {
+  return listSitemapFiles().flatMap((file) => file.entries);
+}
+
+/** Core + keyword×locality URL count (full sitemap index). */
+export function countAllSitemapUrls(): number {
+  return buildSitemapRegistry().length + countKeywordLocalityUrls();
+}
+
+export { SCALE_SITEMAP_CHUNK, countKeywordLocalityUrls, countKeywordSitemapFiles };
 
 export function chunkSitemapEntries<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -293,25 +393,19 @@ export function chunkSitemapEntries<T>(items: T[], size: number): T[][] {
   return out.length > 0 ? out : [[]];
 }
 
-/** Partitioned sitemap files for Next `generateSitemaps` (optional). */
-export function buildSitemapChunks(
-  chunkSize: number = SITEMAP_CHUNK_SIZE,
-): SitemapRegistryEntry[][] {
-  return chunkSitemapEntries(buildSitemapRegistry(), chunkSize);
+/** One array per sitemap file (named groups, split if over the URL cap). */
+export function buildSitemapChunks(): SitemapRegistryEntry[][] {
+  const files = listSitemapFiles();
+  return files.length > 0 ? files.map((file) => file.entries) : [[]];
 }
 
-/**
- * Manual sitemap-index XML (use with route handlers if / when multiple files
- * are required). Next.js `generateSitemaps()` alone may 404 `/sitemap.xml`.
- */
-export function buildSitemapIndexXml(baseUrl: string): string {
-  const base = baseUrl.replace(/\/$/, "");
-  const chunks = buildSitemapChunks();
-  const now = new Date().toISOString();
-  const body = chunks
-    .map((_, id) => {
+export function buildSitemapIndexXml(): string {
+  const names = listSitemapIndexNames();
+  const now = revisionDate().toISOString();
+  const body = names
+    .map((name) => {
       return `  <sitemap>
-    <loc>${base}/sitemap/${id}.xml</loc>
+    <loc>${buildFileUrl(`/sitemaps/${name}.xml`)}</loc>
     <lastmod>${now}</lastmod>
   </sitemap>`;
     })

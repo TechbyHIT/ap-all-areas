@@ -5,6 +5,12 @@ import {
   matchKeywordInGeoPrettyPath,
   matchServiceInCityPrettyPath,
 } from "@/lib/routing/pretty-money-urls";
+import {
+  matchLegacySiloRedirect,
+  matchSiloInternalRewrite,
+  parentServiceSlug,
+  siloAreaServicePath,
+} from "@/lib/routing/location-silo";
 
 /**
  * Clone the request URL for an *internal* rewrite.
@@ -25,7 +31,13 @@ function internalUrl(request: NextRequest, pathname: string) {
 
 /** Next.js 16+ network proxy (replaces deprecated middleware convention). */
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  let { pathname } = request.nextUrl;
+
+  if (pathname.length > 1 && pathname.endsWith(".xml/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.slice(0, -1);
+    return NextResponse.redirect(url, 308);
+  }
 
   if (
     pathname !== pathname.toLowerCase() &&
@@ -37,13 +49,39 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  // Keyword × geo money URLs (safety nets / grills / etc. in areas)
-  const keywordPretty = matchKeywordInGeoPrettyPath(pathname);
-  if (keywordPretty) {
-    return NextResponse.rewrite(internalUrl(request, keywordPretty.rewritePath));
+  pathname = pathname.toLowerCase();
+
+  const sitemapFile = pathname.match(/^\/sitemaps\/([a-z0-9-]+)\.xml\/?$/);
+  if (sitemapFile) {
+    return NextResponse.rewrite(
+      internalUrl(request, `/sitemaps/${sitemapFile[1]}/`),
+    );
   }
 
-  // Core /{service}-in-{city}/ → city×service canonical
+  if (pathname === "/terms/" || pathname === "/terms") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/terms-and-conditions/";
+    return NextResponse.redirect(url, 308);
+  }
+  if (pathname === "/service-areas/" || pathname === "/service-areas") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/locations/andhra-pradesh/";
+    return NextResponse.redirect(url, 308);
+  }
+
+  const siloRewrite = matchSiloInternalRewrite(pathname);
+  if (siloRewrite && siloRewrite !== pathname) {
+    return NextResponse.rewrite(internalUrl(request, siloRewrite));
+  }
+
+  const legacy = matchLegacySiloRedirect(pathname);
+  if (legacy && legacy !== pathname) {
+    const url = request.nextUrl.clone();
+    url.pathname = legacy;
+    return NextResponse.redirect(url, 308);
+  }
+
+  // Core /{service}-in-{city}/ and overlapping keyword×city intents → silo
   const cityPretty = matchServiceInCityPrettyPath(pathname);
   if (cityPretty && pathname !== cityPretty.canonicalPath) {
     const url = request.nextUrl.clone();
@@ -51,9 +89,22 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
+  // Remaining keyword × city / area / scale locality pretty URLs
+  const keywordPretty = matchKeywordInGeoPrettyPath(pathname);
+  if (keywordPretty) {
+    return NextResponse.rewrite(internalUrl(request, keywordPretty.rewritePath));
+  }
+
   const areaPretty = matchAreaMoneyPrettyPath(pathname);
   if (areaPretty) {
-    return NextResponse.rewrite(internalUrl(request, areaPretty.rewritePath));
+    const dest = siloAreaServicePath(
+      areaPretty.citySlug,
+      areaPretty.areaSlug,
+      parentServiceSlug(areaPretty.serviceSlug) ?? areaPretty.serviceSlug,
+    );
+    const url = request.nextUrl.clone();
+    url.pathname = dest;
+    return NextResponse.redirect(url, 308);
   }
 
   const internalKeyword = pathname.match(
@@ -61,6 +112,12 @@ export function proxy(request: NextRequest) {
   );
   if (internalKeyword) {
     const pretty = `/${internalKeyword[1]}-in-${internalKeyword[2]}/`;
+    const silo = matchServiceInCityPrettyPath(pretty)?.canonicalPath;
+    if (silo) {
+      const url = request.nextUrl.clone();
+      url.pathname = silo;
+      return NextResponse.redirect(url, 308);
+    }
     if (matchKeywordInGeoPrettyPath(pretty)) {
       const url = request.nextUrl.clone();
       url.pathname = pretty;
@@ -74,8 +131,13 @@ export function proxy(request: NextRequest) {
   if (internalArea) {
     const pretty = `/${internalArea[1]}/${internalArea[2]}/${internalArea[3]}/${internalArea[4]}/`;
     if (matchAreaMoneyPrettyPath(pretty)) {
+      const dest = siloAreaServicePath(
+        internalArea[3],
+        internalArea[4],
+        parentServiceSlug(internalArea[1]) ?? internalArea[1],
+      );
       const url = request.nextUrl.clone();
-      url.pathname = pretty;
+      url.pathname = dest;
       return NextResponse.redirect(url, 308);
     }
   }

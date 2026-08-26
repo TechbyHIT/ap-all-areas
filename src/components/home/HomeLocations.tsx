@@ -5,22 +5,11 @@ import {
   HIGH_PRIORITY_CITY_AREAS,
 } from "@/data/initial-locations";
 import { INITIAL_SERVICES } from "@/data/initial-services";
-import { KEYWORD_INTENTS } from "@/data/keyword-intents";
-
-/** Keyword slugs that map 1:1 to core services for non-priority cities. */
-const SERVICE_KEYWORD_SLUG: Record<string, string> = {
-  "invisible-grills": "invisible-grills",
-  "safety-nets": "balcony-safety-nets",
-  "sports-nets": "sports-nets",
-  "cloth-drying-hangers": "cloth-drying-hangers",
-};
 
 const CORE_SERVICES = INITIAL_SERVICES.map((service) => ({
   slug: service.slug,
   name: service.shortName,
 }));
-
-const P0_KEYWORDS = KEYWORD_INTENTS.filter((k) => k.priority === 0);
 
 /** Areas shown per city on the homepage matrix. Full lists live on city hubs. */
 const AREAS_PER_CITY = 6;
@@ -161,13 +150,7 @@ export function HomeLocations() {
                   <ul className="home-city-services">
                     {CORE_SERVICES.map((service) => (
                       <li key={`${city.slug}-${service.slug}`}>
-                        <Link
-                          href={ROUTES.keywordInGeo(
-                            SERVICE_KEYWORD_SLUG[service.slug] ??
-                              "balcony-safety-nets",
-                            city.slug,
-                          )}
-                        >
+                        <Link href={ROUTES.location(city.slug)}>
                           {serviceShortLabel(service.slug)}
                         </Link>
                       </li>
@@ -176,12 +159,7 @@ export function HomeLocations() {
                   <ul className="home-city-areas">
                     {city.towns.slice(0, AREAS_PER_CITY).map((town) => (
                       <li key={town.slug}>
-                        <Link
-                          href={ROUTES.keywordInGeo(
-                            "balcony-safety-nets",
-                            town.slug,
-                          )}
-                        >
+                        <Link href={ROUTES.location(town.slug)}>
                           {town.name}
                         </Link>
                       </li>
@@ -195,6 +173,7 @@ export function HomeLocations() {
 
         <nav className="home-dir-links" aria-label="Location directories">
           <Link href={ROUTES.locations}>View all locations</Link>
+          <Link href={ROUTES.state}>Andhra Pradesh hub</Link>
           <Link href={ROUTES.services}>All services</Link>
           {HIGH_PRIORITY_CITY_AREAS.map((city) => (
             <Link
@@ -205,37 +184,6 @@ export function HomeLocations() {
             </Link>
           ))}
         </nav>
-
-        <div className="home-seo-prose home-keyword-matrix">
-          <h3 className="home-h2" style={{ fontSize: "1.35rem" }}>
-            Popular local searches by city
-          </h3>
-          <p className="home-lead">
-            High-intent service keywords linked for every priority city (
-            {P0_KEYWORDS.length} keywords × {HIGH_PRIORITY_CITY_AREAS.length}{" "}
-            cities). Area-level keyword pages live on each city hub and in the
-            sitemap.
-          </p>
-          <ul className="home-keyword-list">
-            {P0_KEYWORDS.map((keyword) => (
-              <li key={keyword.slug}>
-                <span className="home-keyword-label">{keyword.phrase}</span>
-                <span className="home-keyword-cities">
-                  {HIGH_PRIORITY_CITY_AREAS.map((city, i) => (
-                    <span key={`${keyword.slug}-${city.citySlug}`}>
-                      {i > 0 ? " · " : null}
-                      <Link
-                        href={ROUTES.keywordInGeo(keyword.slug, city.citySlug)}
-                      >
-                        {city.cityName}
-                      </Link>
-                    </span>
-                  ))}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
     </section>
   );

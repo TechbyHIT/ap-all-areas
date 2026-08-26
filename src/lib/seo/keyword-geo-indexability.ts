@@ -43,9 +43,8 @@ export function getIndexableScaleLocalitySlugSet(): Set<string> {
 
 /** Whether a scale locality may be indexed for a given keyword priority. */
 export function isScaleLocalityIndexable(
-  geoSlug: string,
-  keywordPriority: number,
+  _geoSlug: string,
+  _keywordPriority: number,
 ): boolean {
-  if (keywordPriority > 0) return false;
-  return getIndexableScaleLocalitySlugSet().has(geoSlug);
+  return true;
 }

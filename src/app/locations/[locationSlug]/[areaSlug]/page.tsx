@@ -23,13 +23,11 @@ import {
   getCityBySlug,
   getDistrictBySlug,
 } from "@/lib/data/locations";
+import { STATE_NAME, STATE_SLUG } from "@/config/geo";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
-import { P0_MONEY_CITY_SLUGS } from "@/data/city-local-profiles";
-import {
-  moneyPageIndexability,
-  seedLocationIndexability,
-} from "@/lib/seo/page-indexability";
+import { shouldGeneratePage } from "@/lib/seo/page-decision";
+import { moneyPageIndexability } from "@/lib/seo/page-indexability";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -53,15 +51,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const area = getAreaBySlugs(locationSlug, areaSlug);
   if (!city || !area) return {};
 
-  const isP0 = (P0_MONEY_CITY_SLUGS as readonly string[]).includes(
-    locationSlug,
-  );
+  const decision = shouldGeneratePage({
+    kind: "area",
+    stateSlug: STATE_SLUG,
+    citySlug: locationSlug,
+    areaSlug,
+  });
+  if (!decision.generate) return {};
 
   return generatePageMetadata({
     title: `${area.name}, ${city.name} — Installation Service Coverage`,
     metaDescription: `Safety and utility installation service available in ${area.name}, ${city.name}, Andhra Pradesh. Invisible grills, safety nets, sports nets and cloth drying hangers — coverage subject to site confirmation.`,
-    canonicalUrl: buildCanonicalUrl(`/locations/${locationSlug}/${areaSlug}/`),
-    ...(isP0 ? moneyPageIndexability("locality") : seedLocationIndexability()),
+    canonicalUrl: buildCanonicalUrl(ROUTES.area(locationSlug, areaSlug)),
+    ...moneyPageIndexability("locality"),
   });
 }
 
@@ -71,6 +73,14 @@ export default async function AreaDetailPage({ params }: PageProps) {
   const area = getAreaBySlugs(locationSlug, areaSlug);
 
   if (!city || !area) notFound();
+
+  const decision = shouldGeneratePage({
+    kind: "area",
+    stateSlug: STATE_SLUG,
+    citySlug: locationSlug,
+    areaSlug,
+  });
+  if (!decision.generate) notFound();
 
   const district = city.district ? getDistrictBySlug(city.district) : undefined;
   const content = buildAreaPageContent({
@@ -111,7 +121,8 @@ export default async function AreaDetailPage({ params }: PageProps) {
         }}
         breadcrumbItems={[
           { label: "Home", href: "/" },
-          { label: "Locations", href: "/locations/" },
+          { label: "Locations", href: ROUTES.locations },
+          { label: STATE_NAME, href: ROUTES.state },
           { label: city.name, href: ROUTES.location(locationSlug) },
           { label: area.name },
         ]}
@@ -198,8 +209,8 @@ export default async function AreaDetailPage({ params }: PageProps) {
           cityName={city.name}
           areas={nearbyAreas}
           excludeAreaSlug={areaSlug}
-          title={`All other areas in ${city.name} × every service`}
-          description={`Complete internal links for every neighbouring locality—each area includes all ${INITIAL_SERVICES.length} core installation services.`}
+          title={`Nearby ${city.name} areas with local notes`}
+          description="Neighbouring localities with verified planning notes, plus remaining area hubs for coverage."
         />
       ) : null}
 

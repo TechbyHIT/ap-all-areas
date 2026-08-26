@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BUSINESS_CONFIG } from "@/config/business";
+import { ROUTES } from "@/config/routes";
 import { MoneyLandingView } from "@/components/sections/MoneyLandingView";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -42,13 +43,15 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const p = await params;
   const landing = getAreaMoneyLanding(p);
-  if (!landing) return {};
+  if (!landing?.areaSlug) return {};
 
   return {
     ...generatePageMetadata({
       title: landing.seo.metaTitle,
       metaDescription: landing.seo.metaDescription,
-      canonicalUrl: buildCanonicalUrl(landing.slugPath),
+      canonicalUrl: buildCanonicalUrl(
+        ROUTES.areaService(landing.citySlug, landing.areaSlug, landing.serviceSlug),
+      ),
       openGraphTitle: landing.seo.title,
       openGraphDescription: landing.seo.metaDescription,
       openGraphImage: BUSINESS_CONFIG.defaultOpenGraphImage,
@@ -66,7 +69,9 @@ export default async function AreaMoneyLandingPage({ params }: PageProps) {
   const landing = getAreaMoneyLanding(p);
   if (!landing || !landing.areaSlug || !landing.areaName) notFound();
 
-  const pageUrl = buildCanonicalUrl(landing.slugPath);
+  const pageUrl = buildCanonicalUrl(
+    ROUTES.areaService(landing.citySlug, landing.areaSlug, landing.serviceSlug),
+  );
   const place = `${landing.areaName}, ${landing.cityName}`;
   const localBusiness = localBusinessSchema();
   const verifiedReviews = landing.reviews.filter((r) => r.verified);
