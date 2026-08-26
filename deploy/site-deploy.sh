@@ -113,8 +113,15 @@ else
   if [ -d "$BUILD/.git" ]; then
     log "Updating checkout ($BRANCH)"
     git -C "$BUILD" remote set-url origin "$REPO"
-    git -C "$BUILD" fetch --depth 1 origin "$BRANCH"
-    git -C "$BUILD" reset --hard "origin/$BRANCH"
+    # Shallow fetch of a slashed branch name often does not create
+    # origin/<branch>. FETCH_HEAD is always set.
+    git -C "$BUILD" fetch --depth 1 origin "+refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}" \
+      || git -C "$BUILD" fetch --depth 1 origin "$BRANCH"
+    if git -C "$BUILD" rev-parse --verify "origin/${BRANCH}" >/dev/null 2>&1; then
+      git -C "$BUILD" reset --hard "origin/${BRANCH}"
+    else
+      git -C "$BUILD" reset --hard FETCH_HEAD
+    fi
     git -C "$BUILD" clean -fd -e node_modules
   else
     log "Cloning $REPO ($BRANCH)"
