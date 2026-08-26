@@ -23,6 +23,7 @@ import {
   countKeywordSitemapFiles,
   SCALE_SITEMAP_CHUNK,
 } from "../src/lib/seo/sitemap-scale";
+import { SITE_CONFIG } from "../src/config/site";
 
 type Issue = { url: string; message: string };
 
@@ -144,6 +145,30 @@ function normalizeUrl(url: string): string {
   }
 }
 
+function validationFetchHeaders(baseOrigin: string): HeadersInit {
+  const headers: Record<string, string> = {
+    "user-agent": "ap-sitemap-validator/1.0",
+  };
+  try {
+    const base = new URL(baseOrigin);
+    const loopback =
+      base.hostname === "localhost" ||
+      base.hostname === "127.0.0.1" ||
+      base.hostname === "::1";
+    if (loopback) {
+      const publicHost =
+        process.env.SITEMAP_VALIDATE_HOST?.replace(/:\d+$/, "") ||
+        new URL(SITE_CONFIG.url).hostname;
+      headers.host = publicHost;
+      headers["x-forwarded-host"] = publicHost;
+      headers["x-forwarded-proto"] = "https";
+    }
+  } catch {
+    // keep default headers
+  }
+  return headers;
+}
+
 async function validateHttp(
   entry: SitemapRegistryEntry,
   baseOrigin: string,
@@ -158,7 +183,7 @@ async function validateHttp(
   try {
     response = await fetch(target, {
       redirect: "manual",
-      headers: { "user-agent": "ap-sitemap-validator/1.0" },
+      headers: validationFetchHeaders(baseOrigin),
     });
   } catch (error) {
     issues.push({
