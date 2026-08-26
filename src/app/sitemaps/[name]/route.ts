@@ -5,6 +5,8 @@ import {
   parseKeywordSitemapPart,
 } from "@/lib/seo/sitemap-scale";
 
+export const dynamic = "force-dynamic";
+
 type RouteContext = {
   params: Promise<{ name: string }>;
 };
