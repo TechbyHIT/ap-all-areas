@@ -153,7 +153,7 @@ else
         # This project tracks the schema with `db push` rather than migration
         # files, so `migrate deploy` would abort with no migrations found.
         log "No prisma/migrations — syncing schema with db push"
-        npx prisma db push --skip-generate
+        npx prisma db push
       fi
     )
   fi

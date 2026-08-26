@@ -14,11 +14,18 @@ fi
 
 echo "==> Prisma generate + schema sync"
 npx prisma generate
-if [ -d prisma/migrations ]; then
+if [ -z "${DATABASE_URL:-}" ] && [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
+fi
+if [ -z "${DATABASE_URL:-}" ]; then
+  echo "No DATABASE_URL — skipping schema setup (public pages do not use Postgres)"
+elif [ -d prisma/migrations ] && [ -n "$(ls -A prisma/migrations 2>/dev/null)" ]; then
   npx prisma migrate deploy
 else
-  # No migration files in this project; the schema is tracked with db push.
-  npx prisma db push --skip-generate
+  npx prisma db push
 fi
 
 echo "==> Build standalone"
