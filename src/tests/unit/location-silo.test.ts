@@ -43,6 +43,15 @@ describe("location silo routing", () => {
       "/services/pigeon-safety-nets/",
     );
     expect(matchLegacySiloRedirect("/locations/andhra-pradesh/")).toBeNull();
+    expect(matchLegacySiloRedirect("/locations/guntur/")).toBe(
+      "/locations/andhra-pradesh/guntur/",
+    );
+  });
+
+  it("maps Guntur silo URL to the city module path (legacy 308 inverse)", () => {
+    expect(matchSiloInternalRewrite("/locations/andhra-pradesh/guntur/")).toBe(
+      "/locations/guntur/",
+    );
   });
 });
 

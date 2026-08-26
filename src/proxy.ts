@@ -7,7 +7,6 @@ import {
 } from "@/lib/routing/pretty-money-urls";
 import {
   matchLegacySiloRedirect,
-  matchSiloInternalRewrite,
   parentServiceSlug,
   siloAreaServicePath,
 } from "@/lib/routing/location-silo";
@@ -29,16 +28,40 @@ function internalUrl(request: NextRequest, pathname: string) {
   return url;
 }
 
+/** Marks a rewrite so the proxy does not 308 the internal module path. */
+const INTERNAL_REWRITE_HEADER = "x-ap-internal-rewrite";
+
+function rewriteInternal(request: NextRequest, pathname: string) {
+  const headers = new Headers(request.headers);
+  headers.set(INTERNAL_REWRITE_HEADER, "1");
+  return NextResponse.rewrite(internalUrl(request, pathname), {
+    request: { headers },
+  });
+}
+
+function nextWithSecurityHeaders() {
+  const response = NextResponse.next();
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  return response;
+}
+
 /** Next.js 16+ network proxy (replaces deprecated middleware convention). */
 export function proxy(request: NextRequest) {
+  if (request.headers.get(INTERNAL_REWRITE_HEADER) === "1") {
+    return nextWithSecurityHeaders();
+  }
+
   let { pathname } = request.nextUrl;
 
-  if (/^\/sitemap\.xml\/?$/i.test(pathname)) {
-    return NextResponse.rewrite(internalUrl(request, "/sitemap.xml"));
+  // Never rewrite /sitemap.xml onto itself — that 500s as an infinite loop.
+  if (/^\/sitemap\.xml\/$/i.test(pathname)) {
+    return rewriteInternal(request, "/sitemap.xml");
   }
 
   if (pathname.length > 1 && pathname.endsWith(".xml/")) {
-    return NextResponse.rewrite(internalUrl(request, pathname.slice(0, -1)));
+    return rewriteInternal(request, pathname.slice(0, -1));
   }
 
   if (
@@ -55,9 +78,7 @@ export function proxy(request: NextRequest) {
 
   const sitemapFile = pathname.match(/^\/sitemaps\/([a-z0-9-]+)\.xml\/?$/);
   if (sitemapFile) {
-    return NextResponse.rewrite(
-      internalUrl(request, `/sitemaps/${sitemapFile[1]}/`),
-    );
+    return rewriteInternal(request, `/sitemaps/${sitemapFile[1]}/`);
   }
 
   if (pathname === "/terms/" || pathname === "/terms") {
@@ -69,11 +90,6 @@ export function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/locations/andhra-pradesh/";
     return NextResponse.redirect(url, 308);
-  }
-
-  const siloRewrite = matchSiloInternalRewrite(pathname);
-  if (siloRewrite && siloRewrite !== pathname) {
-    return NextResponse.rewrite(internalUrl(request, siloRewrite));
   }
 
   const legacy = matchLegacySiloRedirect(pathname);
@@ -94,7 +110,7 @@ export function proxy(request: NextRequest) {
   // Remaining keyword × city / area / scale locality pretty URLs
   const keywordPretty = matchKeywordInGeoPrettyPath(pathname);
   if (keywordPretty) {
-    return NextResponse.rewrite(internalUrl(request, keywordPretty.rewritePath));
+    return rewriteInternal(request, keywordPretty.rewritePath);
   }
 
   const areaPretty = matchAreaMoneyPrettyPath(pathname);
@@ -156,11 +172,7 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  const response = NextResponse.next();
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  return response;
+  return nextWithSecurityHeaders();
 }
 
 export const config = {

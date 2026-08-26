@@ -57,6 +57,16 @@ export function siloAreaServicePath(
   return `/locations/${STATE_SLUG}/${citySlug}/${areaSlug}/${serviceSlug}/`;
 }
 
+export function isAreaMoneyLanding(
+  serviceSlug: string,
+  citySlug: string,
+  areaSlug: string,
+): boolean {
+  return AREA_LANDING_SET.has(
+    `${serviceSlug}/${STATE_SLUG}/${citySlug}/${areaSlug}`,
+  );
+}
+
 /**
  * Public silo URL → existing internal route that still holds the page module.
  */
