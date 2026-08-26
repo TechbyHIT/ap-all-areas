@@ -110,6 +110,18 @@ describe("sitemap registry", () => {
     expect(paths.has("/locations/")).toBe(true);
   });
 
+  it("keeps /sitemap.xml as a small index of child files only", () => {
+    const xml = buildSitemapIndexXml();
+    const childCount = (xml.match(/<sitemap>/g) ?? []).length;
+    expect(xml).toContain("<sitemapindex");
+    expect(xml).not.toContain("<urlset");
+    expect(xml).not.toContain("<url>");
+    expect(xml.length).toBeLessThan(250_000);
+    expect(childCount).toBeGreaterThan(600);
+    expect(childCount).toBeLessThan(800);
+    expect(listSitemapIndexNames().length).toBe(childCount);
+  });
+
   it("indexes the full AP keyword × locality matrix across child sitemaps", () => {
     const total = countAllSitemapUrls();
     expect(total).toBeGreaterThan(2_000_000);

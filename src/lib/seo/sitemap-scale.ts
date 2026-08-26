@@ -8,8 +8,8 @@ import { listScaleLocalities } from "@/data/ap-locality-expansion";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { SEO_CONFIG } from "@/config/seo";
 
-/** Google Search Console per-sitemap URL cap. */
-export const SCALE_SITEMAP_CHUNK = 50_000;
+/** URLs per child sitemap. ~3k keeps Chrome from OOM; Google allows 50k. */
+export const SCALE_SITEMAP_CHUNK = 3_000;
 
 export const KEYWORD_SITEMAP_PREFIX = "andhra-pradesh-keywords";
 
@@ -89,4 +89,38 @@ export function buildKeywordLocalityChunk(part: number): Array<{
   }
 
   return out;
+}
+
+/** Urlset XML for one keyword child — used by `/sitemaps/andhra-pradesh-keywords-N.xml`. */
+export function buildKeywordLocalityUrlsetXml(part: number): string | null {
+  const totalFiles = countKeywordSitemapFiles();
+  if (part < 1 || part > totalFiles) return null;
+
+  const localities = listScaleLocalities();
+  const keywords = KEYWORD_INTENTS;
+  const stride = keywords.length;
+  const total = localities.length * stride;
+  const offset = (part - 1) * SCALE_SITEMAP_CHUNK;
+  const limit = Math.min(SCALE_SITEMAP_CHUNK, total - offset);
+  const lastmod = revisionDate().toISOString();
+  const lines: string[] = [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
+  ];
+
+  for (let i = 0; i < limit; i++) {
+    const index = offset + i;
+    const loc = localities[Math.floor(index / stride)];
+    const keyword = keywords[index % stride];
+    const url = buildCanonicalUrl(`/${keyword.slug}-in-${loc.slug}/`);
+    lines.push(`  <url>`);
+    lines.push(`    <loc>${url}</loc>`);
+    lines.push(`    <lastmod>${lastmod}</lastmod>`);
+    lines.push(`    <changefreq>weekly</changefreq>`);
+    lines.push(`    <priority>0.5</priority>`);
+    lines.push(`  </url>`);
+  }
+
+  lines.push(`</urlset>`);
+  return `${lines.join("\n")}\n`;
 }
