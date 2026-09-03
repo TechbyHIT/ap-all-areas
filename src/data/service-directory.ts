@@ -16,6 +16,10 @@ const S = {
   safety: ROUTES.service("safety-nets"),
   sports: ROUTES.service("sports-nets"),
   hangers: ROUTES.service("cloth-drying-hangers"),
+  balconySafety: ROUTES.serviceFamily("balcony-safety"),
+  birdControl: ROUTES.serviceFamily("bird-control"),
+  sportsFamily: ROUTES.serviceFamily("sports-enclosures"),
+  dryingFamily: ROUTES.serviceFamily("cloth-drying"),
   child: ROUTES.solution("child-balcony-safety"),
   pet: ROUTES.solution("pet-balcony-safety"),
   pigeon: ROUTES.solution("pigeon-infestation"),
@@ -49,7 +53,7 @@ export const SERVICE_DIRECTORY: DirectoryCategory[] = [
   },
   {
     title: "Pigeon Nets",
-    href: ROUTES.service("pigeon-safety-nets"),
+    href: S.birdControl,
     links: [
       { label: "Anti Pigeon Nets", href: ROUTES.service("pigeon-safety-nets") },
       { label: "Pigeon Safety Nets", href: ROUTES.service("pigeon-safety-nets") },
@@ -69,7 +73,7 @@ export const SERVICE_DIRECTORY: DirectoryCategory[] = [
   },
   {
     title: "Safety Nets",
-    href: S.safety,
+    href: S.balconySafety,
     links: [
       { label: "Balcony Safety Nets", href: S.safety },
       { label: "Kids Safety Nets", href: ROUTES.service("children-safety-nets") },
@@ -81,7 +85,7 @@ export const SERVICE_DIRECTORY: DirectoryCategory[] = [
   },
   {
     title: "Sports Nets",
-    href: S.sports,
+    href: S.sportsFamily,
     links: [
       { label: "Cricket Nets", href: S.cricket },
       { label: "Cricket Practice Nets", href: ROUTES.service("cricket-practice-nets") },
@@ -102,7 +106,7 @@ export const SERVICE_DIRECTORY: DirectoryCategory[] = [
   },
   {
     title: "Balcony Nets",
-    href: S.safety,
+    href: S.balconySafety,
     links: [
       { label: "Balcony Protection Nets", href: S.safety },
       { label: "Balcony Children Safety Nets", href: S.child },
@@ -114,7 +118,7 @@ export const SERVICE_DIRECTORY: DirectoryCategory[] = [
   },
   {
     title: "Cloth Hangers",
-    href: S.hangers,
+    href: S.dryingFamily,
     links: [
       { label: "Ceiling Cloth Hangers", href: S.hangers },
       { label: "Balcony Cloth Hangers", href: ROUTES.service("balcony-cloth-hangers") },
@@ -134,7 +138,7 @@ export const SERVICE_DIRECTORY: DirectoryCategory[] = [
   },
   {
     title: "Bird Nets",
-    href: S.bird,
+    href: S.birdControl,
     links: [
       { label: "Anti Bird Nets", href: S.bird },
       { label: "Bird Protection Nets", href: S.bird },
@@ -196,9 +200,11 @@ export const SERVICES_MENU_CATEGORIES = SERVICE_DIRECTORY;
 
 /** Compact top-level service links (fallback / simple menus). */
 export const CORE_SERVICE_LINKS: DirectoryLink[] = [
+  { label: "Balcony Safety", href: S.balconySafety },
+  { label: "Bird Control", href: S.birdControl },
   { label: "Invisible Grills", href: S.invisible },
   { label: "Safety Nets", href: S.safety },
-  { label: "Sports Nets", href: S.sports },
-  { label: "Cloth Drying Hangers", href: S.hangers },
+  { label: "Sports Nets", href: S.sportsFamily },
+  { label: "Cloth Drying", href: S.dryingFamily },
   { label: "View All Services", href: ROUTES.services },
 ];

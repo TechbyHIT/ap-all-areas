@@ -14,9 +14,13 @@ import { FinalCTA } from "@/components/sections/FinalCTA";
 import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { INITIAL_SERVICES } from "@/data/initial-services";
 import { SERVICE_DIRECTORY } from "@/data/service-directory";
+import { SERVICE_FAMILIES } from "@/data/service-families";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
 import { staticPageIndexability } from "@/lib/seo/page-indexability";
+import { Container } from "@/components/ui/Container";
+import { Section } from "@/components/ui/Section";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export const metadata: Metadata = generatePageMetadata({
   title: "Services — Invisible Grills, Safety Nets, Sports Nets & Cloth Hangers",
@@ -80,6 +84,41 @@ export default function ServicesPage() {
         description="Choose the service that matches your safety, bird control, sports or drying requirement. Final specification is confirmed after measurement."
         services={services}
       />
+
+      <Section variant="muted">
+        <Container>
+          <SectionHeading
+            title="Start with a service family"
+            description="Pillar pages help you choose between related options before opening a product page—less duplication, clearer intent."
+          />
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
+            {SERVICE_FAMILIES.map((family) => (
+              <article
+                key={family.slug}
+                className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950"
+              >
+                <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+                  <Link
+                    href={ROUTES.serviceFamily(family.slug)}
+                    className="hover:text-amber-700"
+                  >
+                    {family.name}
+                  </Link>
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                  {family.intro.slice(0, 160)}…
+                </p>
+                <Link
+                  href={ROUTES.serviceFamily(family.slug)}
+                  className="mt-4 inline-flex text-sm font-semibold text-amber-800 hover:underline"
+                >
+                  Compare options →
+                </Link>
+              </article>
+            ))}
+          </div>
+        </Container>
+      </Section>
 
       <VisualServiceGrid
         title="Complete photo catalog of services"

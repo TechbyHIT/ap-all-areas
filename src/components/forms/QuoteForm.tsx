@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";
 import { Section } from "@/components/ui/Section";
+import { buildConversionEvent, trackConversion } from "@/lib/seo/conversion-tracking";
 
 const PROPERTY_TYPES = [
   "Apartment / Flat",
@@ -25,6 +26,9 @@ type QuoteFormProps = {
   title?: string;
   defaultService?: string;
   defaultCity?: string;
+  defaultLocality?: string;
+  defaultPropertyType?: string;
+  defaultRequirement?: string;
   className?: string;
   embedded?: boolean;
 };
@@ -33,6 +37,9 @@ export function QuoteForm({
   title = "Request a Quotation",
   defaultService,
   defaultCity,
+  defaultLocality,
+  defaultPropertyType,
+  defaultRequirement,
   className = "",
   embedded = false,
 }: QuoteFormProps) {
@@ -66,11 +73,31 @@ export function QuoteForm({
       area: String(data.get("area") ?? ""),
       district: String(data.get("district") ?? ""),
       propertyType: String(data.get("propertyType") ?? ""),
-      message: String(data.get("message") ?? ""),
+      message: [
+        String(data.get("requirement") ?? ""),
+        String(data.get("message") ?? ""),
+        data.get("email") ? `Email: ${String(data.get("email"))}` : "",
+        data.get("photoNote")
+          ? `Photo note: ${String(data.get("photoNote"))}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
     });
 
     const opened = openWhatsAppEnquiry(message);
     if (opened) {
+      trackConversion(
+        buildConversionEvent({
+          conversionType: "form_submit",
+          dimensions: {
+            pageType: "quote-form",
+            service: serviceSlug || null,
+            city: String(data.get("city") ?? "") || null,
+            locality: String(data.get("area") ?? "") || null,
+          },
+        }),
+      );
       setStatus("success");
       form.reset();
     } else {
@@ -127,6 +154,15 @@ export function QuoteForm({
         </label>
 
         <label className="grid gap-1">
+          <span className="text-sm font-medium">Email</span>
+          <input
+            name="email"
+            type="email"
+            className="rounded-lg border border-zinc-300 px-3 py-2"
+          />
+        </label>
+
+        <label className="grid gap-1">
           <span className="text-sm font-medium">Service</span>
           <select
             name="service"
@@ -170,6 +206,7 @@ export function QuoteForm({
           <span className="text-sm font-medium">Area / Locality</span>
           <input
             name="area"
+            defaultValue={defaultLocality}
             className="rounded-lg border border-zinc-300 px-3 py-2"
           />
         </label>
@@ -178,6 +215,7 @@ export function QuoteForm({
           <span className="text-sm font-medium">Property Type</span>
           <select
             name="propertyType"
+            defaultValue={defaultPropertyType ?? ""}
             className="rounded-lg border border-zinc-300 px-3 py-2"
           >
             <option value="">Select property type</option>
@@ -190,12 +228,31 @@ export function QuoteForm({
         </label>
 
         <label className="grid gap-1 sm:col-span-2">
+          <span className="text-sm font-medium">Requirement</span>
+          <input
+            name="requirement"
+            defaultValue={defaultRequirement}
+            className="rounded-lg border border-zinc-300 px-3 py-2"
+            placeholder="e.g. balcony child safety, pigeon entry, cricket nets…"
+          />
+        </label>
+
+        <label className="grid gap-1 sm:col-span-2">
+          <span className="text-sm font-medium">Photo note</span>
+          <input
+            name="photoNote"
+            className="rounded-lg border border-zinc-300 px-3 py-2"
+            placeholder="Describe photos you will send on WhatsApp (openings, access)"
+          />
+        </label>
+
+        <label className="grid gap-1 sm:col-span-2">
           <span className="text-sm font-medium">Message</span>
           <textarea
             name="message"
             rows={4}
             className="rounded-lg border border-zinc-300 px-3 py-2"
-            placeholder="Openings, floor level, photos description, society rules…"
+            placeholder="Floor level, society rules, preferred visit time…"
           />
         </label>
 

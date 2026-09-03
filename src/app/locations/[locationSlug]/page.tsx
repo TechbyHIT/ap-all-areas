@@ -19,6 +19,9 @@ import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { RelatedGuides } from "@/components/sections/RelatedGuides";
 import { SeoEncyclopediaSections } from "@/components/sections/SeoEncyclopediaSections";
+import { ProjectGallery } from "@/components/sections/ProjectGallery";
+import { PROPERTY_TYPES } from "@/data/property-types";
+import { projectsAsGalleryItems } from "@/data/projects";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
@@ -43,6 +46,8 @@ import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { canonicalCitySlug } from "@/lib/routing/location-silo";
 import { generatePageMetadata, generateTitle } from "@/lib/seo/generate-page-metadata";
 import { moneyPageIndexability } from "@/lib/seo/page-indexability";
+import { buildPageMediaBundle } from "@/lib/visual/page-media";
+import { getPageVisualStrategy } from "@/lib/visual/page-composition";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -117,7 +122,6 @@ export default async function LocationDetailPage({ params }: PageProps) {
     (city) => city.citySlug !== locationSlug,
   ).slice(0, 8);
 
-  const heroMedia = getServiceMedia("safety-nets");
   const services = INITIAL_SERVICES.map((service) => {
     const media = getServiceMedia(service.slug);
     const catalogCity = getCity(STATE_SLUG, locationSlug);
@@ -141,6 +145,13 @@ export default async function LocationDetailPage({ params }: PageProps) {
   const cityCanonical = buildCanonicalUrl(
     isSiloCity ? ROUTES.location(locationSlug) : `/locations/${locationSlug}/`,
   );
+  const visual = getPageVisualStrategy("city");
+  const mediaBundle = buildPageMediaBundle({
+    pageType: "city",
+    cityName: displayName,
+    serviceSlug: "safety-nets",
+    h1: heroTitle,
+  });
 
   return (
     <>
@@ -164,10 +175,12 @@ export default async function LocationDetailPage({ params }: PageProps) {
             ? `${profile.climateLead} Installation support in ${displayName} is confirmed after site review — this page is not a local branch claim.`
             : `Installation service is available in ${displayName}, Andhra Pradesh. We confirm coverage for each enquiry after a site review — this page does not represent a local branch office.`
         }
+        composition={visual.hero as "city-context"}
         image={{
-          src: heroMedia.image,
-          alt: heroMedia.alt,
+          src: mediaBundle.heroImage.src,
+          alt: mediaBundle.heroImage.alt,
         }}
+        gallery={mediaBundle.galleryImages}
         breadcrumbItems={
           isSiloCity
             ? [
@@ -214,6 +227,34 @@ export default async function LocationDetailPage({ params }: PageProps) {
         services={services}
         variant="muted"
       />
+
+      <Section>
+        <Container>
+          <h2 className="ds-h2">Property types we commonly plan for in {displayName}</h2>
+          <p className="prose-readable mt-3 text-[var(--muted-foreground)]">
+            Generic property guides—not named societies. Open a type×service page
+            when it matches your building.
+          </p>
+          <ul className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {PROPERTY_TYPES.filter(
+              (p) =>
+                p.publicationStatus === "published" && p.allowIndexing,
+            ).map((propertyType) => (
+              <li key={propertyType.slug}>
+                <Link
+                  href={ROUTES.propertyTypeService(
+                    propertyType.slug,
+                    propertyType.suitableServices[0] ?? "safety-nets",
+                  )}
+                  className="text-[var(--color-link)] hover:underline"
+                >
+                  {propertyType.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Container>
+      </Section>
 
       <FeaturesSection
         title={`Residential Applications in ${displayName}`}
@@ -336,6 +377,13 @@ export default async function LocationDetailPage({ params }: PageProps) {
           variant="muted"
         />
       ) : null}
+
+      <ProjectGallery
+        title={`Installation photos (statewide evidence)`}
+        description={`Real photographs from our install set. We do not invent ${displayName}-specific project stories without verified records.`}
+        projects={projectsAsGalleryItems().slice(0, 6)}
+        showViewAll
+      />
 
       <RelatedGuides
         title="Guides that help before a site visit"

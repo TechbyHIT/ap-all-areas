@@ -27,6 +27,10 @@ export type PageType =
   | "blog"
   | "static";
 
+/**
+ * Editorial lifecycle (§54).
+ * Use `resolveIndexabilityState()` for the full machine including `indexable`.
+ */
 export type PublicationStatus =
   | "draft"
   | "review"

@@ -10,6 +10,7 @@ import { Container } from "@/components/ui/Container";
 import { HeroImageScroll } from "@/components/ui/HeroImageScroll";
 import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/navigation/Breadcrumbs";
+import type { HeroComposition } from "@/lib/visual/page-composition";
 
 type ServiceHeroProps = {
   badge?: string;
@@ -28,6 +29,13 @@ type ServiceHeroProps = {
   quoteHref?: string;
   /** Prefill for WhatsApp photo-estimate CTA */
   whatsappMessage?: string;
+  /** §136 — service vs service+geo composition */
+  composition?: Extract<
+    HeroComposition,
+    | "service-split"
+    | "service-local-split"
+    | "locality-service-split"
+  >;
   className?: string;
 };
 
@@ -44,6 +52,7 @@ export function ServiceHero({
   breadcrumbItems,
   quoteHref = ROUTES.contact,
   whatsappMessage = "Hello, I am sharing opening photos for a free estimate in Andhra Pradesh.",
+  composition = "service-split",
   className = "",
 }: ServiceHeroProps) {
   const wa = getWhatsAppLink(whatsappMessage);
@@ -56,11 +65,15 @@ export function ServiceHero({
   })();
 
   const withImage = showImage && scrollImages.length > 0;
+  const isLocalMoney =
+    composition === "service-local-split" ||
+    composition === "locality-service-split";
+  const shellClass = isLocalMoney
+    ? "border-b border-zinc-200 bg-gradient-to-br from-[var(--primary-50)] via-white to-zinc-50"
+    : "border-b border-zinc-200 bg-gradient-to-b from-zinc-50 to-white";
 
   return (
-    <section
-      className={`border-b border-zinc-200 bg-gradient-to-b from-zinc-50 to-white ${className}`.trim()}
-    >
+    <section className={`${shellClass} ${className}`.trim()}>
       {breadcrumbs ??
         (breadcrumbItems ? <Breadcrumbs items={breadcrumbItems} /> : null)}
 

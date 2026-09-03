@@ -28,6 +28,8 @@ import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
 import { shouldGeneratePage } from "@/lib/seo/page-decision";
 import { moneyPageIndexability } from "@/lib/seo/page-indexability";
+import { buildPageMediaBundle } from "@/lib/visual/page-media";
+import { getPageVisualStrategy } from "@/lib/visual/page-composition";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -93,7 +95,15 @@ export default async function AreaDetailPage({ params }: PageProps) {
     (a) => a.slug !== areaSlug,
   );
 
-  const heroMedia = getServiceMedia("invisible-grills");
+  const heroTitle = `Safety Net Services in ${area.name}`;
+  const visual = getPageVisualStrategy("locality");
+  const mediaBundle = buildPageMediaBundle({
+    pageType: "locality",
+    cityName: city.name,
+    localityName: area.name,
+    serviceSlug: "invisible-grills",
+    h1: heroTitle,
+  });
   const services = INITIAL_SERVICES.map((service) => {
     const media = getServiceMedia(service.slug);
     return {
@@ -113,12 +123,14 @@ export default async function AreaDetailPage({ params }: PageProps) {
 
       <LocationHero
         badge={city.name}
-        title={`${area.name}, ${city.name}`}
+        title={heroTitle}
         description={`Installation service is available in ${area.name}, ${city.name}. We confirm address-level coverage after a site review — not via a claimed local branch.`}
+        composition={visual.hero as "locality-orient"}
         image={{
-          src: heroMedia.image,
-          alt: `${heroMedia.alt} — ${area.name}, ${city.name}`,
+          src: mediaBundle.heroImage.src,
+          alt: mediaBundle.heroImage.alt,
         }}
+        gallery={mediaBundle.galleryImages}
         breadcrumbItems={[
           { label: "Home", href: "/" },
           { label: "Locations", href: ROUTES.locations },

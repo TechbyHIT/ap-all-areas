@@ -85,27 +85,27 @@ export function HeaderClient() {
               items={[...NAV_SERVICES]}
             />
             <NavDropdown
-              label="Locations"
+              label="Areas"
               href={ROUTES.locations}
               items={[...NAV_LOCATIONS]}
             />
             <Link
-              href={ROUTES.gallery}
+              href={ROUTES.projects}
               className="ds-link-underline rounded-[var(--radius-md)] px-2 py-2 text-sm font-medium text-[var(--secondary-800)] hover:text-[var(--primary-700)]"
             >
               Projects
+            </Link>
+            <Link
+              href={ROUTES.guides}
+              className="ds-link-underline rounded-[var(--radius-md)] px-2 py-2 text-sm font-medium text-[var(--secondary-800)] hover:text-[var(--primary-700)]"
+            >
+              Guides
             </Link>
             <Link
               href={ROUTES.about}
               className="ds-link-underline rounded-[var(--radius-md)] px-2 py-2 text-sm font-medium text-[var(--secondary-800)] hover:text-[var(--primary-700)]"
             >
               About
-            </Link>
-            <Link
-              href={ROUTES.faq}
-              className="ds-link-underline rounded-[var(--radius-md)] px-2 py-2 text-sm font-medium text-[var(--secondary-800)] hover:text-[var(--primary-700)]"
-            >
-              FAQ
             </Link>
             <Link
               href={ROUTES.contact}

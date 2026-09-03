@@ -49,3 +49,6 @@ next-env.d.ts
 tsc-out.txt
 reports/
 
+# Generated responsive image variants (regenerate via npm run images:optimize)
+public/images/**/responsive/
+

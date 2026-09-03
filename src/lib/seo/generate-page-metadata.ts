@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { BUSINESS_CONFIG } from "@/config/business";
 import { getRobotsDirective } from "@/lib/publishing/indexability";
 import type { PageIndexabilityInput } from "@/types/page";
+import {
+  buildIntentTitle,
+  buildMetaDescription,
+  type TitleIntent,
+} from "@/lib/seo/title-meta-system";
 
 export type PageMetadataInput = PageIndexabilityInput & {
   title: string;
@@ -59,30 +64,72 @@ export function generatePageMetadata(page: PageMetadataInput): Metadata {
   };
 }
 
+/** §78 Intent-based titles (preferred for new pages). */
 export function generateTitle(
   primary: string,
-  pattern: "service" | "location" | "service-location" | "service-area" | "default" = "default",
+  pattern:
+    | "service"
+    | "location"
+    | "service-location"
+    | "service-area"
+    | "guide"
+    | "comparison"
+    | "default" = "default",
+  extras?: { city?: string; locality?: string },
 ): string {
-  const patterns: Record<string, string[]> = {
-    service: [`${primary} in Andhra Pradesh`, `${primary} Installation Andhra Pradesh`],
-    location: [`${primary} Service Coverage`, `Safety Solutions in ${primary}`],
-    "service-location": [
-      `${primary}`,
-      `${primary} — Service Available`,
-    ],
-    "service-area": [`${primary}`, `${primary} Installation`],
-    default: [primary],
+  const intentMap: Record<string, TitleIntent> = {
+    service: "service",
+    location: "local",
+    "service-location": "local",
+    "service-area": "locality",
+    guide: "guide",
+    comparison: "comparison",
+    default: "default",
   };
-  const options = patterns[pattern] ?? patterns.default;
-  return options[0];
+
+  if (pattern === "service-location" && extras?.city) {
+    return buildIntentTitle({
+      intent: "local",
+      primary,
+      city: extras.city,
+    });
+  }
+  if (pattern === "service-area" && extras?.city && extras?.locality) {
+    return buildIntentTitle({
+      intent: "locality",
+      primary,
+      city: extras.city,
+      locality: extras.locality,
+    });
+  }
+  if (pattern === "location" && extras?.city) {
+    return buildIntentTitle({
+      intent: "local",
+      primary,
+      city: extras.city,
+    });
+  }
+
+  return buildIntentTitle({
+    intent: intentMap[pattern] ?? "default",
+    primary,
+    city: extras?.city,
+    locality: extras?.locality,
+  });
 }
 
+/** §79 Unique meta descriptions with differentiator + optional CTA. */
 export function generateDescription(
   service: string,
   location?: string,
+  differentiator =
+    "Coverage is confirmed after site review — not a claimed local branch",
+  cta = "Request a measured quotation",
 ): string {
-  if (location) {
-    return `Professional ${service} installation service available in ${location}, Andhra Pradesh. Coverage subject to site confirmation. Request a free quotation.`;
-  }
-  return `Professional ${service} installation across Andhra Pradesh. Quality materials, expert installation and safety-focused solutions. Request a quotation.`;
+  return buildMetaDescription({
+    service,
+    location,
+    differentiator,
+    cta,
+  });
 }

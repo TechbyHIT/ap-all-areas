@@ -26,10 +26,9 @@ const nextConfig: NextConfig = {
       appear until the cache fills.
     */
     formats: ["image/webp"],
-    // Dropped 1920: hero/CSS rarely needs it on this site and every width is
-    // another on-demand encode + cache entry per image.
-    deviceSizes: [640, 750, 828, 1080, 1200],
-    imageSizes: [32, 64, 96, 128, 256, 384],
+    // Useful responsive widths for hero/card/gallery (Next still encodes on demand).
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [32, 64, 96, 128, 256, 384, 480],
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
 

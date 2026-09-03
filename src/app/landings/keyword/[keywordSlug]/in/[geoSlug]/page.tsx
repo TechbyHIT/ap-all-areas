@@ -31,6 +31,7 @@ import {
   webPageSchema,
 } from "@/lib/schema";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
+import { getKeywordOwnerPath } from "@/lib/seo/keyword-ownership";
 import { staticPageIndexability } from "@/lib/seo/page-indexability";
 
 
@@ -113,16 +114,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const content = buildKeywordGeoContent(keyword, geo);
   const heroImage = getIntentHeroImage(keyword.slug, keyword.serviceSlug);
-  const canonicalPath = ROUTES.keywordInGeo(keywordSlug, geoSlug);
+  const targetPath = ROUTES.keywordInGeo(keywordSlug, geoSlug);
+  // City keyword URLs consolidate to silo city×service — one owner per intent.
+  const ownerPath =
+    geo.kind === "city"
+      ? (getKeywordOwnerPath(keywordSlug, geoSlug) ?? targetPath)
+      : targetPath;
+  const isCanonicalOwner = ownerPath === targetPath;
 
   return generatePageMetadata({
     title: content.metaTitle,
     metaDescription: content.metaDescription,
-    canonicalUrl: buildCanonicalUrl(canonicalPath),
+    canonicalUrl: buildCanonicalUrl(ownerPath),
     openGraphTitle: `${keyword.phrase} in ${geo.name} | ${BUSINESS_CONFIG.name}`,
     openGraphDescription: content.metaDescription,
     openGraphImage: heroImage.src,
-    ...staticPageIndexability(true),
+    ...staticPageIndexability(isCanonicalOwner && geo.indexable),
   });
 }
 
@@ -135,8 +142,12 @@ export default async function KeywordGeoLandingPage({ params }: PageProps) {
   if (!geo || !service) notFound();
 
   const content = buildKeywordGeoContent(keyword, geo);
-  const canonicalPath = ROUTES.keywordInGeo(keywordSlug, geoSlug);
-  const pageUrl = buildCanonicalUrl(canonicalPath);
+  const targetPath = ROUTES.keywordInGeo(keywordSlug, geoSlug);
+  const ownerPath =
+    geo.kind === "city"
+      ? (getKeywordOwnerPath(keywordSlug, geoSlug) ?? targetPath)
+      : targetPath;
+  const pageUrl = buildCanonicalUrl(ownerPath);
   const heroImage = getIntentHeroImage(keyword.slug, service.slug);
 
   const related = Object.values(INITIAL_SERVICE_MAP)
@@ -188,6 +199,7 @@ export default async function KeywordGeoLandingPage({ params }: PageProps) {
         title={`${keyword.phrase} in ${geo.name}`}
         description={content.heroDescription}
         serviceSlug={keyword.serviceSlug}
+        composition="locality-service-split"
         image={heroImage}
         quoteHref={ROUTES.contact}
         whatsappMessage={`Hello, I need ${keyword.phrase.toLowerCase()} in ${geo.name}, ${geo.cityName}. Sharing opening photos for a free estimate.`}

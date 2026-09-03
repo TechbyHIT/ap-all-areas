@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServiceMedia } from "@/config/design";
 import { ROUTES } from "@/config/routes";
@@ -18,7 +19,6 @@ import { RelatedServices } from "@/components/sections/RelatedServices";
 import { RelatedGuides } from "@/components/sections/RelatedGuides";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
-import { FeatureCard } from "@/components/cards/FeatureCard";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -32,13 +32,22 @@ import {
 } from "@/data/initial-services";
 import { SERVICE_PAGE_CONTENT } from "@/data/service-page-content";
 import { SERVICE_FAQS } from "@/data/service-faqs";
+import { getServiceAdvancedSections } from "@/data/service-advanced-sections";
+import { projectsAsGalleryItems } from "@/data/projects";
 import { SUB_SERVICE_MAP, SUB_SERVICE_SLUGS } from "@/data/sub-services";
+import {
+  getServiceFamily,
+  SERVICE_FAMILY_SLUGS,
+} from "@/data/service-families";
+import { ServiceFamilyPageView } from "@/components/sections/ServiceFamilyPageView";
+import { ProjectGallery } from "@/components/sections/ProjectGallery";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import {
   generateDescription,
   generatePageMetadata,
   generateTitle,
 } from "@/lib/seo/generate-page-metadata";
+import { staticPageIndexability } from "@/lib/seo/page-indexability";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -58,7 +67,11 @@ function toProcessSteps(items: readonly string[]) {
 }
 
 export async function generateStaticParams() {
-  return [...INITIAL_SERVICE_SLUGS, ...SUB_SERVICE_SLUGS].map((serviceSlug) => ({
+  return [
+    ...INITIAL_SERVICE_SLUGS,
+    ...SUB_SERVICE_SLUGS,
+    ...SERVICE_FAMILY_SLUGS,
+  ].map((serviceSlug) => ({
     serviceSlug,
   }));
 }
@@ -102,6 +115,18 @@ function resolveServicePage(serviceSlug: string) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { serviceSlug } = await params;
+
+  const family = getServiceFamily(serviceSlug);
+  if (family) {
+    return generatePageMetadata({
+      title: family.metaTitle,
+      metaDescription: family.metaDescription,
+      canonicalUrl: buildCanonicalUrl(ROUTES.serviceFamily(family.slug)),
+      openGraphImage: getServiceMedia(family.primaryServiceSlug).image,
+      ...staticPageIndexability(true),
+    });
+  }
+
   const resolved = resolveServicePage(serviceSlug);
   if (!resolved) return {};
   const { service } = resolved;
@@ -129,16 +154,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ServiceDetailPage({ params }: PageProps) {
   const { serviceSlug } = await params;
+
+  const family = getServiceFamily(serviceSlug);
+  if (family) {
+    return <ServiceFamilyPageView family={family} />;
+  }
+
   const resolved = resolveServicePage(serviceSlug);
   if (!resolved) notFound();
 
   const { service, content, faqs, mediaSlug, h1 } = resolved;
   const parentSlug = SUB_SERVICE_MAP[serviceSlug]?.parentSlug;
+  const advanced =
+    getServiceAdvancedSections(parentSlug ?? service.slug) ??
+    getServiceAdvancedSections(mediaSlug);
   const relatedServices = INITIAL_SERVICES.filter((item) =>
     parentSlug ? item.slug !== parentSlug : item.slug !== service.slug,
   );
   const canonical = buildCanonicalUrl(`/services/${service.slug}/`);
   const media = getServiceMedia(mediaSlug);
+  const projectPhotos = projectsAsGalleryItems(mediaSlug);
 
   const crumbs = [
     { name: "Home", url: buildCanonicalUrl("/") },
@@ -206,35 +241,57 @@ export default async function ServiceDetailPage({ params }: PageProps) {
       />
 
       <MaterialsSection
-        title={`About ${service.name}`}
+        title={`What Is ${service.name}?`}
         prose={<p>{content.uniqueIntroduction}</p>}
         note="We provide installation services across Andhra Pradesh subject to site accessibility, measurements, technician availability and project requirements. Listing a place does not mean we operate a branch there."
         cards={[]}
       />
 
+      {advanced ? (
+        <PropertyTypesSection
+          title={`Who Needs ${service.name}?`}
+          items={advanced.whoNeeds}
+          variant="muted"
+        />
+      ) : null}
+
       <ProblemsSolvedSection
-        title="Customer Problems Solved"
+        title={`Problems ${service.name} Solves`}
         items={content.problemsSolved}
       />
 
       <PropertyTypesSection
-        title="Suitable Property Types"
+        title={`Where ${service.name} Is Used`}
         items={content.suitablePropertyTypes}
         variant="muted"
       />
 
       <FeaturesSection
-        title="Common Applications"
+        title={`Applications of ${service.name}`}
         description="Typical installation contexts across homes and institutions in Andhra Pradesh"
         items={content.commonApplications}
       />
 
       <BenefitsSection title="Main Benefits" items={content.benefits} variant="muted" />
 
-      <FeaturesSection title="Product Features" items={content.features} />
+      <FeaturesSection
+        title={
+          service.subServices.length > 0
+            ? `Types of ${service.name}`
+            : `Features of ${service.name}`
+        }
+        items={
+          service.subServices.length > 0
+            ? service.subServices.map((sub) => ({
+                title: sub.name,
+                description: sub.summary,
+              }))
+            : content.features
+        }
+      />
 
       <MaterialsSection
-        title="Materials Used"
+        title="Materials / Technology"
         description={content.materialsOverview}
         prose={<p>{content.materialGradesGuidance}</p>}
         variant="muted"
@@ -245,10 +302,18 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         items={content.technicalConsiderations}
       />
 
-      <InstallationProcess
-        title="Measurement Guidance"
-        steps={toProcessSteps(content.measurementGuidance)}
-      />
+      {advanced ? (
+        <FeaturesSection
+          title="How to Choose"
+          description="Decision points before you approve measurement and materials"
+          items={advanced.howToChoose}
+        />
+      ) : (
+        <InstallationProcess
+          title="How to Choose — Measurement Guidance"
+          steps={toProcessSteps(content.measurementGuidance)}
+        />
+      )}
 
       <InstallationProcess
         title="Installation Process"
@@ -257,7 +322,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
       />
 
       <InstallationProcess
-        title="Site-Inspection Process"
+        title="Site Inspection Before Work"
         steps={toProcessSteps(content.siteInspectionProcess)}
       />
 
@@ -266,37 +331,72 @@ export default async function ServiceDetailPage({ params }: PageProps) {
       <QualitySection title="Quality Checks" items={content.qualityChecks} />
 
       <MaintenanceSection
-        title="Maintenance Instructions"
-        items={content.maintenanceInstructions}
+        title="Maintenance"
+        items={[
+          ...content.maintenanceInstructions,
+          ...content.cleaningGuidance,
+        ]}
         variant="muted"
-      />
-
-      <MaintenanceSection
-        title="Cleaning Guidance"
-        items={content.cleaningGuidance}
       />
 
       <QualitySection
-        title="Durability Factors"
-        items={content.durabilityFactors}
-        variant="muted"
-      />
-
-      <SafetySection
-        title="Weather-Related Considerations"
-        items={content.weatherConsiderations}
+        title="Durability & Weather Notes"
+        items={[
+          ...content.durabilityFactors,
+          ...content.weatherConsiderations,
+        ]}
       />
 
       <PricingFactors
-        title="Pricing Factors"
+        title="What Affects Cost?"
         items={content.pricingFactors}
         honestStatement="Pricing depends on measurements, material grade, required spacing, installation complexity, building height, site accessibility and total project quantity. Fixed package prices are not shown because every site differs."
       />
 
       <QualitySection
-        title="Common Customer Mistakes"
+        title="Common Mistakes"
         items={content.commonMistakes}
       />
+
+      {advanced ? (
+        <QualitySection
+          title="Limitations"
+          items={advanced.limitations}
+          variant="muted"
+        />
+      ) : null}
+
+      {advanced ? (
+        <Section>
+          <Container>
+            <SectionHeading
+              title="When Another Service Is Better"
+              description="Honest alternatives when this product is not the best fit."
+            />
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {advanced.whenAnotherServiceBetter.map((item) => (
+                <article
+                  key={item.title}
+                  className="rounded-xl border border-zinc-200 p-5 dark:border-zinc-800"
+                >
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                    {item.href ? (
+                      <Link href={item.href} className="hover:text-amber-700">
+                        {item.title}
+                      </Link>
+                    ) : (
+                      item.title
+                    )}
+                  </h3>
+                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    {item.description}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </Container>
+        </Section>
+      ) : null}
 
       <QualitySection
         title="Contractor-Selection Guidance"
@@ -304,32 +404,21 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         variant="muted"
       />
 
-      {service.subServices.length > 0 ? (
-        <Section>
-          <Container>
-            <SectionHeading
-              title="Related Applications & Sub-Services"
-              description={`Common ${service.name.toLowerCase()} applications planned after site measurement.`}
-            />
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {service.subServices.map((sub) => (
-                <FeatureCard
-                  key={sub.slug}
-                  title={sub.name}
-                  description={sub.summary}
-                />
-              ))}
-            </div>
-          </Container>
-        </Section>
-      ) : null}
-
       <ServiceCityAreaLinks
-        serviceSlug={service.slug}
-        serviceName={service.name}
-        title={`${service.name} in every priority city & area`}
-        description={`Open the ${service.name.toLowerCase()} page for your city or locality. Coverage is confirmed after site review—listing a place does not mean we operate a branch there.`}
+        serviceSlug={mediaSlug}
+        serviceName={
+          INITIAL_SERVICE_MAP[mediaSlug]?.name ?? service.name
+        }
+        title="Service Areas"
+        description={`${service.name} pages for priority cities and localities. Coverage is confirmed after site review—listing a place does not mean we operate a branch there.`}
         variant="muted"
+      />
+
+      <ProjectGallery
+        title="Projects — Installation Photos"
+        description="Real photographs from our installation set. We do not invent city names, customer quotes or ratings on these cards."
+        projects={projectPhotos}
+        showViewAll
       />
 
       <RelatedServices
@@ -343,16 +432,16 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         }))}
       />
 
-      <RelatedGuides title="Related Guides" guides={guides} />
+      <RelatedGuides title="Useful Guides" guides={guides} />
 
       <FAQSection
-        title={`${service.name} — Frequently Asked Questions`}
+        title={`${service.name} — FAQs`}
         items={faqs}
       />
 
       <FinalCTA
-        title={`Get a ${service.name} Quotation`}
-        description={`Share your city, property type and approximate measurements for ${service.name}. We will confirm service availability and guide you through the next steps.`}
+        title="Request a Quote"
+        description={`Share your city, property type and opening photos for ${service.name}. We confirm availability after reviewing your site.`}
         whatsappMessage={`Hello, I need a quotation for ${service.name} installation in Andhra Pradesh.`}
       />
     </>

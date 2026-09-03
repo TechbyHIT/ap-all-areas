@@ -7,6 +7,9 @@ import { PLACEHOLDER_BLOG_POSTS } from "@/data/placeholder-content";
 import { PROBLEMS } from "@/data/problems";
 import { PROPERTY_TYPES } from "@/data/property-types";
 import { SUB_SERVICE_SLUGS } from "@/data/sub-services";
+import { SERVICE_FAMILY_SLUGS } from "@/data/service-families";
+import { listPublishedProjects } from "@/data/projects";
+import { SERVICE_COMPARISON_SLUGS } from "@/data/comparisons";
 import { INSTALLATION_PHOTOS } from "@/config/installation-photos";
 import { ROUTES } from "@/config/routes";
 import { matchLegacySiloRedirect } from "@/lib/routing/location-silo";
@@ -144,6 +147,10 @@ function buildServiceEntries(): SitemapRegistryEntry[] {
     entries.push(makeEntry(`/services/${slug}/`, 0.78, { kind: "hub" }));
   }
 
+  for (const slug of SERVICE_FAMILY_SLUGS) {
+    entries.push(makeEntry(`/services/${slug}/`, 0.82, { kind: "hub" }));
+  }
+
   return entries;
 }
 
@@ -181,7 +188,23 @@ function buildBlogEntries(): SitemapRegistryEntry[] {
 }
 
 function buildProjectEntries(): SitemapRegistryEntry[] {
-  return [makeEntry("/projects/", 0.65, { kind: "hub" })];
+  const entries: SitemapRegistryEntry[] = [
+    makeEntry("/projects/", 0.65, { kind: "hub" }),
+  ];
+  for (const project of listPublishedProjects()) {
+    entries.push(makeEntry(`/projects/${project.slug}/`, 0.55, { kind: "hub" }));
+  }
+  return entries;
+}
+
+function buildComparisonEntries(): SitemapRegistryEntry[] {
+  const entries: SitemapRegistryEntry[] = [
+    makeEntry("/comparisons/", 0.7, { kind: "hub" }),
+  ];
+  for (const slug of SERVICE_COMPARISON_SLUGS) {
+    entries.push(makeEntry(`/comparisons/${slug}/`, 0.72, { kind: "hub" }));
+  }
+  return entries;
 }
 
 function buildStateEntries(): SitemapRegistryEntry[] {
@@ -317,6 +340,7 @@ function buildCoreEntries(): SitemapRegistryEntry[] {
     ...buildCityEntries(),
     ...buildBlogEntries(),
     ...buildProjectEntries(),
+    ...buildComparisonEntries(),
     ...buildGuideEntries(),
   ];
 }

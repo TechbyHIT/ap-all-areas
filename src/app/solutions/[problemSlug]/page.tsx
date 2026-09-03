@@ -16,6 +16,7 @@ import { Heading } from "@/components/ui/Heading";
 import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { PROBLEM_MAP, PROBLEM_SLUGS } from "@/data/problems";
+import { comparisonForProblem } from "@/data/comparisons";
 import { INITIAL_SERVICE_MAP, INITIAL_SERVICES } from "@/data/initial-services";
 import { getIntentHeroImage } from "@/config/design";
 import { ROUTES } from "@/config/routes";
@@ -107,22 +108,31 @@ export default async function SolutionDetailPage({ params }: PageProps) {
   if (!problem) notFound();
 
   const faqs = buildProblemFaqs(problem);
+  const comparison = comparisonForProblem(problem.slug);
   const primaryServiceSlug =
     problem.recommendedServices[0] ?? "safety-nets";
   const primaryService =
     INITIAL_SERVICE_MAP[primaryServiceSlug] ?? INITIAL_SERVICES[0];
   const hero = getIntentHeroImage(problem.slug, primaryServiceSlug);
 
-  const recommendedServiceCards = problem.recommendedServices
+  const possibleSolutions = problem.recommendedServices
     .map((slug) => {
       const service = INITIAL_SERVICE_MAP[slug];
       if (!service) return null;
       return {
         title: service.name,
-        description: `${service.summary} Often considered for ${problem.shortName.toLowerCase()} after site measurement and a clear quotation.`,
+        description: `${service.summary} Considered for ${problem.shortName.toLowerCase()} after measurement.`,
+        href: ROUTES.service(slug),
       };
     })
-    .filter((item): item is { title: string; description: string } => item !== null);
+    .filter(
+      (item): item is { title: string; description: string; href: string } =>
+        item !== null,
+    );
+
+  const recommendedServiceCards = possibleSolutions.map(
+    ({ title, description }) => ({ title, description }),
+  );
 
   const subServiceItems = problem.recommendedSubServiceSlugs
     .map((slug) => {
@@ -160,7 +170,7 @@ export default async function SolutionDetailPage({ params }: PageProps) {
         image={hero}
       />
 
-      <ProseSection title={`Understanding ${problem.name}`}>
+      <ProseSection title={`Problem: ${problem.name}`}>
         <p>{problem.introduction}</p>
         <p>
           Across Andhra Pradesh homes and institutions, the right response depends
@@ -180,34 +190,51 @@ export default async function SolutionDetailPage({ params }: PageProps) {
       <BulletListSection title="Risks If Left Unaddressed" items={problem.risks} />
 
       <CardGridSection
-        title="Recommended Services"
-        subtitle="Service choice is confirmed after reviewing your openings and access conditions"
+        title="Possible solutions"
+        subtitle="Options that can address this problem — choice confirmed after site review"
         items={recommendedServiceCards}
       />
+
+      {comparison ? (
+        <Section variant="muted">
+          <Container>
+            <Heading as="h2" className="mb-4">
+              Comparison
+            </Heading>
+            <p className="max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+              When more than one product could work, compare purpose, materials,
+              appearance and limitations before you buy.
+            </p>
+            <Link
+              href={ROUTES.comparison(comparison.slug)}
+              className="mt-4 inline-flex text-sm font-semibold text-amber-800 hover:underline"
+            >
+              {comparison.h1} →
+            </Link>
+          </Container>
+        </Section>
+      ) : null}
 
       <Section>
         <Container>
           <Heading as="h2" className="mb-6">
-            Explore Recommended Services
+            Recommended service
           </Heading>
+          <p className="mb-4 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
+            Start with the primary recommendation, then confirm on measurement.
+            Related applications below narrow the brief further.
+          </p>
           <ul className="grid gap-3 sm:grid-cols-2">
-            {problem.recommendedServices.map((slug) => {
-              const service = INITIAL_SERVICE_MAP[slug];
-              return (
-                <li key={slug}>
-                  {service ? (
-                    <Link
-                      href={ROUTES.service(slug)}
-                      className="block rounded-lg border border-zinc-200 px-4 py-3 text-sm font-medium hover:border-teal-300 hover:text-teal-800"
-                    >
-                      {service.name}
-                    </Link>
-                  ) : (
-                    <span className="text-sm text-zinc-600">{slug}</span>
-                  )}
-                </li>
-              );
-            })}
+            {possibleSolutions.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className="block rounded-lg border border-zinc-200 px-4 py-3 text-sm font-medium hover:border-teal-300 hover:text-teal-800"
+                >
+                  {item.title}
+                </Link>
+              </li>
+            ))}
           </ul>
         </Container>
       </Section>
@@ -247,8 +274,8 @@ export default async function SolutionDetailPage({ params }: PageProps) {
         <ServiceCityAreaLinks
           serviceSlug={primaryService.slug}
           serviceName={primaryService.name}
-          title={`${primaryService.name} cities & areas for ${problem.shortName.toLowerCase()}`}
-          description={`Browse ${primaryService.name.toLowerCase()} pages across priority Andhra Pradesh cities and localities. Final suitability for ${problem.shortName.toLowerCase()} is confirmed after site review. Related services above also have full city and area pages.`}
+          title={`Location — ${primaryService.name} cities & areas`}
+          description={`Browse ${primaryService.name.toLowerCase()} pages across priority Andhra Pradesh cities and localities. Final suitability for ${problem.shortName.toLowerCase()} is confirmed after site review.`}
           variant="muted"
         />
       ) : null}
@@ -259,7 +286,7 @@ export default async function SolutionDetailPage({ params }: PageProps) {
       />
 
       <QuoteCTA
-        title={`Solve ${problem.shortName}`}
+        title={`Quote — solve ${problem.shortName}`}
         description="Request a site visit to confirm the best service for your property. Installation service is available across Andhra Pradesh subject to site confirmation."
         whatsappMessage={`Hello, I need help with ${problem.name} at my property in Andhra Pradesh.`}
       />

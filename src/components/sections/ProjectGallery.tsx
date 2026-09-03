@@ -49,10 +49,10 @@ export function ProjectGallery({
         {showViewAll ? (
           <div className="mt-8">
             <Link
-              href={ROUTES.gallery}
+              href={ROUTES.projects}
               className="inline-flex min-h-11 items-center rounded-xl border border-zinc-300 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-600)]"
             >
-              View full gallery
+              View all projects
             </Link>
           </div>
         ) : null}

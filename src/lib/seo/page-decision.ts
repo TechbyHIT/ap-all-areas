@@ -13,6 +13,11 @@ import {
   isServiceAvailableInCity,
 } from "@/lib/data/location-catalog";
 import { parentServiceSlug } from "@/lib/routing/location-silo";
+import {
+  checkCannibalization,
+  type CannibalizationInput,
+} from "@/lib/seo/cannibalization";
+import { scorePageQuality } from "@/lib/seo/page-quality";
 
 export type SeoPageKind =
   | "state"
@@ -109,4 +114,64 @@ export function shouldGeneratePage(input: PageDecisionInput): PageDecision {
 
 export function shouldIndexPage(input: PageDecisionInput): boolean {
   return shouldGeneratePage(input).index;
+}
+
+/**
+ * §33–§34 programmatic publish gate.
+ * Entity + availability already enforced by shouldGeneratePage.
+ * Extra: quality band + cannibalization action.
+ */
+export function canPublishProgrammaticPage(input: {
+  decision: PageDecisionInput;
+  candidatePath: string;
+  kind: CannibalizationInput["kind"];
+  hasUniqueLocalFacts?: boolean;
+  hasRealPhotos?: boolean;
+  keywordSlug?: string;
+}): {
+  publish: boolean;
+  index: boolean;
+  reasons: string[];
+} {
+  const decision = shouldGeneratePage(input.decision);
+  const reasons: string[] = [decision.reason];
+
+  if (!decision.generate) {
+    return { publish: false, index: false, reasons };
+  }
+
+  const cannibal = checkCannibalization({
+    candidatePath: input.candidatePath,
+    kind: input.kind,
+    serviceSlug: input.decision.serviceSlug,
+    citySlug: input.decision.citySlug,
+    keywordSlug: input.keywordSlug,
+  });
+  reasons.push(cannibal.reason);
+
+  if (cannibal.action === "noindex" || cannibal.action === "canonicalize") {
+    return { publish: true, index: false, reasons };
+  }
+  if (cannibal.action === "redirect" || cannibal.action === "delete") {
+    return { publish: false, index: false, reasons };
+  }
+
+  const quality = scorePageQuality({
+    hasUniqueLocalFacts: input.hasUniqueLocalFacts,
+    hasRealPhotos: input.hasRealPhotos ?? true,
+    hasTrustContact: true,
+    hasInternalLinks: true,
+    isDoorwayRisk: !input.hasUniqueLocalFacts && input.kind === "keyword-city",
+  });
+  reasons.push(`quality:${quality.total}:${quality.action}`);
+
+  if (quality.band === "noindex" || quality.band === "rewrite") {
+    return { publish: decision.generate, index: false, reasons };
+  }
+
+  return {
+    publish: true,
+    index: decision.index && quality.band === "publish",
+    reasons,
+  };
 }

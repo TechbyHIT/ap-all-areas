@@ -95,6 +95,43 @@ export function webPageSchema(input: {
   };
 }
 
+/** §64 — only call with genuine published videos. */
+export function videoObjectSchema(input: {
+  name: string;
+  description: string;
+  thumbnailUrl: string;
+  contentUrl: string;
+  uploadDate: string;
+  duration?: string;
+  transcript?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: input.name,
+    description: input.description,
+    thumbnailUrl: input.thumbnailUrl,
+    contentUrl: input.contentUrl,
+    uploadDate: input.uploadDate,
+    ...(input.duration ? { duration: input.duration } : {}),
+    ...(input.transcript ? { transcript: input.transcript } : {}),
+  };
+}
+
+export function imageObjectSchema(input: {
+  contentUrl: string;
+  description: string;
+  name?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ImageObject",
+    contentUrl: input.contentUrl,
+    description: input.description,
+    ...(input.name ? { name: input.name } : {}),
+  };
+}
+
 export function howToSchema(input: {
   name: string;
   description: string;

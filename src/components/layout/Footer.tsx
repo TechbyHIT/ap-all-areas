@@ -14,10 +14,13 @@ import {
   FOOTER_SERVICES,
 } from "@/config/navigation";
 import { ROUTES } from "@/config/routes";
+import { getLocalBusinessModel } from "@/lib/seo/local-business-model";
 
 const COMPANY_LINKS = [
   { label: "About", href: ROUTES.about },
+  { label: "Projects", href: ROUTES.projects },
   { label: "Gallery", href: ROUTES.gallery },
+  { label: "Guides", href: ROUTES.guides },
   { label: "Blog", href: ROUTES.blog },
   { label: "Testimonials", href: ROUTES.testimonials },
   { label: "Sitemap", href: "/sitemap.xml" },
@@ -47,6 +50,7 @@ export function Footer() {
   const wa = getWhatsAppLink();
   const email = getEmailLink();
   const domain = BUSINESS_CONFIG.domain;
+  const socialProfiles = getLocalBusinessModel().socialProfiles;
 
   return (
     <footer className="site-footer mt-auto border-t border-[var(--secondary-800)] bg-[var(--secondary-950)] text-[var(--neutral-300)]">
@@ -104,6 +108,22 @@ export function Footer() {
             <p className="text-[var(--neutral-500)]">
               Business hours: Mon–Sat, by appointment
             </p>
+            {socialProfiles.length > 0 ? (
+              <ul className="mt-3 space-y-1">
+                {socialProfiles.map((profile) => (
+                  <li key={profile.network}>
+                    <a
+                      href={profile.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="capitalize hover:text-[var(--primary-300)]"
+                    >
+                      {profile.network}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         </div>
 

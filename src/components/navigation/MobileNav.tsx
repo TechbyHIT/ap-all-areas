@@ -159,11 +159,11 @@ export function MobileNav({
                 />
               );
             }
-            if (item.label === "Locations") {
+            if (item.label === "Areas") {
               return (
                 <ExpandableGroup
                   key={item.href}
-                  label="Locations"
+                  label="Areas"
                   items={NAV_LOCATIONS}
                   onNavigate={onClose}
                 />

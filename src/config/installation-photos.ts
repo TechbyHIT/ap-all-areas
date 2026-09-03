@@ -1,131 +1,168 @@
 /**
- * Installation photos (Aug 2026 WhatsApp set). All 24 live under
- * /public/images/projects/installations/.
+ * Installation photos (Aug 2026 WhatsApp set). All live under
+ * /public/images/projects/installations/ as optimized WebP (§139).
+ *
+ * Alt text describes what is visible (§62). Location fields stay null until
+ * verified — never invent city/property claims on photos (§63).
  */
-export const INSTALLATION_PHOTOS = [
+
+export type InstallationPhoto = {
+  src: string;
+  alt: string;
+  service: string;
+  /** Verified only — omit rather than guess */
+  citySlug?: string | null;
+  localitySlug?: string | null;
+  propertyTypeSlug?: string | null;
+  application?: string | null;
+};
+
+export const INSTALLATION_PHOTOS: InstallationPhoto[] = [
   {
-    src: "/images/projects/installations/night-balcony-safety-net.jpg",
-    alt: "Balcony safety net with palm and apartment view",
+    src: "/images/projects/installations/night-balcony-safety-net.webp",
+    alt: "Balcony safety net installed across an apartment balcony at night",
     service: "safety-nets",
+    application: "balcony-protection",
   },
   {
-    src: "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
-    alt: "White balcony safety net with apartment view",
-    service: "safety-nets",
-  },
-  {
-    src: "/images/projects/installations/atrium-invisible-grill-circle.jpg",
-    alt: "Circular atrium invisible grill cables",
-    service: "invisible-grills",
-  },
-  {
-    src: "/images/projects/installations/indoor-cricket-practice-nets.jpg",
-    alt: "Green facade balcony safety net on apartment building",
-    service: "safety-nets",
-  },
-  {
-    src: "/images/projects/installations/outdoor-cricket-cage-nets.jpg",
-    alt: "Multi-floor green balcony safety net on building facade",
-    service: "safety-nets",
-  },
-  {
-    src: "/images/projects/installations/highrise-green-safety-net-up.jpg",
-    alt: "High-rise balcony safety net looking along the opening",
-    service: "safety-nets",
-  },
-  {
-    src: "/images/projects/installations/facade-balcony-safety-nets.jpg",
-    alt: "Circular outdoor sports net enclosure",
-    service: "sports-nets",
-  },
-  {
-    src: "/images/projects/installations/installer-harness-green-net.jpg",
-    alt: "Installer securing green safety netting",
-    service: "safety-nets",
-  },
-  {
-    src: "/images/projects/installations/night-invisible-grills-city.jpg",
-    alt: "Invisible grills over city lights at night",
-    service: "invisible-grills",
-  },
-  {
-    src: "/images/projects/installations/balcony-mesh-view-apartments.jpg",
-    alt: "Balcony mesh with apartment view",
-    service: "safety-nets",
-  },
-  {
-    src: "/images/projects/installations/sports-net-enclosure-wide.jpg",
-    alt: "Building shaft safety net between balcony stacks",
-    service: "safety-nets",
-  },
-  {
-    src: "/images/projects/installations/green-facade-netting-street.jpg",
-    alt: "Ceiling cloth drying hanger on green balcony wall",
+    src: "/images/projects/installations/cloth-drying-hanger-ceiling.webp",
+    alt: "Ceiling-mounted cloth drying hanger fixed on a balcony soffit",
     service: "cloth-drying-hangers",
+    application: "utility-drying",
   },
   {
-    src: "/images/projects/installations/balcony-white-net-palm.jpg",
-    alt: "Night balcony invisible grill with city lights",
+    src: "/images/projects/installations/atrium-invisible-grill-circle.webp",
+    alt: "Circular atrium invisible grill cables spanning an indoor void",
     service: "invisible-grills",
+    application: "void-protection",
   },
   {
-    src: "/images/projects/installations/balcony-white-net-palm-alt.jpg",
-    alt: "Balcony invisible grill overlooking palms",
-    service: "invisible-grills",
+    src: "/images/projects/installations/indoor-cricket-practice-nets.webp",
+    alt: "Indoor cricket practice net lanes inside a covered enclosure",
+    service: "sports-nets",
+    application: "sports-enclosure",
   },
   {
-    src: "/images/projects/installations/invisible-grill-construction-view.jpg",
-    alt: "Invisible grill cables with construction view",
-    service: "invisible-grills",
+    src: "/images/projects/installations/outdoor-cricket-cage-nets.webp",
+    alt: "Outdoor cricket practice cage enclosed with sports nets",
+    service: "sports-nets",
+    application: "sports-enclosure",
   },
   {
-    src: "/images/projects/installations/balcony-white-net-residential.jpg",
-    alt: "Residential balcony invisible grill with tree view",
-    service: "invisible-grills",
-  },
-  {
-    src: "/images/projects/installations/invisible-grill-day-city.jpg",
-    alt: "Daytime invisible grill city view",
-    service: "invisible-grills",
-  },
-  {
-    src: "/images/projects/installations/balcony-net-daylight-view.jpg",
-    alt: "Night balcony invisible grill with city skyline",
-    service: "invisible-grills",
-  },
-  {
-    src: "/images/projects/installations/balcony-safety-net-detail.jpg",
-    alt: "Close detail of balcony safety netting",
+    src: "/images/projects/installations/highrise-green-safety-net-up.webp",
+    alt: "Green balcony safety net viewed looking up a high-rise opening",
     service: "safety-nets",
+    application: "balcony-protection",
   },
   {
-    src: "/images/projects/installations/balcony-safety-net-detail-b.jpg",
-    alt: "Invisible grill cables on terrace ledge",
+    src: "/images/projects/installations/facade-balcony-safety-nets.webp",
+    alt: "Green balcony safety nets fitted across a multi-floor building facade",
+    service: "safety-nets",
+    application: "balcony-protection",
+  },
+  {
+    src: "/images/projects/installations/installer-harness-green-net.webp",
+    alt: "Installer in a harness securing green safety netting on site",
+    service: "safety-nets",
+    application: "installation-process",
+  },
+  {
+    src: "/images/projects/installations/night-invisible-grills-city.webp",
+    alt: "Invisible grill wires across a balcony with city lights beyond",
     service: "invisible-grills",
+    application: "balcony-protection",
   },
   {
-    src: "/images/projects/installations/balcony-safety-net-detail-c.jpg",
+    src: "/images/projects/installations/balcony-mesh-view-apartments.webp",
+    alt: "Balcony safety mesh with neighbouring apartment buildings in view",
+    service: "safety-nets",
+    application: "balcony-protection",
+  },
+  {
+    src: "/images/projects/installations/sports-net-enclosure-wide.webp",
+    alt: "Wide outdoor sports net enclosure around a practice area",
+    service: "sports-nets",
+    application: "sports-enclosure",
+  },
+  {
+    src: "/images/projects/installations/green-facade-netting-street.webp",
+    alt: "Green facade safety netting on a building viewed from street level",
+    service: "safety-nets",
+    application: "balcony-protection",
+  },
+  {
+    src: "/images/projects/installations/balcony-white-net-palm.webp",
+    alt: "White balcony safety net overlooking palm trees",
+    service: "safety-nets",
+    application: "balcony-protection",
+  },
+  {
+    src: "/images/projects/installations/balcony-white-net-palm-alt.webp",
+    alt: "Balcony invisible grill cables overlooking palm trees",
+    service: "invisible-grills",
+    application: "balcony-protection",
+  },
+  {
+    src: "/images/projects/installations/invisible-grill-construction-view.webp",
+    alt: "Invisible grill cables with a construction site visible beyond",
+    service: "invisible-grills",
+    application: "balcony-protection",
+  },
+  {
+    src: "/images/projects/installations/balcony-white-net-residential.webp",
+    alt: "White residential balcony safety net with tree view",
+    service: "safety-nets",
+    application: "balcony-protection",
+  },
+  {
+    src: "/images/projects/installations/invisible-grill-day-city.webp",
+    alt: "Daytime invisible grill across a balcony with city buildings beyond",
+    service: "invisible-grills",
+    application: "balcony-protection",
+  },
+  {
+    src: "/images/projects/installations/balcony-net-daylight-view.webp",
+    alt: "Balcony safety net in daylight with an open outdoor view",
+    service: "safety-nets",
+    application: "balcony-protection",
+  },
+  {
+    src: "/images/projects/installations/balcony-safety-net-detail.webp",
+    alt: "Close detail of balcony safety net mesh and edge fixing",
+    service: "safety-nets",
+    application: "balcony-protection",
+  },
+  {
+    src: "/images/projects/installations/balcony-safety-net-detail-b.webp",
+    alt: "Invisible grill cables fixed along a terrace ledge",
+    service: "invisible-grills",
+    application: "terrace-protection",
+  },
+  {
+    src: "/images/projects/installations/balcony-safety-net-detail-c.webp",
     alt: "Balcony safety net corner fixing detail",
     service: "safety-nets",
+    application: "balcony-protection",
   },
   {
-    src: "/images/projects/installations/project-install-31.jpg",
-    alt: "Completed installation project photo",
+    src: "/images/projects/installations/project-install-31.webp",
+    alt: "Completed balcony safety net installation on an apartment opening",
     service: "safety-nets",
+    application: "balcony-protection",
   },
   {
-    src: "/images/projects/installations/project-install-32.jpg",
-    alt: "Completed invisible grill installation project",
+    src: "/images/projects/installations/project-install-32.webp",
+    alt: "Completed invisible grill installation across a balcony opening",
     service: "invisible-grills",
+    application: "balcony-protection",
   },
   {
-    src: "/images/projects/installations/project-install-32b.jpg",
-    alt: "Completed invisible grill on glass balcony railing",
+    src: "/images/projects/installations/project-install-32b.webp",
+    alt: "Invisible grill installed on a glass balcony railing",
     service: "invisible-grills",
+    application: "balcony-protection",
   },
-] as const;
-
-export type InstallationPhoto = (typeof INSTALLATION_PHOTOS)[number];
+];
 
 /** Full set for homepage rotation / gallery (every photo). */
 export const HOME_ROTATION_PHOTOS = INSTALLATION_PHOTOS;
@@ -135,17 +172,17 @@ export const HOME_ROTATION_PHOTOS = INSTALLATION_PHOTOS;
  * frame without awkward letterboxing.
  */
 const HERO_SRCS = new Set([
-  "/images/projects/installations/invisible-grill-day-city.jpg",
-  "/images/projects/installations/night-balcony-safety-net.jpg",
-  "/images/projects/installations/night-invisible-grills-city.jpg",
-  "/images/projects/installations/balcony-mesh-view-apartments.jpg",
-  "/images/projects/installations/balcony-white-net-palm.jpg",
-  "/images/projects/installations/balcony-net-daylight-view.jpg",
-  "/images/projects/installations/outdoor-cricket-cage-nets.jpg",
-  "/images/projects/installations/atrium-invisible-grill-circle.jpg",
-  "/images/projects/installations/highrise-green-safety-net-up.jpg",
-  "/images/projects/installations/facade-balcony-safety-nets.jpg",
-  "/images/projects/installations/cloth-drying-hanger-ceiling.jpg",
+  "/images/projects/installations/invisible-grill-day-city.webp",
+  "/images/projects/installations/night-balcony-safety-net.webp",
+  "/images/projects/installations/night-invisible-grills-city.webp",
+  "/images/projects/installations/balcony-mesh-view-apartments.webp",
+  "/images/projects/installations/balcony-white-net-palm.webp",
+  "/images/projects/installations/balcony-net-daylight-view.webp",
+  "/images/projects/installations/outdoor-cricket-cage-nets.webp",
+  "/images/projects/installations/atrium-invisible-grill-circle.webp",
+  "/images/projects/installations/highrise-green-safety-net-up.webp",
+  "/images/projects/installations/facade-balcony-safety-nets.webp",
+  "/images/projects/installations/cloth-drying-hanger-ceiling.webp",
 ]);
 
 export const HERO_SCROLL_IMAGES = INSTALLATION_PHOTOS.filter((photo) =>

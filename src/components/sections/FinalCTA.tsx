@@ -48,6 +48,8 @@ export function FinalCTA({
           <Link
             href={ROUTES.contact}
             className="inline-flex min-h-11 items-center rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition hover:bg-amber-400"
+            data-track-conversion="cta_click"
+            data-cta-intent="quote_request"
           >
             Request Quote
           </Link>
@@ -58,6 +60,7 @@ export function FinalCTA({
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex min-h-11 items-center rounded-xl border border-white/40 bg-[#25d366] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
+              data-track-conversion="whatsapp_click"
             >
               Send Photo on WhatsApp
             </a>

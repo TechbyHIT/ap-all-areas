@@ -8,10 +8,10 @@ import { ROUTES } from "@/config/routes";
 export const MAIN_NAV = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services/" },
-  { label: "Locations", href: "/locations/" },
-  { label: "Projects", href: "/gallery/" },
+  { label: "Areas", href: "/locations/" },
+  { label: "Projects", href: "/projects/" },
+  { label: "Guides", href: "/guides/" },
   { label: "About", href: "/about/" },
-  { label: "FAQ", href: "/faq/" },
   { label: "Contact", href: "/contact/" },
 ] as const;
 
@@ -58,9 +58,11 @@ export const FOOTER_LOCATIONS = [
 
 export const FOOTER_QUICK_LINKS = [
   { label: "Solutions", href: "/solutions/" },
+  { label: "Comparisons", href: "/comparisons/" },
   { label: "Guides", href: "/guides/" },
   { label: "FAQ", href: "/faq/" },
   { label: "Gallery", href: "/gallery/" },
+  { label: "Projects", href: "/projects/" },
   { label: "Blog", href: "/blog/" },
   { label: "Testimonials", href: "/testimonials/" },
 ] as const;

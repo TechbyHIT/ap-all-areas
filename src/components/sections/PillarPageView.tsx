@@ -253,6 +253,7 @@ export function PillarPageView({ pillar }: PillarPageViewProps) {
         trustLine={pillar.hero.trustLine}
         whatsappMessage={pillar.hero.whatsappMessage}
         serviceSlug={pillar.serviceSlug}
+        composition="service-local-split"
         image={{
           src: media.image,
           alt: media.alt,

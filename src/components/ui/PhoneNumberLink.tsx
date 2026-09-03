@@ -35,6 +35,7 @@ export function PhoneNumberLink({
       href={href}
       className={`phone-number-link ${className}`.trim()}
       aria-label={`Call ${BUSINESS_CONFIG.phone.displayFormatted}`}
+      data-track-conversion="phone_click"
     >
       {prefix ? <span className="phone-number-prefix">{prefix}</span> : null}
       <span className="phone-number-digits">{number}</span>

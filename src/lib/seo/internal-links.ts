@@ -175,3 +175,80 @@ export function flattenLinkGraph(graph: InternalLinkGraph): InternalLink[] {
     ...graph.conversion,
   ];
 }
+
+/** §40 — prioritize converting / strategic destinations. */
+const PRIORITY_CITY = new Set([
+  "visakhapatnam",
+  "vijayawada",
+  "guntur",
+  "tirupati",
+]);
+
+const PRIORITY_SERVICE = new Set([
+  "invisible-grills",
+  "safety-nets",
+  "sports-nets",
+  "cloth-drying-hangers",
+]);
+
+export function prioritizeInternalLinks(links: InternalLink[]): InternalLink[] {
+  return [...links].sort((a, b) => linkWeight(b) - linkWeight(a));
+}
+
+function linkWeight(link: InternalLink): number {
+  let w = 0;
+  if (link.relation === "conversion") w += 40;
+  if (link.relation === "parent") w += 25;
+  if (link.relation === "service") w += 20;
+  if (link.relation === "child") w += 15;
+  if (link.relation === "guide") w += 10;
+  if (link.href.includes("/services/balcony-safety")) w += 12;
+  if (link.href.includes("/comparisons/")) w += 12;
+  if (link.href.includes("/projects/")) w += 8;
+  for (const city of PRIORITY_CITY) {
+    if (link.href.includes(`/${city}/`)) w += 6;
+  }
+  for (const service of PRIORITY_SERVICE) {
+    if (link.href.includes(service)) w += 4;
+  }
+  return w;
+}
+
+/** Service hub contextual graph (§39). */
+export function serviceHubLinkGraph(serviceSlug: string): InternalLinkGraph {
+  const core = parentServiceSlug(serviceSlug) ?? serviceSlug;
+  const out = graph();
+  out.parent = [
+    { href: ROUTES.home, label: "Home", relation: "parent" },
+    { href: ROUTES.services, label: "Services", relation: "parent" },
+  ];
+  out.services = Object.values(INITIAL_SERVICE_MAP)
+    .filter((s) => s.slug !== core)
+    .map((s) => ({
+      href: ROUTES.service(s.slug),
+      label: s.name,
+      relation: "service" as const,
+    }));
+  out.locations = listEnabledCities()
+    .filter((c) => c.indexable)
+    .slice(0, 6)
+    .map((c) => ({
+      href: ROUTES.cityService(c.slug, core),
+      label: `${serviceName(core)} in ${c.name}`,
+      relation: "location" as const,
+    }));
+  out.guides = relatedGuides(core);
+  out.children = [
+    {
+      href: ROUTES.projects,
+      label: "Installation project photos",
+      relation: "child",
+    },
+    {
+      href: ROUTES.comparisons,
+      label: "Compare solution options",
+      relation: "child",
+    },
+  ];
+  return out;
+}

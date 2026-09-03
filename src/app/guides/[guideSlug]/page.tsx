@@ -11,6 +11,7 @@ import { GUIDE_ARTICLES, type GuideArticle } from "@/data/guide-articles";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
 import { staticPageIndexability } from "@/lib/seo/page-indexability";
+import { buildPageMediaBundle } from "@/lib/visual/page-media";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -57,9 +58,25 @@ export default async function GuideDetailPage({ params }: PageProps) {
   const article = getGuideArticle(guideSlug);
   if (!article) notFound();
 
+  const media = buildPageMediaBundle({
+    pageType: "guide",
+    h1: guide.title,
+    serviceSlug: "safety-nets",
+  });
+
   return (
     <>
-      <PageHero title={guide.title} description={guide.summary} eyebrow="Guide" />
+      <PageHero
+        title={guide.title}
+        description={guide.summary}
+        eyebrow="Guide"
+        composition="editorial"
+        image={{
+          src: media.heroImage.src,
+          alt: media.heroImage.alt,
+        }}
+        trustNote="Editorial guidance — not a sales landing"
+      />
 
       <ProseSection title="Overview">
         <p>
