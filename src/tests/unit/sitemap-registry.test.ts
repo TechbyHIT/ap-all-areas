@@ -82,19 +82,20 @@ describe("sitemap registry", () => {
     const xml = buildSitemapIndexXml();
     expect(xml).toContain("<sitemapindex");
     expect(xml).not.toContain("<urlset");
-    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/core.xml");
-    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/services.xml");
+    // Slash form returns 200 XML; `.xml` was 308ing under trailingSlash:true
+    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/core/");
+    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/services/");
     expect(xml).toContain(
-      "https://hiranayaenterprises.in/sitemaps/city-services.xml",
+      "https://hiranayaenterprises.in/sitemaps/city-services/",
     );
-    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/societies.xml");
-    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/images.xml");
-    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/areas.xml");
+    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/societies/");
+    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/images/");
+    expect(xml).toContain("https://hiranayaenterprises.in/sitemaps/areas/");
     expect(xml).toContain(
-      "https://hiranayaenterprises.in/sitemaps/area-services.xml",
+      "https://hiranayaenterprises.in/sitemaps/area-services/",
     );
-    expect(xml).not.toContain("andhra-pradesh-keywords-1.xml");
-    expect(xml).not.toMatch(/\/sitemaps\/[^<]+\.xml\//);
+    expect(xml).not.toContain("andhra-pradesh-keywords-1");
+    expect(xml).not.toMatch(/\/sitemaps\/[^<]+\.xml/);
     expect(xml).not.toContain("localhost");
     expect(xml).not.toContain("http://hiranayaenterprises.in");
     expect(xml).not.toContain("http://127.");
@@ -152,7 +153,7 @@ describe("sitemap registry", () => {
     const xml = buildKeywordSitemapIndexXml();
     expect(xml).toContain("<sitemapindex");
     expect(xml).toContain(
-      "https://hiranayaenterprises.in/sitemaps/andhra-pradesh-keywords-1.xml",
+      "https://hiranayaenterprises.in/sitemaps/andhra-pradesh-keywords-1/",
     );
     expect((xml.match(/<sitemap>/g) ?? []).length).toBeGreaterThan(600);
   });

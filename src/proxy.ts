@@ -76,9 +76,15 @@ export function proxy(request: NextRequest) {
 
   pathname = pathname.toLowerCase();
 
-  const sitemapFile = pathname.match(/^\/sitemaps\/([a-z0-9-]+)\.xml\/?$/);
-  if (sitemapFile) {
-    return rewriteInternal(request, `/sitemaps/${sitemapFile[1]}/`);
+  // Do NOT middleware-rewrite `/sitemaps/*.xml` here. A middleware rewrite to
+  // `/sitemaps/{name}` was exposing a public 308 (trailingSlash) and Search
+  // Console rejected child sitemaps. next.config rewrites `.xml` → slash
+  // form internally; index locs use `/sitemaps/{name}/` which already 200s.
+
+  // Bare `/sitemaps/{name}` (no slash) → internal slash form
+  const sitemapBare = pathname.match(/^\/sitemaps\/([a-z0-9-]+)$/);
+  if (sitemapBare) {
+    return rewriteInternal(request, `/sitemaps/${sitemapBare[1]}/`);
   }
 
   if (pathname === "/terms/" || pathname === "/terms") {

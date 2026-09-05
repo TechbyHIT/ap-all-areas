@@ -505,13 +505,22 @@ export function buildSitemapChunks(): SitemapRegistryEntry[][] {
   return files.length > 0 ? files.map((file) => file.entries) : [[]];
 }
 
+/**
+ * Child locs must return HTTP 200 XML with no redirect.
+ * Use buildCanonicalUrl (keeps trailing slash). buildFileUrl strips slashes and
+ * `/sitemaps/{name}` then 308s under trailingSlash:true — Search Console fails.
+ */
+export function sitemapChildLocPath(name: string): string {
+  return `/sitemaps/${name}/`;
+}
+
 export function buildSitemapIndexXml(): string {
   const names = listSitemapIndexNames();
   const now = revisionDate().toISOString();
   const body = names
     .map((name) => {
       return `  <sitemap>
-    <loc>${buildFileUrl(`/sitemaps/${name}.xml`)}</loc>
+    <loc>${buildCanonicalUrl(sitemapChildLocPath(name))}</loc>
     <lastmod>${now}</lastmod>
   </sitemap>`;
     })

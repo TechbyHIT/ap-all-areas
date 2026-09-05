@@ -210,9 +210,13 @@ export function buildLocationPageContent(input: {
         answer: `We operate as a service-area business serving customers across Andhra Pradesh. Listing ${name} means installation support can be arranged subject to site confirmation; it does not automatically mean a permanent local shop or branch exists there.`,
       },
       {
+        question: `How do I choose the right safety net service in ${name}?`,
+        answer: `Start with the opening problem: fall risk usually needs balcony or terrace nets, bird mess needs pigeon nets, view-first openings may suit invisible grills, and laundry utility needs cloth hangers. Send a clear photo of the opening plus your locality so we can confirm the better next step before a visit.`,
+      },
+      {
         question: "Which services can I request at this location?",
         answer:
-          "You can enquire for invisible grills, safety nets, sports nets and cloth drying hangers. The suitable option depends on your property type, opening size and whether the main need is fall protection, bird control, sports practice or clothes drying.",
+          "You can enquire for invisible grills, balcony and pigeon safety nets, children or pet nets, terrace nets, sports nets and cloth drying hangers. The suitable option depends on your property type, opening size and whether the main need is fall protection, bird control, sports practice or clothes drying.",
       },
       {
         question: "Is a site visit required before quotation?",

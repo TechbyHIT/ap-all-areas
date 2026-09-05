@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getServiceMedia } from "@/config/design";
 import { ROUTES } from "@/config/routes";
 import { LocationHero } from "@/components/sections/LocationHero";
+import { ChooseByNeedSection } from "@/components/sections/ChooseByNeedSection";
 import { ServiceCards } from "@/components/sections/ServiceCards";
 import { AreaCards } from "@/components/sections/AreaCards";
 import { AreaServicesMatrix } from "@/components/sections/AreaServicesMatrix";
@@ -195,6 +196,56 @@ export default async function LocationDetailPage({ params }: PageProps) {
                 { label: displayName },
               ]
         }
+      />
+
+      <ChooseByNeedSection
+        locationName={displayName}
+        paths={[
+          {
+            title: "Balcony / family fall risk",
+            summary:
+              "Open railings, side returns and sit-outs used by children or daily seating.",
+            href: isSiloCity
+              ? ROUTES.cityService(locationSlug, "safety-nets")
+              : ROUTES.service("safety-nets"),
+          },
+          {
+            title: "Clear view / invisible grill",
+            summary:
+              "Cable systems when a low-visibility finish matters as much as a continuous barrier.",
+            href: isSiloCity
+              ? ROUTES.cityService(locationSlug, "invisible-grills")
+              : ROUTES.service("invisible-grills"),
+          },
+          {
+            title: "Pigeon and bird entry",
+            summary:
+              "Ledges, ducts and unused balconies where birds roost — start with pigeon-focused nets.",
+            href: ROUTES.service("pigeon-safety-nets"),
+          },
+          {
+            title: "Children or pets",
+            summary:
+              "Mesh aperture and edge coverage planned for reach and how the opening is used day to day.",
+            href: ROUTES.service("children-safety-nets"),
+          },
+          {
+            title: "Sports / cricket practice",
+            summary:
+              "Practice cages and boundary nets sized to the plot — not balcony mesh reused outdoors.",
+            href: isSiloCity
+              ? ROUTES.cityService(locationSlug, "sports-nets")
+              : ROUTES.service("sports-nets"),
+          },
+          {
+            title: "Cloth drying hangers",
+            summary:
+              "Ceiling or wall hangers that must share space with nets, grills and outdoor units.",
+            href: isSiloCity
+              ? ROUTES.cityService(locationSlug, "cloth-drying-hangers")
+              : ROUTES.service("cloth-drying-hangers"),
+          },
+        ]}
       />
 
       <MaterialsSection

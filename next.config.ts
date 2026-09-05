@@ -43,8 +43,9 @@ const nextConfig: NextConfig = {
 
   /**
    * Serve `/sitemaps/{name}.xml` through the App Router handler at
-   * `/sitemaps/{name}` so Google gets XML even if the network proxy is stale.
-   * Slash variants rewrite internally — no redirect chain for Googlebot.
+   * `/sitemaps/{name}/` (trailingSlash:true). Destinations MUST include the
+   * trailing slash — rewriting to a slash-less path causes a public 308 and
+   * Search Console rejects the sitemap children.
    */
   async rewrites() {
     return [
@@ -54,11 +55,11 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/sitemaps/:name.xml/",
-        destination: "/sitemaps/:name",
+        destination: "/sitemaps/:name/",
       },
       {
         source: "/sitemaps/:name.xml",
-        destination: "/sitemaps/:name",
+        destination: "/sitemaps/:name/",
       },
     ];
   },

@@ -131,7 +131,7 @@ export function buildKeywordSitemapIndexXml(): string {
   const body = names
     .map((name) => {
       return `  <sitemap>
-    <loc>${buildFileUrl(`/sitemaps/${name}.xml`)}</loc>
+    <loc>${buildCanonicalUrl(`/sitemaps/${name}/`)}</loc>
     <lastmod>${now}</lastmod>
   </sitemap>`;
     })
