@@ -99,6 +99,21 @@ function coverageSentence(locationName: string): string {
   return `We provide installation services across ${locationName} subject to site accessibility, measurements, technician availability and project requirements.`;
 }
 
+function rotateFaqsByPlace(
+  placeName: string,
+  faqs: Array<{ question: string; answer: string }>,
+  limit = 10,
+): Array<{ question: string; answer: string }> {
+  if (faqs.length === 0) return faqs;
+  let hash = 0;
+  const seed = placeName.toLowerCase();
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  const offset = hash % faqs.length;
+  return [...faqs.slice(offset), ...faqs.slice(0, offset)].slice(0, limit);
+}
+
 function serviceLabel(serviceSlug: string, serviceName: string): string {
   switch (serviceSlug) {
     case "invisible-grills":
@@ -200,7 +215,7 @@ export function buildLocationPageContent(input: {
       "Any custom frame, gate, pulley or heavy-duty sports support requirement",
     ],
 
-    faqs: [
+    faqs: rotateFaqsByPlace(name, [
       {
         question: `Do you provide installation services in ${name}?`,
         answer: coverageSentence(name),
@@ -273,7 +288,7 @@ export function buildLocationPageContent(input: {
         question: `How should Andhra Pradesh weather affect material choice in ${name}?`,
         answer: `Strong sun, seasonal rain, dust and coastal salt (where relevant) affect nets, cables and fasteners. Ask for outdoor-appropriate specifications and simple maintenance checks after heavy weather—especially on exposed balconies and terraces in ${name}.`,
       },
-    ],
+    ]),
     encyclopedia: getLocationHubEncyclopedia(name),
   };
 }

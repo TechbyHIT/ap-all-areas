@@ -11,9 +11,9 @@ import {
 export const SEO_CONFIG = {
   titleSuffix: "| Hiranya Enterprises",
   defaultTitle:
-    "Invisible Grills, Safety Nets & Pigeon Nets in Andhra Pradesh | Hiranya Enterprises",
+    "Invisible Grills & Safety Nets in Andhra Pradesh | Free Photo Estimate",
   defaultDescription:
-    "Compare balcony safety nets, pigeon nets and invisible grills across Andhra Pradesh. Send a photo for a measured local estimate—Visakhapatnam, Vijayawada and nearby cities.",
+    "Balcony safety nets, invisible grills & pigeon nets across Andhra Pradesh — free photo estimate, measured quote. Visakhapatnam, Vijayawada, Guntur, Tirupati & more.",
 
   /**
    * Minimum unique words for indexability gates.

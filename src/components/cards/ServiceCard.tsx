@@ -37,10 +37,11 @@ export function ServiceCard({
       <div className="relative aspect-[16/10] bg-zinc-100">
         <Image
           src={image}
-          alt={name}
+          alt={`${name} installation example`}
           fill
           className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          loading="lazy"
         />
       </div>
 

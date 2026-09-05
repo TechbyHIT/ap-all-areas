@@ -5,6 +5,9 @@ import { getServiceMedia } from "@/config/design";
 import { ROUTES } from "@/config/routes";
 import { LocationHero } from "@/components/sections/LocationHero";
 import { ChooseByNeedSection } from "@/components/sections/ChooseByNeedSection";
+import { TrustStrip } from "@/components/sections/TrustStrip";
+import { RecentCityInstalls } from "@/components/sections/RecentCityInstalls";
+import { ReviewsSection } from "@/components/sections/ReviewsSection";
 import { ServiceCards } from "@/components/sections/ServiceCards";
 import { AreaCards } from "@/components/sections/AreaCards";
 import { AreaServicesMatrix } from "@/components/sections/AreaServicesMatrix";
@@ -42,13 +45,15 @@ import {
 import { STATE_NAME, STATE_SLUG } from "@/config/geo";
 import { SEO_CONFIG } from "@/config/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbSchema } from "@/lib/schema";
+import { breadcrumbSchema, serviceSchema } from "@/lib/schema";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { canonicalCitySlug } from "@/lib/routing/location-silo";
 import { generatePageMetadata, generateTitle } from "@/lib/seo/generate-page-metadata";
 import { moneyPageIndexability } from "@/lib/seo/page-indexability";
 import { buildPageMediaBundle } from "@/lib/visual/page-media";
 import { getPageVisualStrategy } from "@/lib/visual/page-composition";
+import { pickPageImage } from "@/lib/visual/page-image-pick";
+import { buildMetaDescription } from "@/lib/seo/title-meta-system";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -78,7 +83,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return generatePageMetadata({
     title,
-    metaDescription: `Invisible grills, safety nets, sports nets and cloth drying hanger installation service available in ${location.name}, Andhra Pradesh. Coverage subject to site confirmation — not a claimed local branch.`,
+    metaDescription: buildMetaDescription({
+      location: location.name,
+      differentiator:
+        "Invisible grills, balcony safety nets, pigeon nets and cloth hangers planned after site measurement",
+      cta: "Free photo estimate · measured quote",
+    }),
     canonicalUrl: buildCanonicalUrl(canonicalPath),
     ...(moneyPageIndexability("city")),
   });
@@ -153,10 +163,24 @@ export default async function LocationDetailPage({ params }: PageProps) {
     serviceSlug: "safety-nets",
     h1: heroTitle,
   });
+  const heroPick = pickPageImage({
+    pageKey: `city:${locationSlug}`,
+    serviceSlug: "safety-nets",
+    citySlug: locationSlug,
+    cityName: displayName,
+  });
 
   return (
     <>
       <FaqJsonLd faqs={content.faqs} />
+      <JsonLd
+        data={serviceSchema({
+          name: `Safety net & grill installation in ${displayName}`,
+          description: `Measured installation of balcony safety nets, invisible grills, pigeon nets, sports nets and cloth hangers in ${displayName}, Andhra Pradesh.`,
+          url: cityCanonical,
+          areaServed: `${displayName}, Andhra Pradesh, India`,
+        })}
+      />
       {isSiloCity ? (
         <JsonLd
           data={breadcrumbSchema([
@@ -173,15 +197,20 @@ export default async function LocationDetailPage({ params }: PageProps) {
         title={heroTitle}
         description={
           profile
-            ? `${profile.climateLead} Installation support in ${displayName} is confirmed after site review — this page is not a local branch claim.`
-            : `Installation service is available in ${displayName}, Andhra Pradesh. We confirm coverage for each enquiry after a site review — this page does not represent a local branch office.`
+            ? `${profile.climateLead} Send opening photos for a free estimate in ${displayName} — we confirm access after site review.`
+            : `Send opening photos for a free estimate in ${displayName}, Andhra Pradesh. We confirm coverage after a site review.`
         }
         composition={visual.hero as "city-context"}
         image={{
-          src: mediaBundle.heroImage.src,
-          alt: mediaBundle.heroImage.alt,
+          src: heroPick.src,
+          alt: heroPick.alt,
         }}
         gallery={mediaBundle.galleryImages}
+        trustLine={
+          heroPick.isLocallyVerified
+            ? "Verified local installation photo"
+            : "Representative installation · city confirmed after site review"
+        }
         breadcrumbItems={
           isSiloCity
             ? [
@@ -197,6 +226,8 @@ export default async function LocationDetailPage({ params }: PageProps) {
               ]
         }
       />
+
+      <TrustStrip contextLabel={displayName} />
 
       <ChooseByNeedSection
         locationName={displayName}
@@ -276,7 +307,16 @@ export default async function LocationDetailPage({ params }: PageProps) {
         title={`Services Available in ${displayName}`}
         description="Each service link leads to a location-specific page. Availability is confirmed after reviewing your address and site access."
         services={services}
+        pageKey={`city:${locationSlug}`}
         variant="muted"
+      />
+
+      <RecentCityInstalls citySlug={locationSlug} cityName={displayName} />
+
+      <ReviewsSection
+        citySlug={locationSlug}
+        title={`Reviews for ${displayName} installations`}
+        description="Verified customer reviews for this city appear here when authorized — we never fabricate local ratings."
       />
 
       <Section>

@@ -1,5 +1,7 @@
 /**
  * §78–81 Title, meta description, heading hierarchy, readability.
+ * Benefit-first titles/descriptions — coverage honesty belongs in body copy,
+ * not as the first words of a SERP snippet.
  */
 
 import { BUSINESS_CONFIG } from "@/config/business";
@@ -13,6 +15,15 @@ export type TitleIntent =
   | "project"
   | "default";
 
+const DEFAULT_CTA = "Free photo estimate · measured quote";
+
+function clampTitle(title: string, max = 60): string {
+  if (title.length <= max) return title;
+  const cut = title.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trim()}…`;
+}
+
 export function buildIntentTitle(input: {
   intent: TitleIntent;
   primary: string;
@@ -24,43 +35,67 @@ export function buildIntentTitle(input: {
 
   switch (input.intent) {
     case "service":
-      return `${input.primary} | Installation & Service Guide`;
+      return clampTitle(`${input.primary} | Free Photo Estimate`);
     case "local":
-      return input.city
-        ? `${input.primary} in ${input.city} | ${brand}`
-        : `${input.primary} | Service Coverage`;
+      return clampTitle(
+        input.city
+          ? `${input.primary} in ${input.city} | ${brand}`
+          : `${input.primary} | ${brand}`,
+      );
     case "locality":
-      return input.locality && input.city
-        ? `${input.primary} in ${input.locality}, ${input.city}`
-        : input.primary;
+      return clampTitle(
+        input.locality && input.city
+          ? `${input.primary} in ${input.locality}, ${input.city}`
+          : input.primary,
+      );
     case "guide":
-      return `${input.primary} | ${brand} Guide`;
+      return clampTitle(`${input.primary} | ${brand} Guide`);
     case "comparison":
-      return `${input.primary} | Which Option Fits?`;
+      return clampTitle(`${input.primary} | Which Fits?`);
     case "project":
-      return `${input.primary} | Installation Photo`;
+      return clampTitle(`${input.primary} | Project Photo`);
     default:
-      return input.primary;
+      return clampTitle(input.primary);
   }
 }
 
+/**
+ * Benefit → place/service → soft CTA. Do not lead with coverage disclaimers.
+ */
 export function buildMetaDescription(input: {
   service?: string;
   location?: string;
-  differentiator: string;
+  differentiator?: string;
   cta?: string;
 }): string {
+  const cta = (input.cta ?? DEFAULT_CTA).replace(/\.$/, "");
   const parts: string[] = [];
+
   if (input.service && input.location) {
-    parts.push(`${input.service} in ${input.location}.`);
+    parts.push(
+      `${input.service} in ${input.location} — ${cta}.`,
+    );
   } else if (input.service) {
-    parts.push(`${input.service} installation across Andhra Pradesh.`);
+    parts.push(
+      `${input.service} across Andhra Pradesh — ${cta}.`,
+    );
   } else if (input.location) {
-    parts.push(`Installation support in ${input.location}, Andhra Pradesh.`);
+    parts.push(
+      `Safety nets & invisible grills in ${input.location} — ${cta}.`,
+    );
+  } else {
+    parts.push(`Safety nets & invisible grills in Andhra Pradesh — ${cta}.`);
   }
-  parts.push(input.differentiator.replace(/\.$/, "") + ".");
-  if (input.cta) parts.push(input.cta.replace(/\.$/, "") + ".");
-  return parts.join(" ").slice(0, 160);
+
+  if (input.differentiator) {
+    const diff = input.differentiator
+      .replace(/we do not claim a (local )?branch[^.]*\./gi, "")
+      .replace(/not a (claimed )?local branch[^.]*\./gi, "")
+      .trim();
+    if (diff) parts.push(diff.replace(/\.$/, "") + ".");
+  }
+
+  return parts.join(" ").replace(/\s+/g, " ").trim().slice(0, 160);
 }
 
 export type HeadingNode = {

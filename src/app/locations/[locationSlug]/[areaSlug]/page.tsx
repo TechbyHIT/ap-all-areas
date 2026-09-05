@@ -30,6 +30,11 @@ import { shouldGeneratePage } from "@/lib/seo/page-decision";
 import { moneyPageIndexability } from "@/lib/seo/page-indexability";
 import { buildPageMediaBundle } from "@/lib/visual/page-media";
 import { getPageVisualStrategy } from "@/lib/visual/page-composition";
+import { buildMetaDescription } from "@/lib/seo/title-meta-system";
+import { pickPageImage } from "@/lib/visual/page-image-pick";
+import { serviceSchema } from "@/lib/schema";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { TrustStrip } from "@/components/sections/TrustStrip";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -63,7 +68,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return generatePageMetadata({
     title: `${area.name}, ${city.name} — Installation Service Coverage`,
-    metaDescription: `Safety and utility installation service available in ${area.name}, ${city.name}, Andhra Pradesh. Invisible grills, safety nets, sports nets and cloth drying hangers — coverage subject to site confirmation.`,
+    metaDescription: buildMetaDescription({
+      location: `${area.name}, ${city.name}`,
+      differentiator:
+        "Invisible grills, safety nets and cloth hangers planned after site measurement",
+      cta: "Free photo estimate · measured quote",
+    }),
     canonicalUrl: buildCanonicalUrl(ROUTES.area(locationSlug, areaSlug)),
     ...moneyPageIndexability("locality"),
   });
@@ -104,6 +114,14 @@ export default async function AreaDetailPage({ params }: PageProps) {
     serviceSlug: "invisible-grills",
     h1: heroTitle,
   });
+  const heroPick = pickPageImage({
+    pageKey: `area:${locationSlug}:${areaSlug}`,
+    serviceSlug: "invisible-grills",
+    citySlug: locationSlug,
+    localitySlug: areaSlug,
+    cityName: city.name,
+    localityName: area.name,
+  });
   const services = INITIAL_SERVICES.map((service) => {
     const media = getServiceMedia(service.slug);
     return {
@@ -117,20 +135,35 @@ export default async function AreaDetailPage({ params }: PageProps) {
     };
   });
 
+  const pageUrl = buildCanonicalUrl(ROUTES.area(locationSlug, areaSlug));
+
   return (
     <>
       <FaqJsonLd faqs={content.faqs} />
+      <JsonLd
+        data={serviceSchema({
+          name: `Safety net services in ${area.name}, ${city.name}`,
+          description: `Measured balcony safety nets, invisible grills and related installations for ${area.name}, ${city.name}.`,
+          url: pageUrl,
+          areaServed: `${area.name}, ${city.name}, Andhra Pradesh, India`,
+        })}
+      />
 
       <LocationHero
         badge={city.name}
         title={heroTitle}
-        description={`Installation service is available in ${area.name}, ${city.name}. We confirm address-level coverage after a site review — not via a claimed local branch.`}
+        description={`Send opening photos for a free estimate in ${area.name}, ${city.name}. We confirm address-level access after a site review.`}
         composition={visual.hero as "locality-orient"}
         image={{
-          src: mediaBundle.heroImage.src,
-          alt: mediaBundle.heroImage.alt,
+          src: heroPick.src,
+          alt: heroPick.alt,
         }}
         gallery={mediaBundle.galleryImages}
+        trustLine={
+          heroPick.isLocallyVerified
+            ? `Verified photo · ${area.name}`
+            : "Representative installation · locality confirmed after site review"
+        }
         breadcrumbItems={[
           { label: "Home", href: "/" },
           { label: "Locations", href: ROUTES.locations },
@@ -140,6 +173,8 @@ export default async function AreaDetailPage({ params }: PageProps) {
         ]}
         className="[&>div]:py-8 md:[&>div]:py-10"
       />
+
+      <TrustStrip contextLabel={`${area.name}, ${city.name}`} />
 
       <MaterialsSection
         title={`Service Coverage in ${area.name}`}
@@ -160,6 +195,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
         title={`Services Available in ${area.name}`}
         description={`${city.name} area coverage — subject to building access and site confirmation`}
         services={services}
+        pageKey={`area:${locationSlug}:${areaSlug}`}
         variant="muted"
       />
 

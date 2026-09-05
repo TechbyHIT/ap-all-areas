@@ -7,5 +7,7 @@ export function FaqJsonLd({
   faqs: Array<{ question: string; answer: string }>;
 }) {
   if (faqs.length === 0) return null;
-  return <JsonLd data={faqSchema(faqs)} />;
+  const data = faqSchema(faqs);
+  if (!data) return null;
+  return <JsonLd data={data} />;
 }

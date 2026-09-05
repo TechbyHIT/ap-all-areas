@@ -48,7 +48,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Invisible Grills",
     href: ROUTES.service("invisible-grills"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/installations/invisible-grill-day-city.jpg",
+    image: "/images/projects/installations/invisible-grill-day-city.webp",
     alt: "Stainless steel invisible grill on apartment balcony",
     summary:
       "Stainless-steel cable systems that protect openings while keeping daylight and a clearer outward view.",
@@ -59,7 +59,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Balcony Safety Nets",
     href: ROUTES.service("safety-nets"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/balcony-safety-nets-12.jpg",
+    image: "/images/projects/balcony-safety-nets-12.webp",
     alt: "Balcony safety net installation on residential balcony",
     summary:
       "Mesh systems fitted across balcony openings to reduce fall risk for family use while keeping the space usable.",
@@ -70,7 +70,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Pigeon Safety Nets",
     href: ROUTES.solution("pigeon-infestation"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/pet-safety-nets-1.jpg",
+    image: "/images/projects/pet-safety-nets-1.webp",
     alt: "Balcony bird protection net keeping pigeons outside",
     summary:
       "Full-opening nets that close bird-entry paths on balconies, AC ledges and ducts.",
@@ -80,7 +80,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Children Safety Nets",
     href: ROUTES.solution("child-balcony-safety"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/children-safety-nets-1.jpg",
+    image: "/images/projects/children-safety-nets-1.webp",
     alt: "Children safety net installation on residential balcony",
     summary:
       "Closer-spaced mesh planned where toddlers use balconies or window openings—alongside adult supervision.",
@@ -90,7 +90,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Pet Safety Nets",
     href: ROUTES.solution("pet-balcony-safety"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/installations/night-balcony-safety-net.jpg",
+    image: "/images/projects/installations/night-balcony-safety-net.webp",
     alt: "Balcony safety net for pet and family openings",
     summary:
       "Climb-aware layouts for cats and small dogs on utility and living balconies.",
@@ -100,7 +100,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Sports Nets",
     href: ROUTES.service("sports-nets"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/installations/facade-balcony-safety-nets.jpg",
+    image: "/images/projects/installations/facade-balcony-safety-nets.webp",
     alt: "Outdoor sports net enclosure for cricket practice",
     summary:
       "Practice enclosures and ball-stop nets for terraces, coaching spaces and schools.",
@@ -110,7 +110,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Duct Area Safety Nets",
     href: ROUTES.service("safety-nets"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/duct-area-nets-1.jpg",
+    image: "/images/projects/duct-area-nets-1.webp",
     alt: "Duct and courtyard safety net installation",
     summary:
       "Shaft and duct coverings that block bird nesting while respecting service access.",
@@ -120,7 +120,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
     name: "Cloth Drying Hangers",
     href: ROUTES.service("cloth-drying-hangers"),
     quoteHref: ROUTES.contact,
-    image: "/images/projects/installations/green-facade-netting-street.jpg",
+    image: "/images/projects/installations/green-facade-netting-street.webp",
     alt: "Ceiling-mounted cloth drying hanger on balcony",
     summary:
       "Ceiling and balcony drying systems that free railing space in compact apartments.",

@@ -43,6 +43,7 @@
     "seo:test-set": "tsx scripts/seo-test-set.ts",
     "images:optimize": "tsx scripts/optimize-images.ts",
     "images:validate": "tsx scripts/validate-images.ts",
+    "seo:thin-content": "tsx scripts/thin-content-report.ts",
     "placeholders:audit": "tsx scripts/placeholder-audit.ts",
     "postinstall": "prisma generate"
   },

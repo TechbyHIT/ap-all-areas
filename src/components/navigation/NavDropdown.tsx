@@ -126,18 +126,20 @@ export function NavDropdown({ label, href, items }: NavDropdownProps) {
             : "pointer-events-none invisible opacity-0"
         }`}
       >
-        <ul className="rounded-xl border border-zinc-200 bg-white py-2 shadow-lg">
-          {items.map((item, index) => {
+        <ul className="max-h-[70vh] overflow-y-auto rounded-xl border border-zinc-200 bg-white py-2 shadow-lg">
+          {/* Mount menu items only when open — avoids shipping every area link into the DOM on every page load */}
+          {isOpen
+            ? items.map((item, index) => {
             const isViewAll = item.label.startsWith("View All");
             return (
               <li key={item.href + item.label} role="none">
                 <Link
                   href={item.href}
                   role="menuitem"
-                  className={`block px-4 py-2.5 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--primary-600)] ${
+                  className={`block min-h-11 px-4 py-2.5 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--primary-600)] ${
                     isViewAll
-                      ? "mt-1 border-t border-zinc-100 font-semibold text-[var(--primary-700)] hover:bg-teal-50"
-                      : "text-zinc-700 hover:bg-teal-50 hover:text-[var(--primary-700)]"
+                      ? "mt-1 border-t border-zinc-100 font-semibold text-[var(--primary-700)] hover:bg-[var(--accent-50)]"
+                      : "text-zinc-700 hover:bg-[var(--accent-50)] hover:text-[var(--primary-700)]"
                   }`}
                   onKeyDown={(event) => {
                     const menu = document.getElementById(menuId);
@@ -166,7 +168,8 @@ export function NavDropdown({ label, href, items }: NavDropdownProps) {
                 </Link>
               </li>
             );
-          })}
+          })
+            : null}
         </ul>
       </div>
     </div>

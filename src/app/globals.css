@@ -24,6 +24,7 @@
   --color-gold: var(--gold);
   --color-whatsapp: var(--whatsapp);
   --font-sans: var(--font-body);
+  --font-display: var(--font-display-face);
   --font-mono: var(--font-geist-mono);
 }
 

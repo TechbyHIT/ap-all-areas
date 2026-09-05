@@ -6,7 +6,6 @@ import { HomeGallery } from "@/components/home/HomeGallery";
 import { HomeHeroPremium } from "@/components/home/HomeHeroPremium";
 import { HomeLocations } from "@/components/home/HomeLocations";
 import { HomeMaterials } from "@/components/home/HomeMaterials";
-import { HomePhotoRotation } from "@/components/home/HomePhotoRotation";
 import { HomePricing } from "@/components/home/HomePricing";
 import { HomeProcess } from "@/components/home/HomeProcess";
 import { HomeReviews } from "@/components/home/HomeReviews";
@@ -39,9 +38,9 @@ const SUB_SERVICE_DIRECTORY = INITIAL_SERVICES.map((service) => ({
 
 export const metadata: Metadata = generatePageMetadata({
   title:
-    "Invisible Grills & Balcony Safety Nets in Andhra Pradesh | Hiranya Enterprises",
+    "Invisible Grills & Safety Nets in Andhra Pradesh | Free Photo Estimate",
   metaDescription:
-    "Balcony safety nets, invisible grills, pigeon nets, sports nets and cloth hangers across Visakhapatnam, Vijayawada, Guntur, Tirupati, Rajahmundry, Kakinada, Nellore, Kurnool and Anantapur. Photo estimate · measured quote.",
+    "Balcony safety nets, invisible grills & pigeon nets across Andhra Pradesh — free photo estimate, measured quote. Visakhapatnam, Vijayawada, Guntur, Tirupati & more.",
   canonicalUrl: buildCanonicalUrl("/"),
   ...staticPageIndexability(true),
 });
@@ -55,7 +54,6 @@ export default function HomePage() {
       <HomeServicesBento />
       <HomeAllServices />
       <HomeSeoIntro />
-      <HomePhotoRotation />
       <HomeWhyChoose />
       <HomeMaterials />
       <HomeProcess />

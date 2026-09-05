@@ -4,6 +4,8 @@ import { ServiceCard } from "@/components/cards/ServiceCard";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { pickDistinctServiceCardImages } from "@/lib/visual/page-image-pick";
+import { preferWebpPath } from "@/lib/visual/visual-quality";
 
 export type ServiceCardsItem = {
   name: string;
@@ -22,6 +24,7 @@ type ServiceCardsProps = {
   eyebrow?: string;
   variant?: "default" | "muted" | "brand";
   className?: string;
+  pageKey?: string;
 };
 
 export function ServiceCards({
@@ -31,8 +34,14 @@ export function ServiceCards({
   eyebrow,
   variant = "default",
   className = "",
+  pageKey = "services",
 }: ServiceCardsProps) {
   if (services.length === 0) return null;
+
+  const distinct = pickDistinctServiceCardImages(
+    pageKey,
+    services.map((s) => s.slug),
+  );
 
   return (
     <Section variant={variant} className={className}>
@@ -45,6 +54,9 @@ export function ServiceCards({
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
           {services.map((service) => {
             const media = SERVICE_MEDIA[service.slug];
+            const picked = distinct[service.slug];
+            const image =
+              service.image ?? picked?.src ?? media?.image ?? HERO_FALLBACK;
             return (
               <ServiceCard
                 key={service.slug}
@@ -52,7 +64,7 @@ export function ServiceCards({
                 slug={service.slug}
                 summary={service.summary}
                 benefits={service.benefits}
-                image={service.image ?? media?.image ?? HERO_FALLBACK}
+                image={preferWebpPath(image)}
                 href={service.href ?? ROUTES.service(service.slug)}
                 quoteHref={service.quoteHref}
               />

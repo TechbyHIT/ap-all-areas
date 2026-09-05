@@ -1,63 +1,58 @@
-/**
- * Hiranya Enterprises — Enterprise design tokens
- * Theme: Sapphire Blue + Graphite + Champagne Gold
- * Components consume semantic tokens only.
+﻿/**
+ * Hiranya Enterprises — premium home-safety tokens
+ * Charcoal / navy anchor · off-white page · amber CTA accent (sparing)
  */
 
 :root {
   color-scheme: light;
 
-  /* —— Primary Blue (enterprise) —— */
-  --primary-50: #eef4ff;
-  --primary-100: #dbe7ff;
-  --primary-200: #bfd3ff;
-  --primary-300: #93b4ff;
-  --primary-400: #608bff;
-  --primary-500: #3b6ef6;
-  --primary-600: #1d4ed8;
-  --primary-700: #1e40af;
-  --primary-800: #1e3a8a;
-  --primary-900: #1e3a6e;
-  --primary-950: #0f172a;
+  --primary-50: #f2f5f8;
+  --primary-100: #e2e8ef;
+  --primary-200: #c5d0dc;
+  --primary-300: #9aadc0;
+  --primary-400: #6b849c;
+  --primary-500: #4a647c;
+  --primary-600: #334a60;
+  --primary-700: #253848;
+  --primary-800: #1a2a38;
+  --primary-900: #121e29;
+  --primary-950: #0b141c;
 
-  /* —— Dark Navy —— */
-  --secondary-50: #f8fafc;
-  --secondary-100: #f1f5f9;
-  --secondary-200: #e2e8f0;
-  --secondary-300: #cbd5e1;
-  --secondary-400: #94a3b8;
-  --secondary-500: #64748b;
-  --secondary-600: #475569;
-  --secondary-700: #334155;
-  --secondary-800: #1e293b;
-  --secondary-900: #0f172a;
-  --secondary-950: #0b1220;
+  --secondary-50: #f4f6f8;
+  --secondary-100: #e8ecf1;
+  --secondary-200: #d0d8e2;
+  --secondary-300: #a9b7c8;
+  --secondary-400: #7a8fa6;
+  --secondary-500: #5a7189;
+  --secondary-600: #43586e;
+  --secondary-700: #334455;
+  --secondary-800: #243140;
+  --secondary-900: #16202c;
+  --secondary-950: #0c131b;
 
-  /* —— Premium Gold (sparing: badges / highlights) —— */
-  --accent-50: #fbf7ef;
-  --accent-100: #f5ecd6;
-  --accent-200: #ead7a8;
-  --accent-300: #dcbc70;
-  --accent-400: #d4a84b;
-  --accent-500: #c9972b;
-  --accent-600: #a67a1f;
-  --accent-700: #7d561f;
-  --accent-800: #68461f;
-  --accent-900: #583b1e;
-  --accent-950: #321f0d;
+  --accent-50: #fff8eb;
+  --accent-100: #feefc7;
+  --accent-200: #fcd98a;
+  --accent-300: #f9bf4d;
+  --accent-400: #f5a524;
+  --accent-500: #e8890b;
+  --accent-600: #c96a08;
+  --accent-700: #9f4b0b;
+  --accent-800: #823c10;
+  --accent-900: #6b3211;
+  --accent-950: #3e1806;
 
-  /* —— Neutral / Gray —— */
-  --neutral-50: #f8f9fb;
-  --neutral-100: #f1f3f6;
-  --neutral-200: #e3e7ee;
-  --neutral-300: #cdd4df;
-  --neutral-400: #9aa6b8;
-  --neutral-500: #6b788c;
-  --neutral-600: #516074;
-  --neutral-700: #3f4b5c;
-  --neutral-800: #2c3441;
-  --neutral-900: #1a2029;
-  --neutral-950: #0d1117;
+  --neutral-50: #f7f6f3;
+  --neutral-100: #efeee9;
+  --neutral-200: #e2e0d8;
+  --neutral-300: #cbc8bc;
+  --neutral-400: #a39f91;
+  --neutral-500: #7f7a6d;
+  --neutral-600: #645f54;
+  --neutral-700: #4f4b43;
+  --neutral-800: #36332e;
+  --neutral-900: #23211e;
+  --neutral-950: #131210;
 
   --gray-50: var(--neutral-50);
   --gray-100: var(--neutral-100);
@@ -71,49 +66,44 @@
   --gray-900: var(--neutral-900);
   --gray-950: var(--neutral-950);
 
-  /* —— Status —— */
-  --success: #16a34a;
+  --success: #15803d;
   --success-soft: #e8f8ef;
   --warning: #b45309;
   --warning-soft: #fff7ed;
-  --danger: #c02828;
+  --danger: #b91c1c;
   --danger-soft: #fef2f2;
   --info: var(--primary-600);
   --info-soft: var(--primary-50);
-
-  /* —— WhatsApp (conversion accent) —— */
   --whatsapp: #16a34a;
   --whatsapp-dark: #15803d;
   --whatsapp-soft: #edfcf3;
 
-  /* —— Semantic surfaces —— */
-  --color-bg-page: #f8fafc;
-  --color-bg-subtle: #eef4ff;
-  --color-bg-muted: #f1f5f9;
-  --color-surface: #ffffff;
-  --color-surface-raised: #ffffff;
-  --color-surface-overlay: rgb(15 23 42 / 0.5);
-  --color-surface-glass: rgb(255 255 255 / 0.88);
-  --color-card: #ffffff;
-  --color-card-hover: #f8fafc;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #64748b;
-  --color-text-inverse: #f8fafc;
-  --color-border: #dce4ee;
-  --color-border-strong: #cbd5e1;
-  --color-border-interactive: color-mix(in srgb, var(--primary-500) 45%, var(--neutral-300));
+  --color-bg-page: #f5f3ef;
+  --color-bg-subtle: #ebe8e1;
+  --color-bg-muted: #efede8;
+  --color-surface: #faf9f6;
+  --color-surface-raised: #fffcf7;
+  --color-surface-overlay: rgb(12 19 27 / 0.55);
+  --color-surface-glass: rgb(250 249 246 / 0.9);
+  --color-card: #fffcf7;
+  --color-card-hover: #f5f3ef;
+  --color-text-primary: #121e29;
+  --color-text-secondary: #43586e;
+  --color-text-muted: #5a7189;
+  --color-text-inverse: #f5f3ef;
+  --color-border: #ddd8ce;
+  --color-border-strong: #cbc8bc;
+  --color-border-interactive: color-mix(in srgb, var(--primary-500) 40%, var(--neutral-300));
   --color-link: var(--primary-700);
   --color-link-hover: var(--primary-800);
-  --color-focus: var(--primary-500);
-  --color-selection: color-mix(in srgb, var(--primary-400) 32%, white);
+  --color-focus: var(--accent-500);
+  --color-selection: color-mix(in srgb, var(--accent-300) 35%, white);
   --color-disabled: var(--neutral-300);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-info: var(--info);
 
-  /* Legacy aliases (existing components) */
   --background: var(--color-bg-page);
   --foreground: var(--color-text-primary);
   --muted: var(--color-bg-muted);
@@ -122,7 +112,7 @@
   --surface-elevated: var(--color-surface-raised);
   --overlay: var(--color-surface-overlay);
   --glass: var(--color-surface-glass);
-  --glass-border: rgb(255 255 255 / 0.55);
+  --glass-border: rgb(255 252 247 / 0.55);
   --card: var(--color-card);
   --card-muted: var(--color-bg-subtle);
   --border: var(--color-border);
@@ -133,15 +123,14 @@
   --disabled: var(--color-disabled);
   --disabled-foreground: var(--neutral-500);
 
-  --brand: var(--primary-600);
-  --brand-dark: var(--primary-700);
+  --brand: var(--primary-700);
+  --brand-dark: var(--primary-800);
   --brand-soft: var(--primary-50);
   --gold: var(--accent-500);
   --gold-dark: var(--accent-600);
-  --accent-foreground: #ffffff;
+  --accent-foreground: #1a1208;
   --accent-dark: var(--accent-600);
 
-  /* —— Spacing —— */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -159,7 +148,6 @@
   --space-48: 12rem;
   --space-64: 16rem;
 
-  /* —— Radius —— */
   --radius-xs: 0.25rem;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -170,25 +158,23 @@
   --radius-full: 9999px;
   --radius: var(--radius-lg);
 
-  /* —— Elevation —— */
-  --shadow-soft: 0 1px 2px rgb(16 33 73 / 0.04);
-  --shadow-medium: 0 6px 20px rgb(16 33 73 / 0.07);
-  --shadow-large: 0 16px 40px rgb(16 33 73 / 0.1);
-  --shadow-card: 0 1px 2px rgb(16 33 73 / 0.04), 0 0 0 1px rgb(16 33 73 / 0.02);
-  --shadow-interactive: 0 4px 14px rgb(26 86 216 / 0.22);
-  --shadow-floating: 0 18px 48px rgb(16 33 73 / 0.14);
-  --shadow-dropdown: 0 12px 32px rgb(16 33 73 / 0.12);
-  --shadow-mega: 0 20px 50px rgb(16 33 73 / 0.14);
-  --shadow-header: 0 1px 0 rgb(16 33 73 / 0.06);
-  --shadow-modal: 0 28px 70px rgb(16 33 73 / 0.2);
-  --shadow-glass: 0 10px 30px rgb(16 33 73 / 0.06);
-  --shadow-glow: 0 0 0 4px rgb(47 116 240 / 0.16);
-  --shadow-focus: 0 0 0 3px rgb(47 116 240 / 0.28);
-  --shadow-inset: inset 0 1px 2px rgb(16 33 73 / 0.06);
+  --shadow-soft: 0 1px 2px rgb(12 19 27 / 0.05);
+  --shadow-medium: 0 6px 20px rgb(12 19 27 / 0.08);
+  --shadow-large: 0 16px 40px rgb(12 19 27 / 0.12);
+  --shadow-card: 0 1px 2px rgb(12 19 27 / 0.04), 0 0 0 1px rgb(12 19 27 / 0.03);
+  --shadow-interactive: 0 4px 14px rgb(201 106 8 / 0.28);
+  --shadow-floating: 0 18px 48px rgb(12 19 27 / 0.16);
+  --shadow-dropdown: 0 12px 32px rgb(12 19 27 / 0.14);
+  --shadow-mega: 0 20px 50px rgb(12 19 27 / 0.16);
+  --shadow-header: 0 1px 0 rgb(12 19 27 / 0.08);
+  --shadow-modal: 0 28px 70px rgb(12 19 27 / 0.22);
+  --shadow-glass: 0 10px 30px rgb(12 19 27 / 0.07);
+  --shadow-glow: 0 0 0 4px rgb(232 137 11 / 0.18);
+  --shadow-focus: 0 0 0 3px rgb(232 137 11 / 0.32);
+  --shadow-inset: inset 0 1px 2px rgb(12 19 27 / 0.06);
 
-  /* —— Typography —— */
   --font-sans: var(--font-body), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-display-face), var(--font-body), sans-serif;
+  --font-display: var(--font-display-face), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --text-micro: clamp(0.6875rem, 0.66rem + 0.12vw, 0.75rem);
@@ -210,7 +196,6 @@
   --tracking-tight: -0.025em;
   --tracking-wide: 0.1em;
 
-  /* —— Layout —— */
   --container-sm: 40rem;
   --container-md: 48rem;
   --container-lg: 64rem;
@@ -227,73 +212,15 @@
   --section-y-immersive: clamp(5rem, 3.5rem + 5vw, 8.5rem);
   --grid-gap: var(--space-6);
 
-  /* —— Motion —— */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --duration-fast: 140ms;
   --duration-base: 220ms;
   --duration-slow: 340ms;
 
-  /* —— Z —— */
   --z-header: 40;
   --z-dropdown: 50;
   --z-fab: 45;
   --z-modal: 60;
   --z-toast: 70;
-}
-
-[data-theme="dark"] {
-  color-scheme: dark;
-
-  --color-bg-page: #0f141c;
-  --color-bg-subtle: #161d28;
-  --color-bg-muted: #1c2433;
-  --color-surface: #161d28;
-  --color-surface-raised: #1f2836;
-  --color-surface-overlay: rgb(0 0 0 / 0.64);
-  --color-surface-glass: rgb(22 29 40 / 0.86);
-  --color-card: #161d28;
-  --color-card-hover: #1f2836;
-  --color-text-primary: #f2f5f9;
-  --color-text-secondary: #a4b0c2;
-  --color-text-muted: #7d8a9e;
-  --color-text-inverse: #0f141c;
-  --color-border: rgb(255 255 255 / 0.1);
-  --color-border-strong: rgb(255 255 255 / 0.16);
-  --color-border-interactive: color-mix(in srgb, var(--primary-400) 40%, transparent);
-  --color-link: var(--primary-300);
-  --color-link-hover: var(--primary-200);
-  --color-focus: var(--primary-400);
-  --color-selection: color-mix(in srgb, var(--primary-500) 45%, black);
-
-  --background: var(--color-bg-page);
-  --foreground: var(--color-text-primary);
-  --muted: var(--color-bg-muted);
-  --muted-foreground: var(--color-text-secondary);
-  --surface: var(--color-surface);
-  --surface-elevated: var(--color-surface-raised);
-  --overlay: var(--color-surface-overlay);
-  --glass: var(--color-surface-glass);
-  --glass-border: rgb(255 255 255 / 0.08);
-  --card: var(--color-card);
-  --card-muted: var(--color-bg-subtle);
-  --border: var(--color-border);
-  --border-strong: var(--color-border-strong);
-  --hover: rgb(255 255 255 / 0.05);
-  --pressed: rgb(255 255 255 / 0.09);
-  --brand-soft: rgb(47 116 240 / 0.14);
-  --focus-ring: var(--color-focus);
-
-  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35);
-  --shadow-medium: 0 8px 24px rgb(0 0 0 / 0.35);
-  --shadow-large: 0 18px 48px rgb(0 0 0 / 0.45);
-  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.04);
-  --shadow-interactive: 0 4px 16px rgb(47 116 240 / 0.28);
-  --shadow-header: 0 1px 0 rgb(255 255 255 / 0.06);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-  }
 }

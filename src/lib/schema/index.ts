@@ -1,4 +1,32 @@
 import { BUSINESS_CONFIG } from "@/config/business";
+import { P0_MONEY_CITY_SLUGS } from "@/data/city-local-profiles";
+import {
+  aggregateRatingFromReviews,
+  listPublishableReviews,
+  type GenuineReview,
+} from "@/data/reviews";
+
+const AP_CITY_LABELS: Record<string, string> = {
+  visakhapatnam: "Visakhapatnam",
+  vijayawada: "Vijayawada",
+  guntur: "Guntur",
+  tirupati: "Tirupati",
+  rajahmundry: "Rajahmundry",
+  kakinada: "Kakinada",
+  nellore: "Nellore",
+  kurnool: "Kurnool",
+  anantapur: "Anantapur",
+  eluru: "Eluru",
+  vizianagaram: "Vizianagaram",
+  srikakulam: "Srikakulam",
+};
+
+function areaServedCities() {
+  return P0_MONEY_CITY_SLUGS.map((slug) => ({
+    "@type": "City" as const,
+    name: AP_CITY_LABELS[slug] ?? slug.replace(/-/g, " "),
+  }));
+}
 
 export function organizationSchema() {
   return {
@@ -9,7 +37,7 @@ export function organizationSchema() {
     logo: `${BUSINESS_CONFIG.websiteUrl}${BUSINESS_CONFIG.logoCircle ?? BUSINESS_CONFIG.logo}`,
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: BUSINESS_CONFIG.phone.display,
+      telephone: `+91${BUSINESS_CONFIG.phone.raw.replace(/\D/g, "")}`,
       contactType: "customer service",
       areaServed: "IN-AP",
       availableLanguage: ["English", "Telugu"],
@@ -46,6 +74,7 @@ export function serviceSchema(input: {
   description: string;
   url: string;
   areaServed?: string;
+  serviceType?: string;
 }) {
   return {
     "@context": "https://schema.org",
@@ -53,15 +82,18 @@ export function serviceSchema(input: {
     name: input.name,
     description: input.description,
     url: input.url,
+    serviceType: input.serviceType ?? input.name,
     provider: {
       "@type": "Organization",
       name: BUSINESS_CONFIG.name,
+      url: BUSINESS_CONFIG.websiteUrl,
     },
     areaServed: input.areaServed ?? "Andhra Pradesh, India",
   };
 }
 
 export function faqSchema(faqs: Array<{ question: string; answer: string }>) {
+  if (faqs.length === 0) return null;
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -168,18 +200,26 @@ export function itemListSchema(input: {
   };
 }
 
+/**
+ * HomeAndConstructionBusiness — NAP + AP service area.
+ * Geo only when verified. AggregateRating only with real reviews.
+ */
 export function localBusinessSchema() {
-  // Require verified coordinates before emitting LocalBusiness geo markup.
-  const hasAddress = BUSINESS_CONFIG.coordinates.latitude !== null;
-
-  if (!hasAddress) return null;
+  const reviews = listPublishableReviews();
+  const aggregate = aggregateRatingFromReviews(reviews);
+  const hasGeo =
+    BUSINESS_CONFIG.coordinates.latitude !== null &&
+    BUSINESS_CONFIG.coordinates.longitude !== null;
 
   return {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": "HomeAndConstructionBusiness",
     name: BUSINESS_CONFIG.name,
     image: `${BUSINESS_CONFIG.websiteUrl}${BUSINESS_CONFIG.logo}`,
-    telephone: BUSINESS_CONFIG.phone.display,
+    url: BUSINESS_CONFIG.websiteUrl,
+    telephone: `+91${BUSINESS_CONFIG.phone.raw.replace(/\D/g, "")}`,
+    email: BUSINESS_CONFIG.email,
+    priceRange: "₹₹",
     address: {
       "@type": "PostalAddress",
       streetAddress: BUSINESS_CONFIG.address.street,
@@ -188,14 +228,64 @@ export function localBusinessSchema() {
       postalCode: BUSINESS_CONFIG.address.postalCode,
       addressCountry: BUSINESS_CONFIG.address.country,
     },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: BUSINESS_CONFIG.coordinates.latitude,
-      longitude: BUSINESS_CONFIG.coordinates.longitude,
+    ...(hasGeo
+      ? {
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: BUSINESS_CONFIG.coordinates.latitude,
+            longitude: BUSINESS_CONFIG.coordinates.longitude,
+          },
+        }
+      : {}),
+    areaServed: [
+      { "@type": "State", name: "Andhra Pradesh" },
+      ...areaServedCities(),
+    ],
+    ...(aggregate
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: aggregate.ratingValue,
+            reviewCount: aggregate.reviewCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
+  };
+}
+
+/** Review JSON-LD — only when approved genuine reviews exist. */
+export function reviewsSchema(reviews?: GenuineReview[]) {
+  const list = reviews ?? listPublishableReviews();
+  const aggregate = aggregateRatingFromReviews(list);
+  if (!aggregate || list.length === 0) return null;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: BUSINESS_CONFIG.name,
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: aggregate.ratingValue,
+      reviewCount: aggregate.reviewCount,
+      bestRating: 5,
+      worstRating: 1,
     },
-    areaServed: {
-      "@type": "State",
-      name: "Andhra Pradesh",
-    },
+    review: list.map((r) => ({
+      "@type": "Review",
+      author: {
+        "@type": "Person",
+        name: r.customerLabel ?? r.reviewerName,
+      },
+      datePublished: r.date,
+      reviewBody: r.reviewText,
+      reviewRating: {
+        "@type": "Rating",
+        ratingValue: r.rating,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    })),
   };
 }

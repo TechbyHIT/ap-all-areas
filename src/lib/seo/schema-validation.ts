@@ -68,12 +68,19 @@ function validateNode(
     issues.push({ path: `${path}.url`, message: "URL must not use localhost in public schema" });
   }
 
-  // Reject fabricated review aggregates without genuine data.
+  // Reject fabricated review aggregates: only allow when reviewCount is a positive number
+  // and ratingValue is in range (genuine data layer must supply these).
   if (node.aggregateRating != null) {
-    issues.push({
-      path: `${path}.aggregateRating`,
-      message: "aggregateRating requires verified genuine reviews — remove if fabricated",
-    });
+    const agg = node.aggregateRating as Record<string, unknown>;
+    const count = Number(agg.reviewCount ?? 0);
+    const value = Number(agg.ratingValue ?? 0);
+    if (!(count > 0 && value >= 1 && value <= 5)) {
+      issues.push({
+        path: `${path}.aggregateRating`,
+        message:
+          "aggregateRating requires verified genuine reviews (reviewCount > 0) — remove if fabricated",
+      });
+    }
   }
 
   for (const [key, value] of Object.entries(node)) {

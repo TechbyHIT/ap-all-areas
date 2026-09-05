@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { IBM_Plex_Sans, Sora, Geist_Mono } from "next/font/google";
+import { Fraunces, Source_Sans_3, Geist_Mono } from "next/font/google";
 import { BUSINESS_CONFIG } from "@/config/business";
 import { SEO_CONFIG } from "@/config/seo";
 import { Footer } from "@/components/layout/Footer";
@@ -12,19 +12,24 @@ import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { BlogTeaser } from "@/components/sections/BlogTeaser";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
-import { organizationSchema, webSiteSchema } from "@/lib/schema";
+import {
+  localBusinessSchema,
+  organizationSchema,
+  reviewsSchema,
+  webSiteSchema,
+} from "@/lib/schema";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
 import { staticPageIndexability } from "@/lib/seo/page-indexability";
 import "./globals.css";
 
-const bodyFont = IBM_Plex_Sans({
+const bodyFont = Source_Sans_3({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const displayFont = Sora({
+const displayFont = Fraunces({
   variable: "--font-display-face",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
@@ -63,6 +68,8 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const reviewLd = reviewsSchema();
+
   return (
     <html
       lang="en-IN"
@@ -70,7 +77,14 @@ export default function RootLayout({
       className={`${bodyFont.variable} ${displayFont.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-[var(--color-bg-page)] font-sans text-[var(--color-text-primary)]">
-        <JsonLd data={[organizationSchema(), webSiteSchema()]} />
+        <JsonLd
+          data={[
+            organizationSchema(),
+            webSiteSchema(),
+            localBusinessSchema(),
+            ...(reviewLd ? [reviewLd] : []),
+          ]}
+        />
         <SkipToContent />
         <ScrollToTop />
         <ScrollProgress />
