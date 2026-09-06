@@ -7,7 +7,7 @@ import { installationPhotosForService } from "@/config/installation-photos";
 import { ROUTES } from "@/config/routes";
 import { Badge } from "@/components/ui/Badge";
 import { Container } from "@/components/ui/Container";
-import { HeroImageScroll } from "@/components/ui/HeroImageScroll";
+import { HeroLcpImage } from "@/components/ui/HeroLcpImage";
 import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/navigation/Breadcrumbs";
 import type { HeroComposition } from "@/lib/visual/page-composition";
@@ -17,9 +17,9 @@ type ServiceHeroProps = {
   title: string;
   description: string;
   image?: { src: string; alt: string };
-  /** Extra full-ratio photos for the scrolling hero panel. */
+  /** API compat — only the first image is used for LCP. */
   gallery?: readonly { src: string; alt: string }[];
-  /** When set, prefers matching installation photos for the scroll strip. */
+  /** When set, prefers a matching installation photo. */
   serviceSlug?: string;
   /** Hide the hero media panel (SEO / content-first landings). */
   showImage?: boolean;
@@ -57,14 +57,17 @@ export function ServiceHero({
 }: ServiceHeroProps) {
   const wa = getWhatsAppLink(whatsappMessage);
 
-  const scrollImages = (() => {
-    if (gallery && gallery.length > 0) return gallery;
-    if (serviceSlug) return installationPhotosForService(serviceSlug);
-    if (image?.src) return [image];
-    return installationPhotosForService("safety-nets");
+  const primary = (() => {
+    if (image?.src) return image;
+    if (gallery && gallery.length > 0) return gallery[0];
+    if (serviceSlug) {
+      const list = installationPhotosForService(serviceSlug);
+      if (list[0]) return list[0];
+    }
+    return installationPhotosForService("safety-nets")[0];
   })();
 
-  const withImage = showImage && scrollImages.length > 0;
+  const withImage = showImage && Boolean(primary?.src);
   const isLocalMoney =
     composition === "service-local-split" ||
     composition === "locality-service-split";
@@ -123,8 +126,8 @@ export function ServiceHero({
             <p className="mt-4 text-sm text-zinc-500">{trustLine}</p>
           </div>
 
-          {withImage ? (
-            <HeroImageScroll images={scrollImages} variant="panel" fit="cover" />
+          {withImage && primary ? (
+            <HeroLcpImage src={primary.src} alt={primary.alt} />
           ) : null}
         </div>
       </Container>

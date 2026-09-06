@@ -65,9 +65,21 @@ export function scoreSeoPage(input: SeoScoreInput): {
 export function uniqueLocalPageScore(options?: {
   hasLocalFacts?: boolean;
   hasCityProfile?: boolean;
+  isCuratedCatalog?: boolean;
 }): ReturnType<typeof scoreSeoPage> {
-  const local = options?.hasLocalFacts || options?.hasCityProfile ? 9 : 5;
-  const original = options?.hasLocalFacts ? 9 : options?.hasCityProfile ? 8 : 4;
+  const local =
+    options?.hasLocalFacts || options?.hasCityProfile
+      ? 9
+      : options?.isCuratedCatalog
+        ? 8
+        : 5;
+  const original = options?.hasLocalFacts
+    ? 9
+    : options?.hasCityProfile
+      ? 8
+      : options?.isCuratedCatalog
+        ? 8
+        : 4;
   return scoreSeoPage({
     searchIntent: 9,
     originality: original,

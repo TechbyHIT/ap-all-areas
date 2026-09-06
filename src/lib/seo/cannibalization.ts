@@ -2,9 +2,9 @@
  * §36 cannibalization checks — before publishing a new money/hub URL.
  */
 
+import { SERVICE_SLUG_REDIRECTS } from "@/config/geo";
 import { getKeywordOwnerPath } from "@/lib/seo/keyword-ownership";
 import { matchKeywordCityConsolidatePath } from "@/lib/routing/pretty-money-urls";
-import { parentServiceSlug } from "@/lib/routing/location-silo";
 
 export type CannibalizationAction =
   | "ok"
@@ -66,18 +66,20 @@ export function checkCannibalization(
     }
   }
 
-  if (input.kind === "city-service" && input.serviceSlug) {
-    const core = parentServiceSlug(input.serviceSlug);
-    if (core && core !== input.serviceSlug) {
+  if (
+    (input.kind === "city-service" || input.kind === "area-service") &&
+    input.serviceSlug
+  ) {
+    // Alias slugs (pigeon-nets, anti-pigeon-nets) share intent with a real
+    // sub-service page, so they consolidate. Genuine sub-services do not:
+    // they describe a different opening and specification from the parent.
+    const canonical = SERVICE_SLUG_REDIRECTS[input.serviceSlug];
+    if (canonical) {
       return {
         risk: "high",
         action: "redirect",
-        reason:
-          "sub-service×city should consolidate to parent service×city owner",
-        ownerPath: path.replace(
-          `/${input.serviceSlug}/`,
-          `/${core}/`,
-        ),
+        reason: "alias service slug consolidates to its canonical variation",
+        ownerPath: path.replace(`/${input.serviceSlug}/`, `/${canonical}/`),
       };
     }
   }

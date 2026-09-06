@@ -42,7 +42,7 @@ export function CoverageSection({
         {links.length > 0 ? (
           <ul className="mt-6 flex flex-wrap gap-3">
             {links.map((link) => (
-              <li key={link.href}>
+              <li key={`${link.label}-${link.href}`}>
                 <Link
                   href={link.href}
                   className="inline-flex min-h-10 items-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-[var(--primary-300)] hover:text-[var(--primary-700)]"

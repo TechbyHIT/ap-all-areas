@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { STATE_SLUG } from "@/config/geo";
 import {
   canonicalCitySlug,
   isAreaMoneyLanding,
-  parentServiceSlug,
+  locationServiceSlug,
+  siloAreaServicePath,
 } from "@/lib/routing/location-silo";
 import AreaServicePage, {
   generateMetadata as generateAreaServiceMetadata,
@@ -29,7 +30,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { citySlug, areaSlug, serviceSlug } = await params;
   const city = canonicalCitySlug(citySlug);
-  const service = parentServiceSlug(serviceSlug);
+  const service = locationServiceSlug(serviceSlug);
   if (!city || !service) return {};
   if (isAreaMoneyLanding(service, city, areaSlug)) {
     return generateLandingMetadata({
@@ -53,8 +54,11 @@ export async function generateMetadata({
 export default async function SiloAreaServicePage({ params }: PageProps) {
   const { citySlug, areaSlug, serviceSlug } = await params;
   const city = canonicalCitySlug(citySlug);
-  const service = parentServiceSlug(serviceSlug);
+  const service = locationServiceSlug(serviceSlug);
   if (!city || !service) notFound();
+  if (service !== serviceSlug) {
+    redirect(siloAreaServicePath(city, areaSlug, service));
+  }
   if (isAreaMoneyLanding(service, city, areaSlug)) {
     return AreaMoneyLandingPage({
       params: Promise.resolve({

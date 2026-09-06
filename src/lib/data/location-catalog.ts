@@ -3,7 +3,14 @@
  * Wraps existing seed data — does not invent cities, areas, or branches.
  */
 
-import { STATE_NAME, STATE_SLUG } from "@/config/geo";
+import {
+  LOCATION_SERVICE_SLUGS,
+  locationServiceSlug,
+  STATE_NAME,
+  STATE_SLUG,
+} from "@/config/geo";
+import { getServiceVariant } from "@/data/service-variants";
+import { SUB_SERVICE_MAP } from "@/data/sub-services";
 import { AREA_LOCAL_FACTS, getAreaLocalFact } from "@/data/area-local-facts";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
 import {
@@ -129,6 +136,69 @@ export function getService(serviceSlug: string): Service | null {
     return INITIAL_SERVICE_MAP[parent];
   }
   return null;
+}
+
+/**
+ * Resolve any service slug that may appear in a location URL to a full
+ * `Service` record.
+ *
+ * Core hubs return their seed record unchanged. Sub-services return the
+ * parent's record with their own identity and, more importantly, their own
+ * openings, safety notes, pricing factors and aftercare — which is what stops
+ * two variations in the same city reading as the same page.
+ */
+export function resolveLocationService(slug: string): Service | null {
+  const canonical = locationServiceSlug(slug);
+  if (!canonical) return null;
+
+  const variant = getServiceVariant(canonical);
+  if (!variant) return null;
+
+  const parent = INITIAL_SERVICE_MAP[variant.parentSlug];
+  if (!parent?.allowIndexing) return null;
+  if (variant.slug === parent.slug) return parent;
+
+  const seeded = parent.subServices.find((sub) => sub.slug === variant.slug);
+  const hub = SUB_SERVICE_MAP[variant.slug];
+
+  return {
+    ...parent,
+    id: `service-${variant.slug}`,
+    slug: variant.slug,
+    name: variant.name,
+    shortName: variant.shortLabel,
+    summary:
+      seeded?.summary ??
+      hub?.summary ??
+      `${variant.name} planned around ${variant.openings.slice(0, 2).join(" and ")}.`,
+    introduction: hub?.intro ?? seeded?.introduction ?? parent.introduction,
+    benefits: seeded?.benefits ?? parent.benefits,
+    features: seeded?.features ?? parent.features,
+    applications: seeded?.applications ?? variant.openings,
+    materials: seeded?.materials ?? parent.materials,
+    customerProblems: seeded?.customerProblems ?? parent.customerProblems,
+    primaryKeywords: seeded?.primaryKeywords ?? parent.primaryKeywords,
+    secondaryKeywords: seeded?.secondaryKeywords ?? parent.secondaryKeywords,
+    suitablePropertyTypes: variant.openings,
+    safetyInformation: [
+      `What this covers: ${variant.solves}.`,
+      `What it does not cover: ${variant.notSolved}`,
+      `Specification turns on ${variant.specFocus}.`,
+    ],
+    maintenanceTips: [
+      `${variant.maintenance.charAt(0).toUpperCase()}${variant.maintenance.slice(1)}`,
+      ...parent.maintenanceTips.slice(0, 2),
+    ],
+    pricingFactors: variant.costDrivers,
+    subServices: [],
+  };
+}
+
+/** Every service that owns a city and area URL, core hubs first. */
+export function listLocationServices(): Service[] {
+  return LOCATION_SERVICE_SLUGS.map((slug) => resolveLocationService(slug)).filter(
+    (service): service is Service => service !== null,
+  );
 }
 
 export function getCityServices(stateSlug: string, citySlug: string): Service[] {

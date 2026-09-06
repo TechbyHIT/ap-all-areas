@@ -13,9 +13,13 @@ import { SERVICE_COMPARISON_SLUGS } from "@/data/comparisons";
 import { INSTALLATION_PHOTOS } from "@/config/installation-photos";
 import { ROUTES } from "@/config/routes";
 import { matchLegacySiloRedirect } from "@/lib/routing/location-silo";
+import { listLocationServices } from "@/lib/data/location-catalog";
 import { STATE_SLUG } from "@/config/geo";
-import { shouldGeneratePage } from "@/lib/seo/page-decision";
+import { getAreaLocalFact } from "@/data/area-local-facts";
+import { shouldGeneratePage, canPublishProgrammaticPage } from "@/lib/seo/page-decision";
+import { SITEMAP_ALL_CURATED_AREA_SERVICES } from "@/config/programmatic-scale";
 import { buildCanonicalUrl, buildFileUrl } from "@/lib/routing/paths";
+import { listKeywordSitemapFileNames } from "@/lib/seo/sitemap-scale";
 
 /** Keep each sitemap file under Search Console / config limits. */
 export const SITEMAP_CHUNK_SIZE = Math.min(
@@ -256,8 +260,7 @@ function buildAreaEntries(): SitemapRegistryEntry[] {
 function buildCityServiceEntries(): SitemapRegistryEntry[] {
   const entries: SitemapRegistryEntry[] = [];
   for (const city of siloCities()) {
-    for (const service of INITIAL_SERVICES) {
-      if (!service.allowIndexing) continue;
+    for (const service of listLocationServices()) {
       if (
         !shouldGeneratePage({
           kind: "city-service",
@@ -282,8 +285,18 @@ function buildAreaServiceEntries(): SitemapRegistryEntry[] {
   const entries: SitemapRegistryEntry[] = [];
   for (const city of siloCities()) {
     for (const area of city.areas) {
-      for (const service of INITIAL_SERVICES) {
-        if (!service.allowIndexing) continue;
+      const areaFact = getAreaLocalFact(city.citySlug, area.slug);
+      // Full curated area × service grid is the P0 money set, and "service"
+      // now means every variation, not only the four core hubs.
+      // Unique local facts improve copy; they are not a sitemap filter.
+      if (!SITEMAP_ALL_CURATED_AREA_SERVICES && !areaFact) continue;
+
+      for (const service of listLocationServices()) {
+        const candidatePath = ROUTES.areaService(
+          city.citySlug,
+          area.slug,
+          service.slug,
+        );
         if (
           !shouldGeneratePage({
             kind: "area-service",
@@ -295,13 +308,23 @@ function buildAreaServiceEntries(): SitemapRegistryEntry[] {
         ) {
           continue;
         }
-        entries.push(
-          makeEntry(
-            ROUTES.areaService(city.citySlug, area.slug, service.slug),
-            0.72,
-            { kind: "money" },
-          ),
-        );
+
+        const gate = canPublishProgrammaticPage({
+          decision: {
+            kind: "area-service",
+            stateSlug: STATE_SLUG,
+            citySlug: city.citySlug,
+            areaSlug: area.slug,
+            serviceSlug: service.slug,
+          },
+          candidatePath,
+          kind: "area-service",
+          hasUniqueLocalFacts: Boolean(areaFact),
+          isCuratedCatalog: true,
+        });
+        if (!gate.index) continue;
+
+        entries.push(makeEntry(candidatePath, 0.72, { kind: "money" }));
       }
     }
   }
@@ -466,15 +489,18 @@ export function listSitemapFiles(): SitemapFile[] {
 /**
  * Child names in `/sitemap.xml` — a small named index like core / services /
  * city-services / societies / images / areas / area-services.
- * Keyword expansion files are not listed here (not submitted to Search Console).
+ * Keyword × locality children are listed after the core money files.
  */
 export function listSitemapIndexNames(): string[] {
   const groups = buildSitemapGroups();
-  return MAIN_INDEX_ORDER.flatMap((name) =>
-    name === "images"
-      ? ["images"]
-      : splitNamedGroup(name, groups[name]).map((file) => file.name),
-  );
+  return [
+    ...MAIN_INDEX_ORDER.flatMap((name) =>
+      name === "images"
+        ? ["images"]
+        : splitNamedGroup(name, groups[name]).map((file) => file.name),
+    ),
+    ...listKeywordSitemapFileNames(),
+  ];
 }
 
 export function getSitemapFile(name: string): SitemapFile | null {
@@ -486,7 +512,7 @@ export function buildSitemapRegistry(): SitemapRegistryEntry[] {
   return listSitemapFiles().flatMap((file) => file.entries);
 }
 
-/** URL count Google discovers from `/sitemap.xml` children (excludes keyword matrix). */
+/** Core hub + silo money URLs (keyword matrix is lazy-chunked, not flattened). */
 export function countAllSitemapUrls(): number {
   return buildSitemapRegistry().length;
 }

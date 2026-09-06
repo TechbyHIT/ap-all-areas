@@ -31,6 +31,18 @@ export const INSTALLATION_PHOTOS: InstallationPhoto[] = [
     application: "utility-drying",
   },
   {
+    src: "/images/projects/cloth-hangers-1.webp",
+    alt: "Pulley ceiling cloth hanger over a glass-railing balcony with one rod lowered",
+    service: "cloth-drying-hangers",
+    application: "utility-drying",
+  },
+  {
+    src: "/images/projects/cloth-hangers-6.webp",
+    alt: "Ceiling cloth hanger rods above an outdoor AC unit on a narrow balcony",
+    service: "cloth-drying-hangers",
+    application: "utility-drying",
+  },
+  {
     src: "/images/projects/installations/atrium-invisible-grill-circle.webp",
     alt: "Circular atrium invisible grill cables spanning an indoor void",
     service: "invisible-grills",

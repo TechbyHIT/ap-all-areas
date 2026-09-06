@@ -8,6 +8,7 @@ import {
   buildSeoHealthDashboard,
   runAutomatedSeoQa,
 } from "@/lib/seo/seo-health";
+import { buildSitemapInventory } from "@/lib/seo/sitemap-inventory";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default function AdminAuditsPage() {
   const qa = runAutomatedSeoQa();
   const health = buildSeoHealthDashboard();
   const content = buildContentQualityDashboard();
+  const sitemap = buildSitemapInventory();
 
   return (
     <Section>
@@ -27,13 +29,21 @@ export default function AdminAuditsPage() {
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
-            <p className="text-sm text-zinc-500">Sitemap URLs</p>
-            <p className="text-2xl font-bold">{health.totals.sitemapUrls}</p>
+            <p className="text-sm text-zinc-500">Indexable sitemap URLs</p>
+            <p className="text-2xl font-bold">{sitemap.indexableTotal}</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Area×service {sitemap.moneyGrid.areaServiceInSitemap}/
+              {sitemap.moneyGrid.areaServiceExpected}
+              {sitemap.moneyGrid.completeAreaServiceGrid ? " · complete" : ""}
+            </p>
           </Card>
           <Card>
             <p className="text-sm text-zinc-500">Availability cells</p>
             <p className="text-2xl font-bold">
               {health.totals.availabilityIndexable}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              City + every curated area × core services
             </p>
           </Card>
           <Card>
@@ -60,6 +70,17 @@ export default function AdminAuditsPage() {
             <p className="text-sm text-zinc-500">Content gaps</p>
             <p className="text-2xl font-bold">{content.lowQualityCandidates}</p>
           </Card>
+        </div>
+
+        <div className="mt-10">
+          <Heading as="h2">Sitemap files</Heading>
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
+            {Object.entries(sitemap.byFile).map(([name, count]) => (
+              <li key={name}>
+                {name}: {count}
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className="mt-10">

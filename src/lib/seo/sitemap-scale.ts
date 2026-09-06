@@ -5,8 +5,13 @@
 
 import { KEYWORD_INTENTS } from "@/data/keyword-intents";
 import { listScaleLocalities } from "@/data/ap-locality-expansion";
-import { buildCanonicalUrl, buildFileUrl } from "@/lib/routing/paths";
+import { matchKeywordCityConsolidatePath } from "@/lib/routing/pretty-money-urls";
+import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { SEO_CONFIG } from "@/config/seo";
+
+function shouldSubmitKeywordPath(path: string): boolean {
+  return matchKeywordCityConsolidatePath(path) === null;
+}
 
 /** URLs per child sitemap. ~3k keeps Chrome from OOM; Google allows 50k. */
 export const SCALE_SITEMAP_CHUNK = 3_000;
@@ -78,6 +83,7 @@ export function buildKeywordLocalityChunk(part: number): Array<{
     const loc = localities[Math.floor(index / stride)];
     const keyword = keywords[index % stride];
     const path = `/${keyword.slug}-in-${loc.slug}/`;
+    if (!shouldSubmitKeywordPath(path)) continue;
     out.push({
       path,
       url: buildCanonicalUrl(path),
@@ -112,7 +118,9 @@ export function buildKeywordLocalityUrlsetXml(part: number): string | null {
     const index = offset + i;
     const loc = localities[Math.floor(index / stride)];
     const keyword = keywords[index % stride];
-    const url = buildCanonicalUrl(`/${keyword.slug}-in-${loc.slug}/`);
+    const path = `/${keyword.slug}-in-${loc.slug}/`;
+    if (!shouldSubmitKeywordPath(path)) continue;
+    const url = buildCanonicalUrl(path);
     lines.push(`  <url>`);
     lines.push(`    <loc>${url}</loc>`);
     lines.push(`    <lastmod>${lastmod}</lastmod>`);

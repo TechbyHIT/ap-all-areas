@@ -187,11 +187,6 @@ export function Footer() {
                 Contact
               </Link>
             </li>
-            <li>
-              <Link href={ROUTES.faq} className="hover:text-[var(--primary-300)]">
-                FAQ
-              </Link>
-            </li>
           </ul>
           <ul className="space-y-2 text-sm">
             {FOOTER_POLICY_LINKS.map((item) => (

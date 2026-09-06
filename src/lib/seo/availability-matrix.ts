@@ -4,11 +4,11 @@
 
 import { STATE_SLUG } from "@/config/geo";
 import { P0_MONEY_CITY_SLUGS } from "@/data/city-local-profiles";
-import { INITIAL_SERVICES } from "@/data/initial-services";
+import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 import {
   isServiceAvailableInArea,
   isServiceAvailableInCity,
-  listFactAreas,
+  listLocationServices,
 } from "@/lib/data/location-catalog";
 import { listPublishedProjects } from "@/data/projects";
 import { shouldGeneratePage } from "@/lib/seo/page-decision";
@@ -42,13 +42,13 @@ export function buildAvailabilityMatrix(options?: {
   includeLocalities?: boolean;
   localityLimitPerCity?: number;
 }): AvailabilityRow[] {
-  const includeLocalities = options?.includeLocalities === true;
-  const localityLimit = options?.localityLimitPerCity ?? 8;
+  const includeLocalities = options?.includeLocalities !== false;
+  const localityLimit = options?.localityLimitPerCity;
   const rows: AvailabilityRow[] = [];
 
   for (const city of P0_MONEY_CITY_SLUGS) {
-    for (const service of INITIAL_SERVICES) {
-      if (!service.allowIndexing) continue;
+    const citySeed = HIGH_PRIORITY_CITY_AREAS.find((c) => c.citySlug === city);
+    for (const service of listLocationServices()) {
       const available = isServiceAvailableInCity(
         STATE_SLUG,
         city,
@@ -74,9 +74,14 @@ export function buildAvailabilityMatrix(options?: {
             : "limited",
       });
 
-      if (!includeLocalities || !available) continue;
+      if (!includeLocalities || !available || !citySeed) continue;
 
-      for (const area of listFactAreas(city).slice(0, localityLimit)) {
+      const areas =
+        typeof localityLimit === "number"
+          ? citySeed.areas.slice(0, localityLimit)
+          : citySeed.areas;
+
+      for (const area of areas) {
         const areaOk = isServiceAvailableInArea(
           STATE_SLUG,
           city,

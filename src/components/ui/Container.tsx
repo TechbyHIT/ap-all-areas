@@ -6,14 +6,14 @@ type ContainerProps = {
 };
 
 const sizeVar: Record<NonNullable<ContainerProps["size"]>, string> = {
-  sm: "var(--container-sm)",
-  md: "var(--container-md)",
-  lg: "var(--container-lg)",
-  xl: "var(--container-xl)",
-  "2xl": "var(--container-2xl)",
-  "3xl": "var(--container-3xl)",
-  "4xl": "var(--container-4xl)",
-  default: "var(--container)",
+  sm: "var(--shell-sm)",
+  md: "var(--shell-md)",
+  lg: "var(--shell-lg)",
+  xl: "var(--shell-xl)",
+  "2xl": "var(--shell-2xl)",
+  "3xl": "var(--shell-3xl)",
+  "4xl": "var(--shell-4xl)",
+  default: "var(--shell)",
 };
 
 export function Container({

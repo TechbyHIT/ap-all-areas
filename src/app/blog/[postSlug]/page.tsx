@@ -11,6 +11,10 @@ import { BLOG_ARTICLES, type BlogArticle } from "@/data/blog-articles";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
 import { staticPageIndexability } from "@/lib/seo/page-indexability";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { AuthorByline } from "@/components/seo/AuthorByline";
+import { DEFAULT_EDITORIAL_AUTHOR } from "@/lib/seo/content-governance";
+import { articleSchema } from "@/lib/schema";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -32,10 +36,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = HOME_BLOG_POSTS.find((p) => p.slug === postSlug);
   if (!post) return {};
 
+  const canonical = buildCanonicalUrl(`/blog/${post.slug}/`);
+
   return generatePageMetadata({
     title: `${post.title} | Hiranya Enterprises`,
     metaDescription: post.summary,
-    canonicalUrl: buildCanonicalUrl(`/blog/${post.slug}/`),
+    canonicalUrl: canonical,
     openGraphImage: post.image,
     openGraphImageAlt: post.imageAlt,
     ...staticPageIndexability(true),
@@ -50,8 +56,20 @@ export default async function BlogPostPage({ params }: PageProps) {
   const article = getBlogArticle(postSlug);
   if (!article) notFound();
 
+  const canonical = buildCanonicalUrl(`/blog/${post.slug}/`);
+
   return (
     <>
+      <JsonLd
+        data={articleSchema({
+          headline: post.title,
+          description: post.summary,
+          url: canonical,
+          datePublished: post.publishedAt,
+          authorName: DEFAULT_EDITORIAL_AUTHOR.name,
+          imageUrl: post.image,
+        })}
+      />
       <PageHero
         title={post.title}
         description={post.summary}
@@ -87,6 +105,8 @@ export default async function BlogPostPage({ params }: PageProps) {
         description="Share your location, photos and whether bird control, fall protection or both are the priority. We will outline measurement and quotation next steps."
         whatsappMessage={`Hello, I read "${post.title}" and would like advice for my property in Andhra Pradesh.`}
       />
+
+      <AuthorByline updatedAt={post.publishedAt} />
     </>
   );
 }

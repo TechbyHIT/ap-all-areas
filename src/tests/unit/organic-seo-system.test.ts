@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { STATE_SLUG } from "@/config/geo";
+import { AREA_LOCAL_FACTS, getAreaLocalFact } from "@/data/area-local-facts";
+import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 import { selectContentModules } from "@/data/content-modules";
 import {
   getCity,
@@ -35,6 +37,19 @@ describe("location catalog", () => {
     expect(
       isServiceAvailableInCity(STATE_SLUG, "eluru", "invisible-grills"),
     ).toBe(false);
+  });
+
+  it("covers every curated locality with a unique area fact", () => {
+    const keys = AREA_LOCAL_FACTS.map((fact) => `${fact.citySlug}/${fact.areaSlug}`);
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const city of HIGH_PRIORITY_CITY_AREAS) {
+      for (const area of city.areas) {
+        expect(getAreaLocalFact(city.citySlug, area.slug)).not.toBeNull();
+      }
+    }
+    expect(keys.length).toBe(
+      HIGH_PRIORITY_CITY_AREAS.reduce((sum, city) => sum + city.areas.length, 0),
+    );
   });
 
   it("exposes the four core services for each enabled city", () => {
@@ -84,7 +99,7 @@ describe("page decision engine", () => {
     ).toMatchObject({ generate: true, index: true });
   });
 
-  it("rejects unknown cities and sub-service city URLs", () => {
+  it("rejects unknown cities and indexes specialist city URLs", () => {
     expect(
       shouldGeneratePage({
         kind: "city-service",
@@ -97,8 +112,8 @@ describe("page decision engine", () => {
         kind: "city-service",
         citySlug: "vijayawada",
         serviceSlug: "balcony-safety-nets",
-      }).generate,
-    ).toBe(false);
+      }),
+    ).toMatchObject({ generate: true, index: true });
   });
 });
 

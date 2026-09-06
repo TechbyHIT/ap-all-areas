@@ -56,7 +56,7 @@ export const SEO_CONFIG = {
    * Stable sitemap lastmod for matrix-driven URLs (ISO date YYYY-MM-DD only).
    * Bump when services, locations, keywords, or hub content change.
    */
-  sitemapContentRevision: "2026-09-05-index",
+  sitemapContentRevision: "2026-09-05-gfg-cwv",
 
   /**
    * Strategy flag: prefer more unique useful URLs over mega-pages.

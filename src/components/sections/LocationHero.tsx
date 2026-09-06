@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { HERO_SCROLL_IMAGES } from "@/config/installation-photos";
+import { HERO_FALLBACK } from "@/config/design";
 import { ROUTES } from "@/config/routes";
 import { Badge } from "@/components/ui/Badge";
 import { Container } from "@/components/ui/Container";
-import { HeroImageScroll } from "@/components/ui/HeroImageScroll";
+import { HeroLcpImage } from "@/components/ui/HeroLcpImage";
 import { PhoneNumberLink } from "@/components/ui/PhoneNumberLink";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/navigation/Breadcrumbs";
 import type { HeroComposition } from "@/lib/visual/page-composition";
@@ -15,12 +15,12 @@ type LocationHeroProps = {
   description: string;
   coverageMessage?: string;
   image?: { src: string; alt: string };
+  /** Kept for API compat — only the first image is used (LCP). */
   gallery?: readonly { src: string; alt: string }[];
   showImage?: boolean;
   trustLine?: string;
   breadcrumbs?: ReactNode;
   breadcrumbItems?: BreadcrumbItem[];
-  /** §136 — city vs locality visual strategy */
   composition?: Extract<
     HeroComposition,
     "city-context" | "locality-orient" | "property-context"
@@ -29,8 +29,7 @@ type LocationHeroProps = {
 };
 
 /**
- * Location hero — city / locality compositions share brand tokens but differ
- * in shell treatment and CTA emphasis (§134–136, §151–152).
+ * Location hero — one LCP image, clear H1, CTAs (GFG on-page + page speed).
  */
 export function LocationHero({
   badge,
@@ -46,12 +45,12 @@ export function LocationHero({
   composition = "city-context",
   className = "",
 }: LocationHeroProps) {
-  const scrollImages =
-    gallery && gallery.length > 0
-      ? gallery
-      : image
-        ? [image, ...HERO_SCROLL_IMAGES.slice(0, 6)]
-        : HERO_SCROLL_IMAGES.slice(0, 8);
+  const primary =
+    image ??
+    (gallery && gallery.length > 0 ? gallery[0] : undefined) ?? {
+      src: HERO_FALLBACK,
+      alt: "Balcony safety installation in Andhra Pradesh",
+    };
 
   const isLocality = composition === "locality-orient";
   const shellClass = isLocality
@@ -112,7 +111,7 @@ export function LocationHero({
           </div>
 
           {showImage ? (
-            <HeroImageScroll images={scrollImages} variant="panel" fit="cover" />
+            <HeroLcpImage src={primary.src} alt={primary.alt} />
           ) : null}
         </div>
       </Container>

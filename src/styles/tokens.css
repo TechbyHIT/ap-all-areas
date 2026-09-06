@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Hiranya Enterprises — premium home-safety tokens
  * Charcoal / navy anchor · off-white page · amber CTA accent (sparing)
  */
@@ -175,7 +175,7 @@
 
   --font-sans: var(--font-body), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-display-face), Georgia, "Times New Roman", serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --text-micro: clamp(0.6875rem, 0.66rem + 0.12vw, 0.75rem);
   --text-caption: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
@@ -196,14 +196,22 @@
   --tracking-tight: -0.025em;
   --tracking-wide: 0.1em;
 
-  --container-sm: 40rem;
-  --container-md: 48rem;
-  --container-lg: 64rem;
-  --container-xl: 80rem;
-  --container-2xl: 90rem;
-  --container-3xl: 100rem;
-  --container-4xl: 120rem;
-  --container: var(--container-xl);
+  /**
+   * Page shell widths.
+   *
+   * Named `--shell-*`, not `--container-*`: Tailwind v4 owns the
+   * `--container-*` theme namespace (its own scale tops out at 36rem), and its
+   * defaults win over these declarations. Under the old names every Container
+   * on the site silently rendered at 576px instead of 1280px.
+   */
+  --shell-sm: 40rem;
+  --shell-md: 48rem;
+  --shell-lg: 64rem;
+  --shell-xl: 80rem;
+  --shell-2xl: 90rem;
+  --shell-3xl: 100rem;
+  --shell-4xl: 120rem;
+  --shell: var(--shell-xl);
   --prose-width: 42rem;
   --header-height: 4.5rem;
   --section-y-compact: clamp(2rem, 1.5rem + 1.5vw, 3rem);

@@ -68,7 +68,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
   },
   {
     name: "Pigeon Safety Nets",
-    href: ROUTES.solution("pigeon-infestation"),
+    href: ROUTES.service("pigeon-safety-nets"),
     quoteHref: ROUTES.contact,
     image: "/images/projects/pet-safety-nets-1.webp",
     alt: "Balcony bird protection net keeping pigeons outside",
@@ -78,7 +78,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
   },
   {
     name: "Children Safety Nets",
-    href: ROUTES.solution("child-balcony-safety"),
+    href: ROUTES.service("children-safety-nets"),
     quoteHref: ROUTES.contact,
     image: "/images/projects/children-safety-nets-1.webp",
     alt: "Children safety net installation on residential balcony",
@@ -88,7 +88,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
   },
   {
     name: "Pet Safety Nets",
-    href: ROUTES.solution("pet-balcony-safety"),
+    href: ROUTES.service("pet-safety-nets"),
     quoteHref: ROUTES.contact,
     image: "/images/projects/installations/night-balcony-safety-net.webp",
     alt: "Balcony safety net for pet and family openings",
@@ -108,7 +108,7 @@ export const HOME_BENTO_SERVICES: HomeServiceCard[] = [
   },
   {
     name: "Duct Area Safety Nets",
-    href: ROUTES.service("safety-nets"),
+    href: ROUTES.service("duct-area-pigeon-nets"),
     quoteHref: ROUTES.contact,
     image: "/images/projects/duct-area-nets-1.webp",
     alt: "Duct and courtyard safety net installation",

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { canonicalCitySlug, parentServiceSlug } from "@/lib/routing/location-silo";
+import { notFound, redirect } from "next/navigation";
+import {
+  canonicalCitySlug,
+  locationServiceSlug,
+  siloCityServicePath,
+} from "@/lib/routing/location-silo";
 import CityServicePage, {
   generateMetadata as generateCityServiceMetadata,
 } from "../../../../[locationSlug]/[slug]/page";
@@ -21,7 +25,7 @@ export async function generateMetadata({
   const { citySlug, areaSlug } = await params;
   const city = canonicalCitySlug(citySlug);
   if (!city) return {};
-  const service = parentServiceSlug(areaSlug);
+  const service = locationServiceSlug(areaSlug);
   if (service) {
     return generateCityServiceMetadata({
       params: Promise.resolve({ locationSlug: city, slug: service }),
@@ -36,8 +40,11 @@ export default async function SiloCityChildPage({ params }: PageProps) {
   const { citySlug, areaSlug } = await params;
   const city = canonicalCitySlug(citySlug);
   if (!city) notFound();
-  const service = parentServiceSlug(areaSlug);
+  const service = locationServiceSlug(areaSlug);
   if (service) {
+    if (service !== areaSlug) {
+      redirect(siloCityServicePath(city, service));
+    }
     return CityServicePage({
       params: Promise.resolve({ locationSlug: city, slug: service }),
     });

@@ -75,7 +75,7 @@ function resolveGeo(geoSlug: string, keywordPriority = 0) {
       citySlug: scale.routeCitySlug,
       cityName: parentCity?.cityName ?? scale.routeCitySlug.replace(/-/g, " "),
       areaSlug: scale.slug,
-      indexable: isScaleLocalityIndexable(geoSlug, keywordPriority),
+      indexable: isScaleLocalityIndexable(geoSlug),
     };
   }
   return null;

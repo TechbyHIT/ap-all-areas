@@ -194,7 +194,14 @@ export const SERVICE_SEMANTIC_MODELS: Record<string, ServiceSemanticModel> = {
     entity: "Cloth drying hanger system",
     whatIsIt:
       "Ceiling, wall or balcony hanger systems for laundry that must share space with nets, grills and outdoor units.",
-    attributes: ["mechanism", "load habit", "travel clearance", "fixing surface"],
+    attributes: [
+      "mechanism",
+      "load habit",
+      "travel clearance",
+      "fixing surface",
+      "stainless steel or coated rod material",
+      "fastener grade for humid and coastal sites",
+    ],
     components: ["rails or rods", "brackets", "pulley parts where used", "anchors"],
     applications: ["apartment balconies", "utility sit-outs", "compact drying zones"],
     problems: ["limited drying space", "monsoon drying difficulty"],

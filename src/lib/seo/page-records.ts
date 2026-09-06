@@ -137,14 +137,20 @@ function classify(path: string): {
   };
 }
 
-function sitemapFileForPath(path: string): string {
+function buildSitemapPathToFileMap(): Map<string, string> {
+  const map = new Map<string, string>();
   for (const file of listSitemapFiles()) {
-    if (file.entries.some((entry) => entry.path === path)) return file.name;
+    for (const entry of file.entries) {
+      map.set(entry.path, file.name);
+    }
   }
-  return "unlisted";
+  return map;
 }
 
-function recordFromEntry(entry: SitemapRegistryEntry): SeoPageRecord {
+function recordFromEntry(
+  entry: SitemapRegistryEntry,
+  sitemapFileByPath: Map<string, string>,
+): SeoPageRecord {
   const classified = classify(entry.path);
   const decision =
     classified.pageType === "hub"
@@ -184,7 +190,7 @@ function recordFromEntry(entry: SitemapRegistryEntry): SeoPageRecord {
     searchIntent: classified.searchIntent,
     canonical: entry.url,
     indexable: decision.index,
-    sitemap: sitemapFileForPath(entry.path),
+    sitemap: sitemapFileByPath.get(entry.path) ?? "unlisted",
     parentUrl: classified.parentUrl,
     inboundLinks: classified.parentUrl ? 1 : 0,
     outboundInternalLinks: 4,
@@ -197,5 +203,8 @@ function recordFromEntry(entry: SitemapRegistryEntry): SeoPageRecord {
 }
 
 export function buildSeoPageRecords(): SeoPageRecord[] {
-  return buildSitemapRegistry().map(recordFromEntry);
+  const sitemapFileByPath = buildSitemapPathToFileMap();
+  return buildSitemapRegistry().map((entry) =>
+    recordFromEntry(entry, sitemapFileByPath),
+  );
 }

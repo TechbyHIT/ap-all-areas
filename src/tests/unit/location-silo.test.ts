@@ -20,6 +20,16 @@ describe("location silo routing", () => {
         "/locations/andhra-pradesh/visakhapatnam/madhurawada/",
       ),
     ).toBe("/locations/visakhapatnam/madhurawada/");
+    expect(
+      matchSiloInternalRewrite(
+        "/locations/andhra-pradesh/visakhapatnam/children-safety-nets/",
+      ),
+    ).toBe("/visakhapatnam/children-safety-nets/");
+    expect(
+      matchSiloInternalRewrite(
+        "/locations/andhra-pradesh/visakhapatnam/gajuwaka/pigeon-safety-nets/",
+      ),
+    ).toBe("/visakhapatnam/gajuwaka/pigeon-safety-nets/");
   });
 
   it("rewrites Gajuwaka invisible grills to the unique landing module", () => {

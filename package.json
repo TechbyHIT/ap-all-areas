@@ -40,6 +40,7 @@
     "seo:link-health": "tsx scripts/link-health-report.ts",
     "seo:canonical-schema": "tsx scripts/canonical-schema-report.ts",
     "seo:qa": "tsx scripts/seo-qa.ts",
+    "seo:organic": "tsx scripts/organic-seo-audit.ts",
     "seo:test-set": "tsx scripts/seo-test-set.ts",
     "images:optimize": "tsx scripts/optimize-images.ts",
     "images:validate": "tsx scripts/validate-images.ts",

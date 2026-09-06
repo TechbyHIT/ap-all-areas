@@ -36,8 +36,8 @@ export const CORE_SERVICE_SLUGS = [
 ] as const;
 
 /**
- * Public sub-service slugs that should resolve to a parent service
- * in the location silo (city + service pages stay on the four cores).
+ * Specialist → parent hub. Used for materials/FAQ fallbacks, not for
+ * collapsing public URLs — each specialist keeps its own city and area page.
  */
 export const SERVICE_PARENT_BY_SLUG: Record<string, string> = {
   "balcony-invisible-grills": "invisible-grills",
@@ -62,6 +62,36 @@ export const SERVICE_SLUG_REDIRECTS: Record<string, string> = {
   "pigeon-nets": "pigeon-safety-nets",
   "anti-pigeon-nets": "pigeon-safety-nets",
 };
+
+/**
+ * Every service slug that owns its own city and area URL.
+ *
+ * Sub-services are included: each one covers a different opening, audience and
+ * specification, so it earns a location page instead of folding into the four
+ * core hubs. Pure alias slugs stay out — they 308 to their canonical.
+ */
+export const LOCATION_SERVICE_SLUGS: string[] = [
+  ...CORE_SERVICE_SLUGS,
+  ...Object.keys(SERVICE_PARENT_BY_SLUG).filter(
+    (slug) => !(slug in SERVICE_SLUG_REDIRECTS),
+  ),
+];
+
+const LOCATION_SERVICE_SET = new Set(LOCATION_SERVICE_SLUGS);
+
+/** True when the slug may appear as the service segment of a location URL. */
+export function isLocationServiceSlug(slug: string): boolean {
+  return LOCATION_SERVICE_SET.has(slug);
+}
+
+/**
+ * The slug a location URL should actually use. Aliases resolve to their
+ * canonical sub-service; everything else keeps its own identity.
+ */
+export function locationServiceSlug(slug: string): string | null {
+  const canonical = SERVICE_SLUG_REDIRECTS[slug] ?? slug;
+  return LOCATION_SERVICE_SET.has(canonical) ? canonical : null;
+}
 
 /** Unique area landings that should render at the silo area+service URL. */
 export const AREA_MONEY_LANDING_KEYS = [

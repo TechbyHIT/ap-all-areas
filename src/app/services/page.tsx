@@ -12,8 +12,10 @@ import { ProjectGallery } from "@/components/sections/ProjectGallery";
 import { ServiceCityAreaLinks } from "@/components/sections/ServiceCityAreaLinks";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
+import { CORE_SERVICE_SLUGS } from "@/config/geo";
 import { INITIAL_SERVICES } from "@/data/initial-services";
 import { SERVICE_DIRECTORY } from "@/data/service-directory";
+import { listLocationServices } from "@/lib/data/location-catalog";
 import { SERVICE_FAMILIES } from "@/data/service-families";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
@@ -42,6 +44,18 @@ export default function ServicesPage() {
       image: media.image,
     };
   });
+  const specialists = listLocationServices()
+    .filter((service) => !(CORE_SERVICE_SLUGS as readonly string[]).includes(service.slug))
+    .map((service) => {
+      const media = getServiceMedia(service.slug);
+      return {
+        name: service.name,
+        slug: service.slug,
+        summary: service.summary,
+        benefits: service.benefits.slice(0, 3),
+        image: media.image,
+      };
+    });
 
   const heroMedia = getServiceMedia("invisible-grills");
 
@@ -80,9 +94,16 @@ export default function ServicesPage() {
       />
 
       <ServiceCards
-        title="Four Main Installation Services"
-        description="Choose the service that matches your safety, bird control, sports or drying requirement. Final specification is confirmed after measurement."
+        title="Core installation services"
+        description="Start with the parent job, then open the specialist variation that matches the opening."
         services={services}
+      />
+
+      <ServiceCards
+        title="Specialist services — every opening type"
+        description="Children, pets, pigeons, ducts, terraces, cricket cages, balcony hangers and the rest each have their own page — not a renamed copy of the four hubs."
+        services={specialists}
+        variant="muted"
       />
 
       <Section variant="muted">

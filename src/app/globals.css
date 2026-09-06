@@ -25,7 +25,7 @@
   --color-whatsapp: var(--whatsapp);
   --font-sans: var(--font-body);
   --font-display: var(--font-display-face);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 @layer overrides {

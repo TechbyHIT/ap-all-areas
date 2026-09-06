@@ -1,41 +1,25 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServiceMedia } from "@/config/design";
 import { ROUTES } from "@/config/routes";
-import { LocationHero } from "@/components/sections/LocationHero";
-import { ChooseByNeedSection } from "@/components/sections/ChooseByNeedSection";
-import { TrustStrip } from "@/components/sections/TrustStrip";
+import { LandingPage } from "@/components/landing/LandingPage";
 import { RecentCityInstalls } from "@/components/sections/RecentCityInstalls";
 import { ReviewsSection } from "@/components/sections/ReviewsSection";
-import { ServiceCards } from "@/components/sections/ServiceCards";
 import { AreaCards } from "@/components/sections/AreaCards";
 import { AreaServicesMatrix } from "@/components/sections/AreaServicesMatrix";
 import { LocationCards } from "@/components/sections/LocationCards";
 import { NearbyLocations } from "@/components/sections/NearbyLocations";
-import { BenefitsSection } from "@/components/sections/BenefitsSection";
-import { FeaturesSection } from "@/components/sections/FeaturesSection";
 import { MaterialsSection } from "@/components/sections/MaterialsSection";
-import { QualitySection } from "@/components/sections/QualitySection";
-import { PricingFactors } from "@/components/sections/PricingFactors";
-import { CoverageSection } from "@/components/sections/CoverageSection";
-import { FAQSection } from "@/components/sections/FAQSection";
-import { FinalCTA } from "@/components/sections/FinalCTA";
 import { RelatedGuides } from "@/components/sections/RelatedGuides";
 import { SeoEncyclopediaSections } from "@/components/sections/SeoEncyclopediaSections";
 import { ProjectGallery } from "@/components/sections/ProjectGallery";
 import { PROPERTY_TYPES } from "@/data/property-types";
 import { projectsAsGalleryItems } from "@/data/projects";
-import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
-import { Container } from "@/components/ui/Container";
-import { Section } from "@/components/ui/Section";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
-import { INITIAL_SERVICES } from "@/data/initial-services";
 import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 import { PLACEHOLDER_GUIDES } from "@/data/placeholder-content";
-import { SUB_SERVICES } from "@/data/sub-services";
 import { buildLocationPageContent } from "@/data/location-page-content";
-import { getCity } from "@/lib/data/location-catalog";
+import { getCity, listLocationServices } from "@/lib/data/location-catalog";
 import {
   findLocationBySlug,
   getAreasForCity,
@@ -49,11 +33,19 @@ import { breadcrumbSchema, serviceSchema } from "@/lib/schema";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { canonicalCitySlug } from "@/lib/routing/location-silo";
 import { generatePageMetadata, generateTitle } from "@/lib/seo/generate-page-metadata";
-import { moneyPageIndexability } from "@/lib/seo/page-indexability";
-import { buildPageMediaBundle } from "@/lib/visual/page-media";
+import { staticPageIndexability } from "@/lib/seo/page-indexability";
+import { buildProgrammaticIndexability } from "@/lib/seo/programmatic-indexability";
+import { countLocationHubWords } from "@/lib/seo/content-word-count";
 import { getPageVisualStrategy } from "@/lib/visual/page-composition";
 import { pickPageImage } from "@/lib/visual/page-image-pick";
 import { buildMetaDescription } from "@/lib/seo/title-meta-system";
+import {
+  buildEnquiryProcess,
+  buildLocationProblems,
+  buildLocationRelatedGroups,
+  buildServiceOptions,
+} from "@/lib/landing/builders/location-landing";
+import type { LandingPageData, LandingUseCase } from "@/lib/landing/types";
 
 export const dynamicParams = true;
 export const revalidate = 86400;
@@ -81,6 +73,34 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ? `Safety Nets, Invisible Grills & Balcony Solutions in ${location.name} ${SEO_CONFIG.titleSuffix}`
     : generateTitle(location.name, "location");
 
+  const profile = getCityLocalProfile(locationSlug);
+  const areas = getAreasForCity(locationSlug);
+  const hubWords = countLocationHubWords(
+    buildLocationPageContent({
+      name: location.name,
+      locationType: location.locationType ?? "city",
+      district: location.district
+        ? getDistrictBySlug(location.district)?.name
+        : undefined,
+      nearbyPlaces: areas.slice(0, 8).map((area) => area.name),
+      isPriorityCity: true,
+    }),
+  );
+  const indexInput = siloCity
+    ? buildProgrammaticIndexability({
+        decision: {
+          kind: "city",
+          stateSlug: STATE_SLUG,
+          citySlug: locationSlug,
+        },
+        candidatePath: canonicalPath,
+        cannibalKind: "city",
+        tier: "city",
+        hasCityProfile: Boolean(profile),
+        wordCount: hubWords,
+      })
+    : staticPageIndexability(Boolean(siloCity));
+
   return generatePageMetadata({
     title,
     metaDescription: buildMetaDescription({
@@ -90,7 +110,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       cta: "Free photo estimate · measured quote",
     }),
     canonicalUrl: buildCanonicalUrl(canonicalPath),
-    ...(moneyPageIndexability("city")),
+    ...indexInput,
   });
 }
 
@@ -133,7 +153,8 @@ export default async function LocationDetailPage({ params }: PageProps) {
     (city) => city.citySlug !== locationSlug,
   ).slice(0, 8);
 
-  const services = INITIAL_SERVICES.map((service) => {
+  const moneyServices = listLocationServices();
+  const services = moneyServices.map((service) => {
     const media = getServiceMedia(service.slug);
     const catalogCity = getCity(STATE_SLUG, locationSlug);
     return {
@@ -157,12 +178,6 @@ export default async function LocationDetailPage({ params }: PageProps) {
     isSiloCity ? ROUTES.location(locationSlug) : `/locations/${locationSlug}/`,
   );
   const visual = getPageVisualStrategy("city");
-  const mediaBundle = buildPageMediaBundle({
-    pageType: "city",
-    cityName: displayName,
-    serviceSlug: "safety-nets",
-    h1: heroTitle,
-  });
   const heroPick = pickPageImage({
     pageKey: `city:${locationSlug}`,
     serviceSlug: "safety-nets",
@@ -170,9 +185,246 @@ export default async function LocationDetailPage({ params }: PageProps) {
     cityName: displayName,
   });
 
+  /* Property types double as the "who this is for" grid — real pages behind each. */
+  const useCases: LandingUseCase[] = PROPERTY_TYPES.filter(
+    (p) => p.publicationStatus === "published" && p.allowIndexing,
+  )
+    .slice(0, 6)
+    .map((propertyType) => ({
+      title: propertyType.name,
+      description: propertyType.summary,
+      href: ROUTES.propertyTypeService(
+        propertyType.slug,
+        propertyType.suitableServices[0] ?? "safety-nets",
+      ),
+    }));
+
+  const landing: LandingPageData = {
+    pageType: "city",
+    intent: "local",
+    canonicalUrl: cityCanonical,
+    breadcrumbs: isSiloCity
+      ? [
+          { label: "Home", href: "/" },
+          { label: "Locations", href: ROUTES.locations },
+          { label: STATE_NAME, href: ROUTES.state },
+          { label: displayName },
+        ]
+      : [
+          { label: "Home", href: "/" },
+          { label: "Locations", href: ROUTES.locations },
+          { label: displayName },
+        ],
+    hero: {
+      title: heroTitle,
+      description: profile
+        ? `${profile.climateLead} Send opening photos for a free estimate in ${displayName} — we confirm access after site review.`
+        : `Send opening photos for a free estimate in ${displayName}, Andhra Pradesh. We confirm coverage after a site review.`,
+      badge: districtName ?? STATE_NAME,
+      composition: visual.hero,
+      image: { src: heroPick.src, alt: heroPick.alt },
+      trustLine: heroPick.isLocallyVerified
+        ? "Verified local installation photo"
+        : "Representative installation · city confirmed after site review",
+    },
+    trustLabel: displayName,
+    problems: buildLocationProblems({
+      citySlug: locationSlug,
+      isSiloCity,
+    }),
+    problemsLabel: displayName,
+    primaryContentTitle: `About Service Coverage in ${displayName}`,
+    primaryContent: (
+      <>
+        <p>{content.introduction}</p>
+        <p>{content.servicesOverview}</p>
+        <p>{content.buyingGuide}</p>
+        <p>{content.localDecisionGuide}</p>
+        {profile ? (
+          <>
+            <p>{profile.weatherNotes}</p>
+            <p>
+              Key residential corridors:{" "}
+              {profile.residentialCorridors.join("; ")}.
+            </p>
+          </>
+        ) : null}
+      </>
+    ),
+    primaryContentNote:
+      "Listing this location means installation support can be arranged subject to site confirmation — not that a shop or branch exists here.",
+    offerings: {
+      title: `Services Available in ${displayName}`,
+      description:
+        "Each service link leads to a location-specific page. Availability is confirmed after reviewing your address and site access.",
+      items: services,
+    },
+    contentBlocks: (
+      <>
+        <SeoEncyclopediaSections sections={content.encyclopedia} />
+        <MaterialsSection
+          title="Installation Overview"
+          prose={
+            <>
+              <p>{content.installationOverview}</p>
+              <p>{content.siteInspectionInfo}</p>
+            </>
+          }
+          variant="muted"
+        />
+      </>
+    ),
+    benefits: {
+      title: `Where these installations are used in ${displayName}`,
+      items: [
+        {
+          title: "Homes and apartments",
+          description: content.residentialApplications,
+        },
+        {
+          title: "Commercial and institutional sites",
+          description: content.commercialApplications,
+        },
+      ],
+    },
+    useCases: {
+      title: `Property types we commonly plan for in ${displayName}`,
+      description:
+        "Generic property guides — not named societies. Open the type that matches your building.",
+      items: useCases,
+    },
+    options: {
+      title: `Which option suits your opening in ${displayName}?`,
+      description:
+        "Each system solves a different problem — including what it does not solve.",
+      items: buildServiceOptions(displayName, {
+        citySlug: locationSlug,
+        cityName: displayName,
+        isSiloCity,
+      }),
+    },
+    requirements: {
+      title: "Common Requirements Before Quotation",
+      items: content.commonRequirements,
+    },
+    process: buildEnquiryProcess(displayName),
+    pricing: {
+      title: "Pricing Factors",
+      factors: content.pricingFactors,
+      honestStatement: `Pricing depends on measurements, material grade, required spacing, installation complexity, building height, site accessibility and total project quantity. We do not show fixed package prices because every site in ${displayName} differs.`,
+    },
+    evidence: (
+      <>
+        <RecentCityInstalls citySlug={locationSlug} cityName={displayName} />
+        <ReviewsSection
+          citySlug={locationSlug}
+          title={`Reviews for ${displayName} installations`}
+          description="Verified customer reviews for this city appear here when authorized — we never fabricate local ratings."
+        />
+        <ProjectGallery
+          title="Installation photos (statewide evidence)"
+          description={`Real photographs from our install set. We do not invent ${displayName}-specific project stories without verified records.`}
+          projects={projectsAsGalleryItems().slice(0, 6)}
+          showViewAll
+        />
+      </>
+    ),
+    coverage: {
+      title: `Coverage Summary for ${displayName}`,
+      text: `We provide installation services in ${displayName} subject to site accessibility, measurements, technician availability and project requirements. This page supports enquiry planning and is not a local branch claim.`,
+      links: [
+        { label: "All services", href: ROUTES.services },
+        { label: "Request quote", href: ROUTES.contact },
+      ],
+    },
+    related: buildLocationRelatedGroups({
+      citySlug: locationSlug,
+      cityName: displayName,
+      isSiloCity,
+      nearbyAreas: areas.map((a) => ({ slug: a.slug, name: a.name })),
+      siblingCities: isSiloCity
+        ? siblingCities.map((c) => ({
+            citySlug: c.citySlug,
+            cityName: c.cityName,
+          }))
+        : undefined,
+    }),
+    faqs: content.faqs,
+    faqTitle: `FAQs — Service in ${displayName}`,
+    appendSections: (
+      <>
+        {isCity && areas.length > 0 ? (
+          <>
+            <AreaCards
+              title={`Areas in ${displayName}`}
+              description="Area pages help residents find service coverage by locality. Listing an area means installation support can be arranged subject to site confirmation — not that a shop exists in every neighbourhood."
+              areas={areas.map((area) => ({
+                name: area.name,
+                href: ROUTES.area(locationSlug, area.slug),
+                cityName: displayName,
+                description: `Service coverage reference in ${displayName} — confirmed after site review.`,
+              }))}
+            />
+            <AreaServicesMatrix
+              citySlug={locationSlug}
+              cityName={displayName}
+              areas={areas}
+              title={`Every service in every ${displayName} area`}
+              description={`${moneyServices.length} installation types × every curated locality in ${displayName}.`}
+              variant="muted"
+            />
+          </>
+        ) : null}
+
+        <RelatedGuides
+          title="Guides that help before a site visit"
+          description="Read these before sending photos if you are still comparing invisible grills, nets or hangers."
+          guides={PLACEHOLDER_GUIDES.map((guide) => ({
+            title: guide.title,
+            href: ROUTES.guide(guide.slug),
+            summary: guide.summary,
+          }))}
+        />
+
+        {nearbyPlaces.length > 0 && district ? (
+          <NearbyLocations
+            title="Nearby Places & Related Coverage"
+            description={`Customers also enquire from nearby places such as ${nearbyPlaces.slice(0, 6).join(", ")}. Each request is reviewed on its own access and measurement conditions.`}
+            locations={district.places
+              .filter((p) => p.slug !== locationSlug)
+              .slice(0, 12)
+              .map((place) => ({
+                name: place.name,
+                href: ROUTES.location(place.slug),
+                parentLabel: district.name,
+                description: `Service availability in ${place.name} is confirmed after site review.`,
+              }))}
+            variant="muted"
+          />
+        ) : null}
+
+        {districtRecord && !isCity ? (
+          <LocationCards
+            title={`Places in ${districtRecord.name} District`}
+            locations={districtRecord.places.slice(0, 12).map((place) => ({
+              name: place.name,
+              href: ROUTES.location(place.slug),
+              parentLabel: districtRecord.name,
+              description: `Installation service may be arranged in ${place.name} subject to site confirmation.`,
+            }))}
+          />
+        ) : null}
+      </>
+    ),
+    cta: {
+      title: `Request Service in ${displayName}`,
+      description: `Share your requirement for ${displayName}. We will confirm whether installation service is available at your specific address — without claiming a local branch.`,
+      message: `Hello, I need installation service in ${displayName}, Andhra Pradesh.`,
+    },
+  };
+
   return (
     <>
-      <FaqJsonLd faqs={content.faqs} />
       <JsonLd
         data={serviceSchema({
           name: `Safety net & grill installation in ${displayName}`,
@@ -192,353 +444,7 @@ export default async function LocationDetailPage({ params }: PageProps) {
         />
       ) : null}
 
-      <LocationHero
-        badge={districtName ?? "Andhra Pradesh"}
-        title={heroTitle}
-        description={
-          profile
-            ? `${profile.climateLead} Send opening photos for a free estimate in ${displayName} — we confirm access after site review.`
-            : `Send opening photos for a free estimate in ${displayName}, Andhra Pradesh. We confirm coverage after a site review.`
-        }
-        composition={visual.hero as "city-context"}
-        image={{
-          src: heroPick.src,
-          alt: heroPick.alt,
-        }}
-        gallery={mediaBundle.galleryImages}
-        trustLine={
-          heroPick.isLocallyVerified
-            ? "Verified local installation photo"
-            : "Representative installation · city confirmed after site review"
-        }
-        breadcrumbItems={
-          isSiloCity
-            ? [
-                { label: "Home", href: "/" },
-                { label: "Locations", href: ROUTES.locations },
-                { label: STATE_NAME, href: ROUTES.state },
-                { label: displayName },
-              ]
-            : [
-                { label: "Home", href: "/" },
-                { label: "Locations", href: ROUTES.locations },
-                { label: displayName },
-              ]
-        }
-      />
-
-      <TrustStrip contextLabel={displayName} />
-
-      <ChooseByNeedSection
-        locationName={displayName}
-        paths={[
-          {
-            title: "Balcony / family fall risk",
-            summary:
-              "Open railings, side returns and sit-outs used by children or daily seating.",
-            href: isSiloCity
-              ? ROUTES.cityService(locationSlug, "safety-nets")
-              : ROUTES.service("safety-nets"),
-          },
-          {
-            title: "Clear view / invisible grill",
-            summary:
-              "Cable systems when a low-visibility finish matters as much as a continuous barrier.",
-            href: isSiloCity
-              ? ROUTES.cityService(locationSlug, "invisible-grills")
-              : ROUTES.service("invisible-grills"),
-          },
-          {
-            title: "Pigeon and bird entry",
-            summary:
-              "Ledges, ducts and unused balconies where birds roost — start with pigeon-focused nets.",
-            href: ROUTES.service("pigeon-safety-nets"),
-          },
-          {
-            title: "Children or pets",
-            summary:
-              "Mesh aperture and edge coverage planned for reach and how the opening is used day to day.",
-            href: ROUTES.service("children-safety-nets"),
-          },
-          {
-            title: "Sports / cricket practice",
-            summary:
-              "Practice cages and boundary nets sized to the plot — not balcony mesh reused outdoors.",
-            href: isSiloCity
-              ? ROUTES.cityService(locationSlug, "sports-nets")
-              : ROUTES.service("sports-nets"),
-          },
-          {
-            title: "Cloth drying hangers",
-            summary:
-              "Ceiling or wall hangers that must share space with nets, grills and outdoor units.",
-            href: isSiloCity
-              ? ROUTES.cityService(locationSlug, "cloth-drying-hangers")
-              : ROUTES.service("cloth-drying-hangers"),
-          },
-        ]}
-      />
-
-      <MaterialsSection
-        title={`About Service Coverage in ${displayName}`}
-        prose={
-          <>
-            <p>{content.introduction}</p>
-            <p>{content.servicesOverview}</p>
-            <p>{content.buyingGuide}</p>
-            <p>{content.localDecisionGuide}</p>
-            {profile ? (
-              <>
-                <p>{profile.weatherNotes}</p>
-                <p>
-                  Key residential corridors:{" "}
-                  {profile.residentialCorridors.join("; ")}.
-                </p>
-              </>
-            ) : null}
-          </>
-        }
-        note="Listing this location means installation support can be arranged subject to site confirmation — not that a shop or branch exists here."
-      />
-
-      <SeoEncyclopediaSections sections={content.encyclopedia} />
-
-      <ServiceCards
-        title={`Services Available in ${displayName}`}
-        description="Each service link leads to a location-specific page. Availability is confirmed after reviewing your address and site access."
-        services={services}
-        pageKey={`city:${locationSlug}`}
-        variant="muted"
-      />
-
-      <RecentCityInstalls citySlug={locationSlug} cityName={displayName} />
-
-      <ReviewsSection
-        citySlug={locationSlug}
-        title={`Reviews for ${displayName} installations`}
-        description="Verified customer reviews for this city appear here when authorized — we never fabricate local ratings."
-      />
-
-      <Section>
-        <Container>
-          <h2 className="ds-h2">Property types we commonly plan for in {displayName}</h2>
-          <p className="prose-readable mt-3 text-[var(--muted-foreground)]">
-            Generic property guides—not named societies. Open a type×service page
-            when it matches your building.
-          </p>
-          <ul className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {PROPERTY_TYPES.filter(
-              (p) =>
-                p.publicationStatus === "published" && p.allowIndexing,
-            ).map((propertyType) => (
-              <li key={propertyType.slug}>
-                <Link
-                  href={ROUTES.propertyTypeService(
-                    propertyType.slug,
-                    propertyType.suitableServices[0] ?? "safety-nets",
-                  )}
-                  className="text-[var(--color-link)] hover:underline"
-                >
-                  {propertyType.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Container>
-      </Section>
-
-      <FeaturesSection
-        title={`Residential Applications in ${displayName}`}
-        items={[
-          {
-            title: "Homes and apartments",
-            description: content.residentialApplications,
-          },
-        ]}
-      />
-
-      <BenefitsSection
-        title="Commercial & Institutional Applications"
-        items={[
-          {
-            title: "Commercial and community sites",
-            description: content.commercialApplications,
-          },
-        ]}
-        variant="muted"
-      />
-
-      <QualitySection
-        title="Common Requirements Before Quotation"
-        items={content.commonRequirements}
-      />
-
-      <MaterialsSection
-        title="Installation Overview"
-        prose={
-          <>
-            <p>{content.installationOverview}</p>
-            <p>{content.siteInspectionInfo}</p>
-          </>
-        }
-        variant="muted"
-      />
-
-      <PricingFactors
-        title="Pricing Factors"
-        items={content.pricingFactors}
-        honestStatement={`Pricing depends on measurements, material grade, required spacing, installation complexity, building height, site accessibility and total project quantity. We do not show fixed package prices because every site in ${displayName} differs.`}
-      />
-
-      {isCity && areas.length > 0 ? (
-        <>
-          <AreaCards
-            title={`Areas in ${displayName}`}
-            description="Area pages help residents find service coverage by locality. Listing an area means installation support can be arranged subject to site confirmation — not that a shop exists in every neighbourhood."
-            areas={areas.map((area) => ({
-              name: area.name,
-              href: ROUTES.area(locationSlug, area.slug),
-              cityName: displayName,
-              description: `Service coverage reference in ${displayName} — confirmed after site review.`,
-            }))}
-          />
-          <AreaServicesMatrix
-            citySlug={locationSlug}
-            cityName={displayName}
-            areas={areas}
-            title={`Local service pages in ${displayName}`}
-            description={`Dedicated service+area pages exist only where we have verified locality notes. Other neighbourhoods still have an area hub for coverage planning.`}
-            variant="muted"
-          />
-        </>
-      ) : null}
-
-      {isPriorityCity ? (
-        <Section variant="muted">
-          <Container>
-            <h2 className="ds-h2">Service types people ask about in {displayName}</h2>
-            <p className="prose-readable mt-3 text-[var(--muted-foreground)]">
-              These specialised pages explain balcony, window, child, pet, pigeon
-              and sports options. For {displayName}-specific installation, open
-              the matching city service page rather than a keyword variation.
-            </p>
-            <ul className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {INITIAL_SERVICES.map((service) => (
-                <li key={service.slug}>
-                  <Link
-                    href={ROUTES.cityService(locationSlug, service.slug)}
-                    className="text-[var(--color-link)] hover:underline"
-                  >
-                    {service.name} in {displayName}
-                  </Link>
-                </li>
-              ))}
-              {SUB_SERVICES.filter((sub) =>
-                ["balcony-invisible-grills", "window-invisible-grills", "children-safety-nets", "pet-safety-nets", "pigeon-safety-nets", "cricket-practice-nets", "balcony-cloth-hangers"].includes(sub.slug),
-              ).map((sub) => (
-                <li key={sub.slug}>
-                  <Link
-                    href={ROUTES.service(sub.slug)}
-                    className="text-[var(--color-link)] hover:underline"
-                  >
-                    {sub.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            {profile ? (
-              <p className="prose-readable mt-6 text-sm text-[var(--muted-foreground)]">
-                {profile.photoEstimateHint}
-              </p>
-            ) : null}
-          </Container>
-        </Section>
-      ) : null}
-
-      {isSiloCity && siblingCities.length > 0 ? (
-        <LocationCards
-          title="Other Andhra Pradesh city hubs"
-          description="Each city page covers local building patterns for that place. They are service-area pages, not branch listings."
-          locations={siblingCities.map((city) => ({
-            name: city.cityName,
-            href: ROUTES.location(city.citySlug),
-            parentLabel: STATE_NAME,
-            description: `Installation support in ${city.cityName} is confirmed after site review.`,
-          }))}
-          variant="muted"
-        />
-      ) : null}
-
-      <ProjectGallery
-        title={`Installation photos (statewide evidence)`}
-        description={`Real photographs from our install set. We do not invent ${displayName}-specific project stories without verified records.`}
-        projects={projectsAsGalleryItems().slice(0, 6)}
-        showViewAll
-      />
-
-      <RelatedGuides
-        title="Guides that help before a site visit"
-        description="Read these before sending photos if you are still comparing invisible grills, nets or hangers."
-        guides={PLACEHOLDER_GUIDES.map((guide) => ({
-          title: guide.title,
-          href: ROUTES.guide(guide.slug),
-          summary: guide.summary,
-        }))}
-      />
-
-      {nearbyPlaces.length > 0 ? (
-        <NearbyLocations
-          title="Nearby Places & Related Coverage"
-          description={`Customers also enquire from nearby places such as ${nearbyPlaces.slice(0, 6).join(", ")}. Each request is reviewed on its own access and measurement conditions.`}
-          locations={
-            district
-              ? district.places
-                  .filter((p) => p.slug !== locationSlug)
-                  .slice(0, 12)
-                  .map((place) => ({
-                    name: place.name,
-                    href: ROUTES.location(place.slug),
-                    parentLabel: district.name,
-                    description: `Service availability in ${place.name} is confirmed after site review.`,
-                  }))
-              : []
-          }
-          variant="muted"
-        />
-      ) : null}
-
-      {districtRecord && !isCity ? (
-        <LocationCards
-          title={`Places in ${districtRecord.name} District`}
-          locations={districtRecord.places.slice(0, 12).map((place) => ({
-            name: place.name,
-            href: ROUTES.location(place.slug),
-            parentLabel: districtRecord.name,
-            description: `Installation service may be arranged in ${place.name} subject to site confirmation.`,
-          }))}
-        />
-      ) : null}
-
-      <CoverageSection
-        title={`Coverage Summary for ${displayName}`}
-        coverageText={`We provide installation services in ${displayName} subject to site accessibility, measurements, technician availability and project requirements. This page supports enquiry planning and is not a local branch claim.`}
-        links={[
-          { label: "All services", href: ROUTES.services },
-          { label: "Request quote", href: ROUTES.contact },
-        ]}
-        variant="muted"
-      />
-
-      <FAQSection
-        title={`FAQs — Service in ${displayName}`}
-        items={content.faqs}
-      />
-
-      <FinalCTA
-        title={`Request Service in ${displayName}`}
-        description={`Share your requirement for ${displayName}. We will confirm whether installation service is available at your specific address — without claiming a local branch.`}
-        whatsappMessage={`Hello, I need installation service in ${displayName}, Andhra Pradesh.`}
-      />
+      <LandingPage data={landing} />
     </>
   );
 }

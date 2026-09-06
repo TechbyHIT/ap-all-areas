@@ -5,18 +5,18 @@
 
   .ds-container {
     margin-inline: auto;
-    width: min(100% - 2rem, var(--container));
+    width: min(100% - 2rem, var(--shell));
   }
 
   @media (min-width: 640px) {
     .ds-container {
-      width: min(100% - 3rem, var(--container));
+      width: min(100% - 3rem, var(--shell));
     }
   }
 
   @media (min-width: 1280px) {
     .ds-container {
-      width: min(100% - 4rem, var(--container));
+      width: min(100% - 4rem, var(--shell));
     }
   }
 

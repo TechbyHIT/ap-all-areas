@@ -37,9 +37,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 
   experimental: {
-    // Tree-shake icon/util barrels when present; no-op for unused packages.
+    // Tree-shake barrels; keep marketing pages lean for CWV.
     optimizePackageImports: ["zod"],
   },
+
+  /** Prefer lighter HTML responses (GFG technical SEO / page speed). */
+  reactStrictMode: true,
 
   /**
    * Serve `/sitemaps/{name}.xml` through the App Router handler at

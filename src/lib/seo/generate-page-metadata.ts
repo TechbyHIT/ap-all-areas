@@ -43,6 +43,7 @@ export function generatePageMetadata(page: PageMetadataInput): Metadata {
       description: page.openGraphDescription ?? page.metaDescription,
       url: page.canonicalUrl,
       siteName: BUSINESS_CONFIG.name,
+      locale: "en_IN",
       type: "website",
       images: page.openGraphImage
         ? [

@@ -3,7 +3,7 @@ import Image from "next/image";
 import { HERO_SCROLL_IMAGES } from "@/config/installation-photos";
 import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
-import { HeroImageScroll } from "@/components/ui/HeroImageScroll";
+import { HeroLcpImage } from "@/components/ui/HeroLcpImage";
 import type { HeroComposition } from "@/lib/visual/page-composition";
 import { ASPECT_RATIOS } from "@/lib/visual/visual-quality";
 
@@ -41,14 +41,10 @@ export function PremiumPageHero({
   composition = "service-split",
   className = "",
 }: PremiumPageHeroProps) {
-  const scrollImages: HeroImage[] =
-    gallery && gallery.length > 0
-      ? [...gallery]
-      : image
-        ? [image, ...HERO_SCROLL_IMAGES.slice(0, 4).map((p) => ({ src: p.src, alt: p.alt }))]
-        : HERO_SCROLL_IMAGES.slice(0, 6).map((p) => ({ src: p.src, alt: p.alt }));
-
-  const primary: HeroImage | undefined = image ?? scrollImages[0];
+  const primary: HeroImage | undefined =
+    image ??
+    (gallery && gallery.length > 0 ? gallery[0] : undefined) ??
+    HERO_SCROLL_IMAGES[0];
   const isEditorial = composition === "editorial";
   const isProject = composition === "project-gallery-lead";
   const isDecision = composition === "decision-split";
@@ -197,12 +193,8 @@ export function PremiumPageHero({
             ) : null}
           </div>
 
-          {scrollImages.length > 0 ? (
-            <HeroImageScroll
-              images={scrollImages}
-              variant="panel"
-              fit="cover"
-            />
+          {primary ? (
+            <HeroLcpImage src={primary.src} alt={primary.alt} />
           ) : null}
         </div>
       </Container>

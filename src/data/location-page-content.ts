@@ -5,7 +5,12 @@
  */
 
 import { getAreaLocalFact } from "@/data/area-local-facts";
+import { deriveAreaContext } from "@/data/area-context";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
+import {
+  buildVariantAreaServiceContent,
+  buildVariantCityServiceContent,
+} from "@/data/service-variant-content";
 import {
   getLocationHubEncyclopedia,
   getServiceEncyclopedia,
@@ -475,6 +480,10 @@ export function buildCityServiceContent(input: {
   areas?: string[];
 }): CityServiceContent {
   const { serviceSlug, serviceName, cityName, citySlug, district, areas } = input;
+
+  const variantCopy = buildVariantCityServiceContent(input);
+  if (variantCopy) return variantCopy;
+
   const label = serviceLabel(serviceSlug, serviceName);
   const areaList = joinNearby(areas);
   const profile = citySlug ? getCityLocalProfile(citySlug) : null;
@@ -590,6 +599,9 @@ export function buildAreaServiceContent(input: {
   citySlug?: string;
   areaSlug?: string;
 }): AreaServiceContent {
+  const variantCopy = buildVariantAreaServiceContent(input);
+  if (variantCopy) return variantCopy;
+
   const { serviceSlug, serviceName, areaName, cityName, citySlug, areaSlug } =
     input;
   const label = serviceLabel(serviceSlug, serviceName);
@@ -662,16 +674,29 @@ export function buildAreaServiceContent(input: {
       ? ` Useful visit landmarks include ${areaFact.landmarks.slice(0, 3).join(", ")}.`
       : "";
 
+  /* Locality position (sea-facing, outlying town, core city) changes real
+     planning, so it belongs in the copy rather than only in the fact overlay. */
+  const context =
+    citySlug && areaSlug ? deriveAreaContext(citySlug, areaSlug) : null;
+  const needsBit =
+    areaFact && areaFact.commonNeeds.length > 0
+      ? ` Briefs we hear from ${areaName} most often are ${areaFact.commonNeeds.slice(0, 3).join(", ")}.`
+      : "";
+
   return {
-    uniqueIntroduction: `${baseIntro}${factIntro}`,
+    uniqueIntroduction: `${baseIntro}${factIntro}${
+      context ? ` ${context.exposureNote}` : ""
+    }`,
     serviceOverview,
-    residentialApplications,
+    residentialApplications: `${residentialApplications}${needsBit}`,
     suitablePropertyTypes: areaFact
       ? `Suitable properties in ${areaName} include the apartment and housing mix described above within ${cityName}. ${label} is considered after access and structure are checked.${landmarkBit}`
       : `Apartments, independent houses and other suitable buildings in ${areaName} within ${cityName} can be considered for ${label} after access and structure are checked.`,
     safetyRequirements,
     materialGuidance: materialsByService(serviceSlug, serviceName),
-    measurementProcess: `Measurement in ${place} covers opening width and height, fixing surface condition, obstacles such as AC units, and access notes for installation day.${landmarkBit} These details replace guesswork based only on the area name.`,
+    measurementProcess: `Measurement in ${place} covers opening width and height, fixing surface condition, obstacles such as AC units, and access notes for installation day.${landmarkBit}${
+      context ? ` ${context.accessNote}` : ""
+    } These details replace guesswork based only on the area name.`,
     installationSteps: `After approval, technicians prepare the opening, install fixings, fit the ${label}, check tension or alignment, clean the area and explain basic care before leaving the site in ${areaName}.`,
     encyclopedia: getServiceEncyclopedia(serviceSlug, place, serviceName),
     maintenanceAdvice: (() => {
@@ -689,8 +714,10 @@ export function buildAreaServiceContent(input: {
       }
     })(),
     pricingNote: `Quotation for ${label} in ${place} is based on measured scope, material choice and installation access. ${coverageSentence(place)}${
-      cityProfile ? ` ${cityProfile.photoEstimateHint}` : ""
-    }`,
+      context?.position === "outlying-town"
+        ? ` ${areaName} is served as a scheduled trip out from ${cityName}, so covering every opening in one visit keeps the total sensible.`
+        : ""
+    }${cityProfile ? ` ${cityProfile.photoEstimateHint}` : ""}`,
     buyingGuide: `For ${label} in ${areaName}, share society or landmark details, opening photos and the main risk priority. Approve measured size, material and written inclusions before installation. Parent-city context for ${cityName} helps, but your building access still decides the final plan.`,
     localAuthorityNote: `${areaName} pages support Andhra Pradesh local search with honest coverage wording. They help residents find the right service path—not invent a shop on every street.`,
   };

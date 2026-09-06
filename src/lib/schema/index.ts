@@ -51,6 +51,12 @@ export function webSiteSchema() {
     "@type": "WebSite",
     name: BUSINESS_CONFIG.name,
     url: BUSINESS_CONFIG.websiteUrl,
+    inLanguage: "en-IN",
+    publisher: {
+      "@type": "Organization",
+      name: BUSINESS_CONFIG.name,
+      url: BUSINESS_CONFIG.websiteUrl,
+    },
   };
 }
 
@@ -119,10 +125,62 @@ export function webPageSchema(input: {
     name: input.name,
     description: input.description,
     url: input.url,
+    inLanguage: "en-IN",
     isPartOf: {
       "@type": "WebSite",
       name: BUSINESS_CONFIG.name,
       url: BUSINESS_CONFIG.websiteUrl,
+    },
+  };
+}
+
+/** Article / BlogPosting for guides and blog (GFG E-E-A-T + structured data). */
+export function articleSchema(input: {
+  headline: string;
+  description: string;
+  url: string;
+  datePublished: string;
+  dateModified?: string;
+  authorName?: string;
+  imageUrl?: string;
+}) {
+  const author = input.authorName ?? BUSINESS_CONFIG.name;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.headline,
+    description: input.description,
+    url: input.url,
+    datePublished: input.datePublished,
+    dateModified: input.dateModified ?? input.datePublished,
+    inLanguage: "en-IN",
+    author: {
+      "@type": "Organization",
+      name: author,
+      url: BUSINESS_CONFIG.websiteUrl,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: BUSINESS_CONFIG.name,
+      url: BUSINESS_CONFIG.websiteUrl,
+      logo: {
+        "@type": "ImageObject",
+        url: `${BUSINESS_CONFIG.websiteUrl}${BUSINESS_CONFIG.logoCircle ?? BUSINESS_CONFIG.logo}`,
+      },
+    },
+    ...(input.imageUrl
+      ? {
+          image: {
+            "@type": "ImageObject",
+            url: input.imageUrl.startsWith("http")
+              ? input.imageUrl
+              : `${BUSINESS_CONFIG.websiteUrl}${input.imageUrl}`,
+          },
+        }
+      : {}),
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": input.url,
     },
   };
 }

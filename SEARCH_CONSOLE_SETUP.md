@@ -32,6 +32,12 @@ curl -s https://hiranayaenterprises.in/sitemap.xml | head -40
 
 Expect: index and every child `HTTP/2 200` and `content-type: application/xml` — **no 308** on the locs inside the index.
 
+## On-site SEO + speed (GFG basics map)
+
+Code map: `src/lib/seo/gfg-seo-basics.ts` (keyword ownership, on-page, technical, CWV, internal links). Off-page (GBP, citations, backlinks) stays marketing ops.
+
+After each deploy, spot-check LCP on home + one city (Vizag / Vijayawada) in PageSpeed Insights.
+
 ## Quality rules
 
 - Do not force tens of thousands of thin locality doorways into the master sitemap.

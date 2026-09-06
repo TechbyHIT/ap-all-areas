@@ -7,9 +7,8 @@ import {
   listScaleLocalities,
   type ScaleLocality,
 } from "@/data/ap-locality-expansion";
-import { AREA_LOCAL_FACTS } from "@/data/area-local-facts";
 import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
-import { INITIAL_SERVICES } from "@/data/initial-services";
+import { listLocationServices } from "@/lib/data/location-catalog";
 import { ROUTES } from "@/config/routes";
 
 export type MoneyUrl = {
@@ -55,19 +54,19 @@ export function parseKeywordInGeoPath(
 
 export function listCuratedAreaServiceUrls(): MoneyUrl[] {
   const out: MoneyUrl[] = [];
-  for (const fact of AREA_LOCAL_FACTS) {
-    const city = HIGH_PRIORITY_CITY_AREAS.find((c) => c.citySlug === fact.citySlug);
-    const area = city?.areas.find((a) => a.slug === fact.areaSlug);
-    for (const service of INITIAL_SERVICES) {
-      out.push({
-        path: pathAreaService(fact.citySlug, fact.areaSlug, service.slug),
-        kind: "area-service",
-        title: `${service.name} in ${area?.name ?? fact.areaSlug}, ${city?.cityName ?? fact.citySlug}`,
-        serviceSlug: service.slug,
-        citySlug: fact.citySlug,
-        areaSlug: fact.areaSlug,
-        indexCandidate: true,
-      });
+  for (const city of HIGH_PRIORITY_CITY_AREAS) {
+    for (const area of city.areas) {
+      for (const service of listLocationServices()) {
+        out.push({
+          path: pathAreaService(city.citySlug, area.slug, service.slug),
+          kind: "area-service",
+          title: `${service.name} in ${area.name}, ${city.cityName}`,
+          serviceSlug: service.slug,
+          citySlug: city.citySlug,
+          areaSlug: area.slug,
+          indexCandidate: true,
+        });
+      }
     }
   }
   return out;
@@ -120,7 +119,7 @@ export function listKeywordLocalityUrls(options?: {
         citySlug: loc.routeCitySlug,
         areaSlug: loc.slug,
         keywordSlug: keyword.slug,
-        indexCandidate: false,
+        indexCandidate: true,
       });
     }
   }

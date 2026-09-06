@@ -34,13 +34,14 @@ describe("indexability", () => {
     expect(isPageIndexable({ ...validPage, qualityScore: 50 })).toBe(false);
   });
 
-  it("indexes published pages that allow indexing even below the quality floor", () => {
+  it("respects full indexability gate in robots directive (GFG white-hat)", () => {
     expect(
       getRobotsDirective({ ...validPage, qualityScore: 50 }).index,
-    ).toBe(true);
+    ).toBe(false);
     expect(getRobotsDirective({ ...validPage, allowIndexing: false }).index).toBe(
       false,
     );
+    expect(getRobotsDirective(validPage).index).toBe(true);
   });
 });
 

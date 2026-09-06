@@ -7,6 +7,8 @@ import {
   AREA_MONEY_LANDING_KEYS,
   CITY_ALIASES,
   CORE_SERVICE_SLUGS,
+  isLocationServiceSlug,
+  locationServiceSlug,
   SERVICE_PARENT_BY_SLUG,
   SERVICE_SLUG_REDIRECTS,
   SILO_CITY_SLUGS,
@@ -22,6 +24,8 @@ function withSlash(pathname: string): string {
   if (pathname === "/") return pathname;
   return pathname.endsWith("/") ? pathname : `${pathname}/`;
 }
+
+export { locationServiceSlug };
 
 export function canonicalCitySlug(slug: string): string | null {
   const mapped = CITY_ALIASES[slug] ?? slug;
@@ -82,8 +86,8 @@ export function matchSiloInternalRewrite(pathname: string): string | null {
   );
   if (areaService) {
     const city = canonicalCitySlug(areaService[1]);
-    const service = parentServiceSlug(areaService[3]);
-    if (city && service && !parentServiceSlug(areaService[2])) {
+    const service = locationServiceSlug(areaService[3]);
+    if (city && service && !isLocationServiceSlug(areaService[2])) {
       const landingKey = `${service}/${STATE_SLUG}/${city}/${areaService[2]}`;
       if (AREA_LANDING_SET.has(landingKey)) {
         return `/landings/area/${service}/${STATE_SLUG}/${city}/${areaService[2]}/`;
@@ -99,7 +103,7 @@ export function matchSiloInternalRewrite(pathname: string): string | null {
   if (cityChild) {
     const city = canonicalCitySlug(cityChild[1]);
     if (!city) return null;
-    const service = parentServiceSlug(cityChild[2]);
+    const service = locationServiceSlug(cityChild[2]);
     if (service) return `/${city}/${service}/`;
     return `/locations/${city}/${cityChild[2]}/`;
   }
@@ -131,7 +135,7 @@ export function matchLegacySiloRedirect(pathname: string): string | null {
   if (locArea && locArea[1] !== STATE_SLUG) {
     const city = canonicalCitySlug(locArea[1]);
     if (city) {
-      const service = parentServiceSlug(locArea[2]);
+      const service = locationServiceSlug(locArea[2]);
       if (service) return siloCityServicePath(city, service);
       return siloAreaPath(city, locArea[2]);
     }
@@ -161,8 +165,8 @@ export function matchLegacySiloRedirect(pathname: string): string | null {
   const areaService = p.match(/^\/([a-z0-9-]+)\/([a-z0-9-]+)\/([a-z0-9-]+)\/$/);
   if (areaService) {
     const city = canonicalCitySlug(areaService[1]);
-    const service = parentServiceSlug(areaService[3]);
-    if (city && service && !parentServiceSlug(areaService[2])) {
+    const service = locationServiceSlug(areaService[3]);
+    if (city && service && !isLocationServiceSlug(areaService[2])) {
       return siloAreaServicePath(city, areaService[2], service);
     }
   }
@@ -170,7 +174,7 @@ export function matchLegacySiloRedirect(pathname: string): string | null {
   const cityService = p.match(/^\/([a-z0-9-]+)\/([a-z0-9-]+)\/$/);
   if (cityService) {
     const city = canonicalCitySlug(cityService[1]);
-    const service = parentServiceSlug(cityService[2]);
+    const service = locationServiceSlug(cityService[2]);
     if (city && service) return siloCityServicePath(city, service);
   }
 

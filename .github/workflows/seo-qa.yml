@@ -1,0 +1,29 @@
+name: SEO QA
+
+on:
+  push:
+    branches: [main, seo/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  seo-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: GFG organic SEO audit (strict)
+        run: SEO_QA_STRICT=1 npm run seo:organic

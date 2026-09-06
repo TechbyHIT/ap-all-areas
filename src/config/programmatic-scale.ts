@@ -1,5 +1,5 @@
 /**
- * Programmatic SEO scale blueprint — target ≥ 9 lakh (900,000) addressable URLs.
+ * Programmatic SEO scale blueprint — target ≥ 10 lakh (1,000,000) addressable URLs.
  *
  * Principle:
  * - Capacity can be millions of intent combinations.
@@ -15,7 +15,7 @@ import {
   INITIAL_SERVICES,
 } from "@/data/initial-services";
 
-export const SCALE_TARGET_URLS = 900_000; // 9 lakh
+export const SCALE_TARGET_URLS = 1_000_000; // 10 lakh
 
 export type ScaleLayer = {
   id: string;
@@ -136,11 +136,11 @@ export function buildScaleReport(): ScaleReport {
     },
     {
       id: "keyword-in-locality",
-      label: "Keyword intent × locality (9L engine)",
+      label: "Keyword intent × locality (10L engine)",
       formula: `${keywords} × ${scaleLocalities}`,
       count: keywordInLocality,
-      indexDefault: false,
-      notes: "/{keyword}-in-{locality}/ — main scale vector",
+      indexDefault: true,
+      notes: "/{keyword}-in-{locality}/ — submitted in /sitemap.xml",
     },
   ];
 

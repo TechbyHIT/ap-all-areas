@@ -3,7 +3,7 @@
  * Prefer fewer useful URLs over city-name-swap doorways.
  */
 
-import { STATE_SLUG } from "@/config/geo";
+import { isLocationServiceSlug, STATE_SLUG } from "@/config/geo";
 import {
   getArea,
   getCity,
@@ -12,7 +12,6 @@ import {
   isServiceAvailableInArea,
   isServiceAvailableInCity,
 } from "@/lib/data/location-catalog";
-import { parentServiceSlug } from "@/lib/routing/location-silo";
 import {
   checkCannibalization,
   type CannibalizationInput,
@@ -82,9 +81,8 @@ export function shouldGeneratePage(input: PageDecisionInput): PageDecision {
     if (!isServiceAvailableInCity(stateSlug, city.slug, input.serviceSlug ?? "")) {
       return deny("service-not-available-in-city");
     }
-    const core = parentServiceSlug(input.serviceSlug ?? "");
-    if (core && core !== input.serviceSlug) {
-      return deny("sub-service-belongs-on-core-city-service");
+    if (!isLocationServiceSlug(input.serviceSlug ?? "")) {
+      return deny("service-slug-not-valid-for-location-url");
     }
     return serve(true, "enabled-city-service");
   }
@@ -102,9 +100,8 @@ export function shouldGeneratePage(input: PageDecisionInput): PageDecision {
     ) {
       return deny("service-not-available-in-area");
     }
-    const core = parentServiceSlug(input.serviceSlug ?? "");
-    if (core && core !== input.serviceSlug) {
-      return deny("sub-service-belongs-on-core-area-service");
+    if (!isLocationServiceSlug(input.serviceSlug ?? "")) {
+      return deny("service-slug-not-valid-for-location-url");
     }
     return serve(true, "enabled-area-service");
   }
@@ -128,6 +125,8 @@ export function canPublishProgrammaticPage(input: {
   hasUniqueLocalFacts?: boolean;
   hasRealPhotos?: boolean;
   keywordSlug?: string;
+  /** Area/city is in the hand-curated HIGH_PRIORITY catalog. */
+  isCuratedCatalog?: boolean;
 }): {
   publish: boolean;
   index: boolean;
@@ -162,6 +161,9 @@ export function canPublishProgrammaticPage(input: {
     hasTrustContact: true,
     hasInternalLinks: true,
     isDoorwayRisk: !input.hasUniqueLocalFacts && input.kind === "keyword-city",
+    ...(input.isCuratedCatalog && !input.hasUniqueLocalFacts
+      ? { localUniqueness: 11, usefulInformation: 13 }
+      : {}),
   });
   reasons.push(`quality:${quality.total}:${quality.action}`);
 

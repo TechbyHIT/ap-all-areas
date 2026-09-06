@@ -7,7 +7,7 @@ export type ServiceCardProps = {
   name: string;
   slug: string;
   summary: string;
-  benefits?: string[];
+  benefits?: readonly string[];
   image: string;
   href?: string;
   quoteHref?: string;

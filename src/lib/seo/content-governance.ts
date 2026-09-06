@@ -61,8 +61,15 @@ export type GuideAuthor = {
   reviewerRole?: string;
 };
 
-/** Empty until real editorial roles are confirmed. */
-export const GUIDE_AUTHORS: GuideAuthor[] = [];
+/** Editorial voice — organization-level until named authors are confirmed. */
+export const DEFAULT_EDITORIAL_AUTHOR: GuideAuthor = {
+  name: "Hiranya Enterprises",
+  role: "Installation planning & safety guidance · Andhra Pradesh",
+  reviewerName: "Technical planning desk",
+  reviewerRole: "Site-measurement and material review",
+};
+
+export const GUIDE_AUTHORS: GuideAuthor[] = [DEFAULT_EDITORIAL_AUTHOR];
 
 export function authorshipAllowed(author: GuideAuthor): boolean {
   return Boolean(author.name.trim() && author.role.trim());

@@ -1,5 +1,7 @@
 /** Central design + media map — prefer larger HD project photos. */
 
+import { SERVICE_PARENT_BY_SLUG } from "@/config/geo";
+
 export const SERVICE_MEDIA: Record<
   string,
   { image: string; icon: string; alt: string; gallery: readonly string[] }
@@ -56,10 +58,155 @@ export const SERVICE_MEDIA: Record<
 export const HERO_FALLBACK =
   "/images/projects/installations/invisible-grill-day-city.webp";
 
-/** Resolve hero media for any core service slug (safe fallback). */
+/**
+ * Sub-service hero media. Each variation gets its own photo where one exists
+ * so a locality page for, say, duct nets does not open on a balcony shot.
+ * Anything not listed falls back to its parent hub below.
+ */
+export const VARIANT_MEDIA: Record<
+  string,
+  { image: string; icon: string; alt: string; gallery: readonly string[] }
+> = {
+  "balcony-invisible-grills": {
+    image: "/images/projects/balcony-invisible-grills-10.webp",
+    icon: "/images/projects/balcony-invisible-grills-8.webp",
+    alt: "Invisible grill cables fitted above a balcony railing",
+    gallery: [
+      "/images/projects/balcony-invisible-grills-10.webp",
+      "/images/projects/balcony-invisible-grills-8.webp",
+      "/images/projects/balcony-invisible-grills-16.webp",
+    ],
+  },
+  "window-invisible-grills": {
+    image: "/images/projects/window-invisible-grills-1.webp",
+    icon: "/images/projects/balcony-invisible-grills-4.webp",
+    alt: "Invisible grill cables across a bedroom window opening",
+    gallery: [
+      "/images/projects/window-invisible-grills-1.webp",
+      "/images/projects/balcony-invisible-grills-4.webp",
+    ],
+  },
+  "invisible-grills-for-apartments": {
+    image: "/images/projects/installations/night-invisible-grills-city.webp",
+    icon: "/images/projects/balcony-invisible-grills-22.webp",
+    alt: "Invisible grills across apartment balconies on an upper floor",
+    gallery: [
+      "/images/projects/installations/night-invisible-grills-city.webp",
+      "/images/projects/balcony-invisible-grills-22.webp",
+    ],
+  },
+  "invisible-grills-for-villas": {
+    image: "/images/projects/installations/atrium-invisible-grill-circle.webp",
+    icon: "/images/projects/balcony-invisible-grills-26.webp",
+    alt: "Invisible grill cables around an internal atrium void",
+    gallery: [
+      "/images/projects/installations/atrium-invisible-grill-circle.webp",
+      "/images/projects/balcony-invisible-grills-26.webp",
+    ],
+  },
+  "balcony-safety-nets": {
+    image: "/images/projects/balcony-safety-nets-12.webp",
+    icon: "/images/projects/balcony-safety-nets-3.webp",
+    alt: "Safety net covering a residential balcony opening",
+    gallery: [
+      "/images/projects/balcony-safety-nets-12.webp",
+      "/images/projects/balcony-safety-nets-3.webp",
+      "/images/projects/balcony-safety-nets-20.webp",
+    ],
+  },
+  "children-safety-nets": {
+    image: "/images/projects/children-safety-nets-1.webp",
+    icon: "/images/projects/children-safety-nets-3.webp",
+    alt: "Close-mesh child safety net at a balcony railing",
+    gallery: [
+      "/images/projects/children-safety-nets-1.webp",
+      "/images/projects/children-safety-nets-3.webp",
+      "/images/projects/children-safety-nets-5.webp",
+    ],
+  },
+  "pet-safety-nets": {
+    image: "/images/projects/pet-safety-nets-1.webp",
+    icon: "/images/projects/balcony-safety-nets-9.webp",
+    alt: "Pet safety net closing a balcony edge down to floor level",
+    gallery: [
+      "/images/projects/pet-safety-nets-1.webp",
+      "/images/projects/balcony-safety-nets-9.webp",
+    ],
+  },
+  "pigeon-safety-nets": {
+    image: "/images/projects/installations/facade-balcony-safety-nets.webp",
+    icon: "/images/projects/balcony-safety-nets-24.webp",
+    alt: "Fine bird-control mesh across balcony openings on a facade",
+    gallery: [
+      "/images/projects/installations/facade-balcony-safety-nets.webp",
+      "/images/projects/balcony-safety-nets-24.webp",
+    ],
+  },
+  "balcony-pigeon-nets": {
+    image: "/images/projects/balcony-safety-nets-30.webp",
+    icon: "/images/projects/balcony-safety-nets-22.webp",
+    alt: "Bird net enclosing a full balcony including the AC unit",
+    gallery: [
+      "/images/projects/balcony-safety-nets-30.webp",
+      "/images/projects/balcony-safety-nets-22.webp",
+    ],
+  },
+  "window-pigeon-nets": {
+    image: "/images/projects/balcony-safety-nets-17.webp",
+    icon: "/images/projects/window-invisible-grills-1.webp",
+    alt: "Compact bird net panel fitted at a window ledge",
+    gallery: [
+      "/images/projects/balcony-safety-nets-17.webp",
+      "/images/projects/window-invisible-grills-1.webp",
+    ],
+  },
+  "duct-area-pigeon-nets": {
+    image: "/images/projects/duct-area-nets-1.webp",
+    icon: "/images/projects/balcony-safety-nets-35.webp",
+    alt: "Mesh fitted across a building duct opening",
+    gallery: [
+      "/images/projects/duct-area-nets-1.webp",
+      "/images/projects/balcony-safety-nets-35.webp",
+    ],
+  },
+  "terrace-safety-nets": {
+    image: "/images/projects/installations/highrise-green-safety-net-up.webp",
+    icon: "/images/projects/balcony-safety-nets-40.webp",
+    alt: "Safety netting raised above an open terrace parapet",
+    gallery: [
+      "/images/projects/installations/highrise-green-safety-net-up.webp",
+      "/images/projects/balcony-safety-nets-40.webp",
+    ],
+  },
+  "cricket-practice-nets": {
+    image: "/images/projects/installations/outdoor-cricket-cage-nets.webp",
+    icon: "/images/projects/cricket-nets-4.webp",
+    alt: "Outdoor cricket practice cage enclosed with impact netting",
+    gallery: [
+      "/images/projects/installations/outdoor-cricket-cage-nets.webp",
+      "/images/projects/cricket-nets-4.webp",
+      "/images/projects/cricket-nets-9.webp",
+    ],
+  },
+  "balcony-cloth-hangers": {
+    image: "/images/projects/cloth-hangers-9.webp",
+    icon: "/images/projects/cloth-hangers-2.webp",
+    alt: "Ceiling cloth drying hanger fitted on an apartment balcony",
+    gallery: [
+      "/images/projects/cloth-hangers-9.webp",
+      "/images/projects/cloth-hangers-2.webp",
+      "/images/projects/cloth-hangers-11.webp",
+    ],
+  },
+};
+
+/** Resolve hero media for any service slug, falling back to the parent hub. */
 export function getServiceMedia(serviceSlug: string) {
+  const parent = SERVICE_PARENT_BY_SLUG[serviceSlug];
   return (
-    SERVICE_MEDIA[serviceSlug] ?? {
+    SERVICE_MEDIA[serviceSlug] ??
+    VARIANT_MEDIA[serviceSlug] ??
+    (parent ? SERVICE_MEDIA[parent] : undefined) ?? {
       image: HERO_FALLBACK,
       icon: HERO_FALLBACK,
       alt: "Hiranya Enterprises installation project",

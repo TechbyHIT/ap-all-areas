@@ -3,7 +3,6 @@ import Link from "next/link";
 import { HERO_FALLBACK } from "@/config/design";
 import { ROUTES } from "@/config/routes";
 import { STATE_NAME } from "@/config/geo";
-import { SEO_CONFIG } from "@/config/seo";
 import { LocationHero } from "@/components/sections/LocationHero";
 import { LocationCards } from "@/components/sections/LocationCards";
 import { CoverageSection } from "@/components/sections/CoverageSection";
@@ -41,10 +40,12 @@ const faqs = [
 ];
 
 export const metadata: Metadata = generatePageMetadata({
-  title: `Safety Nets, Invisible Grills & Balcony Solutions in ${STATE_NAME} ${SEO_CONFIG.titleSuffix}`,
+  title: `Safety Nets & Invisible Grills in ${STATE_NAME} | Free Photo Estimate`,
   metaDescription:
-    "Hiranya Enterprises installs invisible grills, balcony safety nets, pigeon nets, sports nets and cloth hangers across Andhra Pradesh as a service area—not as a chain of local branches. Open a city hub, then request a measured quote.",
+    "Andhra Pradesh’s measured balcony safety nets, invisible grills, pigeon nets, sports nets and cloth hangers — Visakhapatnam, Vijayawada, Guntur, Tirupati and more. Free photo estimate; quote after site review.",
   canonicalUrl: canonical,
+  openGraphImage: "/images/projects/installations/invisible-grill-day-city.webp",
+  openGraphImageAlt: `Invisible grill installation serving homes across ${STATE_NAME}`,
   ...staticPageIndexability(true),
 });
 

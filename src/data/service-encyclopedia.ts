@@ -3,10 +3,20 @@
  * Place-aware sentences keep pages useful without inventing local offices or stats.
  */
 
+import { SERVICE_PARENT_BY_SLUG } from "@/config/geo";
+import { getServiceVariant, type ServiceVariant } from "@/data/service-variants";
+
 export type EncyclopediaSection = {
   heading: string;
   paragraphs: string[];
 };
+
+function listPhrase(items: readonly string[], limit = 4): string {
+  const picked = items.slice(0, limit);
+  if (picked.length === 0) return "";
+  if (picked.length === 1) return picked[0];
+  return `${picked.slice(0, -1).join(", ")} and ${picked[picked.length - 1]}`;
+}
 
 function placeClause(placeName: string): string {
   return placeName.trim() || "Andhra Pradesh";
@@ -201,6 +211,60 @@ export function getLocationHubEncyclopedia(
   ];
 }
 
+/**
+ * Specialist-only explainer. Cores already have a dedicated block; this is
+ * what stops "children safety nets" from reading as a renamed parent hub.
+ */
+function variantEncyclopedia(
+  variant: ServiceVariant,
+  place: string,
+): EncyclopediaSection[] {
+  if (variant.slug === variant.parentSlug) return [];
+
+  return [
+    {
+      heading: `What ${variant.name.toLowerCase()} are for in ${place}`,
+      paragraphs: [
+        `${variant.name} in ${place} are asked for by ${variant.audience}. The work is ${variant.solves}. Typical openings are ${listPhrase(variant.openings)}. People usually describe the brief as wanting ${variant.searchIntent}.`,
+        `Specification turns on ${variant.specFocus}. Before a quotation we check ${listPhrase(variant.siteChecks, 5)}. Those checks are what make this page different from a generic ${variant.parentSlug.replace(/-/g, " ")} write-up for the same city.`,
+        `An honest limit belongs on this page: ${variant.notSolved} Coastal jobs: ${variant.coastalNote} Inland or dusty jobs: ${variant.inlandNote}`,
+      ],
+    },
+    {
+      heading: `How ${variant.name.toLowerCase()} are specified and quoted in ${place}`,
+      paragraphs: [
+        `Cost for ${variant.name.toLowerCase()} in ${place} moves with ${listPhrase(variant.costDrivers, 5)}. Ask for the price unit and the included openings in writing so two quotes can be compared.`,
+        `After handover, ${variant.maintenance} That aftercare is specific to this variation — it is not a copy-paste from another balcony product.`,
+        `If the opening you have is closer to another variation, say so before measurement. ${variant.name} is the right start only when the brief matches ${variant.searchIntent}.`,
+      ],
+    },
+  ];
+}
+
+function encyclopediaParentSlug(serviceSlug: string): string {
+  const variant = getServiceVariant(serviceSlug);
+  return variant?.parentSlug ?? SERVICE_PARENT_BY_SLUG[serviceSlug] ?? serviceSlug;
+}
+
+function coreEncyclopedia(
+  parentSlug: string,
+  place: string,
+  serviceName: string,
+): EncyclopediaSection[] {
+  switch (parentSlug) {
+    case "invisible-grills":
+      return invisibleGrills(place);
+    case "safety-nets":
+      return safetyNets(place);
+    case "sports-nets":
+      return sportsNets(place);
+    case "cloth-drying-hangers":
+      return clothHangers(place);
+    default:
+      return genericService(serviceName, place);
+  }
+}
+
 /** Deep explainer blocks for a service, localised with a place name. */
 export function getServiceEncyclopedia(
   serviceSlug: string,
@@ -208,26 +272,12 @@ export function getServiceEncyclopedia(
   serviceName = serviceSlug.replace(/-/g, " "),
 ): EncyclopediaSection[] {
   const place = placeClause(placeName);
-  const core = (() => {
-    switch (serviceSlug) {
-      case "invisible-grills":
-        return invisibleGrills(place);
-      case "safety-nets":
-      case "balcony-safety-nets":
-      case "pigeon-nets":
-      case "children-safety-nets":
-      case "pet-safety-nets":
-      case "duct-area-safety-nets":
-        return safetyNets(place);
-      case "sports-nets":
-      case "cricket-nets":
-        return sportsNets(place);
-      case "cloth-drying-hangers":
-        return clothHangers(place);
-      default:
-        return genericService(serviceName, place);
-    }
-  })();
-
-  return [...core, ...buyerDepth(place, serviceName.toLowerCase())];
+  const variant = getServiceVariant(serviceSlug);
+  const parent = encyclopediaParentSlug(serviceSlug);
+  const specialist = variant ? variantEncyclopedia(variant, place) : [];
+  return [
+    ...specialist,
+    ...coreEncyclopedia(parent, place, serviceName),
+    ...buyerDepth(place, serviceName.toLowerCase()),
+  ];
 }

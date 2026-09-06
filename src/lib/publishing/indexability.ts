@@ -22,7 +22,8 @@ export function getRobotsDirective(page: PageIndexabilityInput): {
   index: boolean;
   follow: boolean;
 } {
-  const index =
-    page.publicationStatus === "published" && page.allowIndexing;
-  return { index, follow: true };
+  return {
+    index: isPageIndexable(page),
+    follow: true,
+  };
 }

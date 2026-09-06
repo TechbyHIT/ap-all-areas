@@ -13,10 +13,18 @@ import { INSTALLATION_PHOTOS } from "@/config/installation-photos";
 import { validateImageAlt } from "@/lib/seo/image-alt";
 import { buildAvailabilityMatrix } from "@/lib/seo/availability-matrix";
 import { analyzeServiceContentGaps } from "@/lib/seo/content-gap";
+import { assessCrawlUrl } from "@/lib/seo/crawl-url-qa";
 import { INITIAL_SERVICES } from "@/data/initial-services";
 import { listRelevantLegalPages, SEO_CHANGE_LOG } from "@/lib/seo/content-governance";
 import { getLocalBusinessModel } from "@/lib/seo/local-business-model";
-import { assessCrawlUrl } from "@/lib/seo/crawl-url-qa";
+import { detectCopyRedFlags } from "@/lib/seo/seo-red-flags";
+import { gfgChecklistSummary } from "@/lib/seo/gfg-seo-basics";
+import { buildProgrammaticIndexability } from "@/lib/seo/programmatic-indexability";
+import { isPageIndexable } from "@/lib/publishing/indexability";
+import { getAreaLocalFact } from "@/data/area-local-facts";
+import { STATE_SLUG } from "@/config/geo";
+import { ROUTES } from "@/config/routes";
+import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 
 export type SeoQaIssue = {
   severity: "critical" | "warn" | "info";
@@ -41,6 +49,8 @@ export type SeoHealthDashboard = {
     altErrors: number;
     missingMetadataSample: number;
     duplicateTitleRisk: number;
+    gfgChecklistDone: number;
+    gfgChecklistTotal: number;
   };
   byPageType: Record<string, number>;
   legalPages: ReturnType<typeof listRelevantLegalPages>;
@@ -144,6 +154,80 @@ export function runAutomatedSeoQa(): {
     }
   }
 
+  // GFG white-hat: duplicate titles in sitemap sample
+  const titles = new Map<string, string>();
+  for (const entry of registry) {
+    const slug = entry.path.replace(/\//g, " ").trim();
+    if (titles.has(slug)) {
+      issues.push({
+        severity: "warn",
+        area: "on-page",
+        message: "Duplicate path pattern in sitemap registry",
+        path: entry.path,
+      });
+    }
+    titles.set(slug, entry.path);
+  }
+
+  // GFG: sitemap vs noindex mismatch for area-service matrix
+  for (const city of HIGH_PRIORITY_CITY_AREAS.slice(0, 3)) {
+    for (const area of city.areas.slice(0, 2)) {
+      for (const service of INITIAL_SERVICES.slice(0, 2)) {
+        const path = ROUTES.areaService(city.citySlug, area.slug, service.slug);
+        const areaFact = getAreaLocalFact(city.citySlug, area.slug);
+        const indexMeta = buildProgrammaticIndexability({
+          decision: {
+            kind: "area-service",
+            stateSlug: STATE_SLUG,
+            citySlug: city.citySlug,
+            areaSlug: area.slug,
+            serviceSlug: service.slug,
+          },
+          candidatePath: path,
+          cannibalKind: "area-service",
+          tier: "locality-service",
+          hasUniqueLocalFacts: Boolean(areaFact),
+          isCuratedCatalog: true,
+        });
+        const inSitemap = registry.some((e) => e.path === path);
+        const indexable = isPageIndexable(indexMeta);
+        if (inSitemap && !indexable) {
+          issues.push({
+            severity: "critical",
+            area: "gfg-organic",
+            message: "Sitemap lists URL but page fails indexability gate",
+            path,
+          });
+        }
+        if (!inSitemap && indexable) {
+          issues.push({
+            severity: "warn",
+            area: "gfg-organic",
+            message: "Indexable area-service missing from sitemap",
+            path,
+          });
+        }
+      }
+    }
+  }
+
+  // GFG black-hat detection on sample pillar copy
+  const sampleCopy = detectCopyRedFlags({
+    path: "/",
+    title: "Invisible Grills & Safety Nets in Andhra Pradesh",
+    description: "Balcony safety nets and measured installation",
+    body: "Service coverage across Andhra Pradesh is confirmed after site review.",
+    claimsLocalBranch: false,
+  });
+  for (const flag of sampleCopy) {
+    issues.push({
+      severity: flag.severity,
+      area: "gfg-organic",
+      message: `${flag.flag}: ${flag.detail}`,
+      path: flag.path,
+    });
+  }
+
   const critical = issues.filter((i) => i.severity === "critical").length;
   const warn = issues.filter((i) => i.severity === "warn").length;
 
@@ -160,7 +244,7 @@ export function buildSeoHealthDashboard(): SeoHealthDashboard {
   const orphans = summarizeOrphans(detectOrphanPages({ sitemapOnly: true }));
   const links = auditInternalLinksStatic();
   const redirects = auditRedirectRegistry();
-  const matrix = buildAvailabilityMatrix({ includeLocalities: false });
+  const matrix = buildAvailabilityMatrix();
   const model = getLocalBusinessModel();
 
   let schemaErrors = 0;
@@ -205,6 +289,8 @@ export function buildSeoHealthDashboard(): SeoHealthDashboard {
       altErrors,
       missingMetadataSample: 0,
       duplicateTitleRisk: 0,
+      gfgChecklistDone: gfgChecklistSummary().done,
+      gfgChecklistTotal: gfgChecklistSummary().total,
     },
     byPageType,
     legalPages: listRelevantLegalPages(),

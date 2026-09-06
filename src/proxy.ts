@@ -7,7 +7,7 @@ import {
 } from "@/lib/routing/pretty-money-urls";
 import {
   matchLegacySiloRedirect,
-  parentServiceSlug,
+  locationServiceSlug,
   siloAreaServicePath,
 } from "@/lib/routing/location-silo";
 
@@ -124,7 +124,7 @@ export function proxy(request: NextRequest) {
     const dest = siloAreaServicePath(
       areaPretty.citySlug,
       areaPretty.areaSlug,
-      parentServiceSlug(areaPretty.serviceSlug) ?? areaPretty.serviceSlug,
+      locationServiceSlug(areaPretty.serviceSlug) ?? areaPretty.serviceSlug,
     );
     const url = request.nextUrl.clone();
     url.pathname = dest;
@@ -158,7 +158,7 @@ export function proxy(request: NextRequest) {
       const dest = siloAreaServicePath(
         internalArea[3],
         internalArea[4],
-        parentServiceSlug(internalArea[1]) ?? internalArea[1],
+        locationServiceSlug(internalArea[1]) ?? internalArea[1],
       );
       const url = request.nextUrl.clone();
       url.pathname = dest;

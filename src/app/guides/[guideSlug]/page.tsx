@@ -11,6 +11,10 @@ import { GUIDE_ARTICLES, type GuideArticle } from "@/data/guide-articles";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
 import { staticPageIndexability } from "@/lib/seo/page-indexability";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { AuthorByline } from "@/components/seo/AuthorByline";
+import { DEFAULT_EDITORIAL_AUTHOR } from "@/lib/seo/content-governance";
+import { articleSchema } from "@/lib/schema";
 import { buildPageMediaBundle } from "@/lib/visual/page-media";
 
 export const dynamicParams = true;
@@ -42,10 +46,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const guide = PLACEHOLDER_GUIDES.find((g) => g.slug === guideSlug);
   if (!guide) return {};
 
+  const canonical = buildCanonicalUrl(`/guides/${guide.slug}/`);
+
   return generatePageMetadata({
     title: guide.title,
     metaDescription: guide.summary,
-    canonicalUrl: buildCanonicalUrl(`/guides/${guide.slug}/`),
+    canonicalUrl: canonical,
     ...staticPageIndexability(true),
   });
 }
@@ -58,6 +64,7 @@ export default async function GuideDetailPage({ params }: PageProps) {
   const article = getGuideArticle(guideSlug);
   if (!article) notFound();
 
+  const canonical = buildCanonicalUrl(`/guides/${guide.slug}/`);
   const media = buildPageMediaBundle({
     pageType: "guide",
     h1: guide.title,
@@ -66,6 +73,16 @@ export default async function GuideDetailPage({ params }: PageProps) {
 
   return (
     <>
+      <JsonLd
+        data={articleSchema({
+          headline: guide.title,
+          description: guide.summary,
+          url: canonical,
+          datePublished: "2026-01-15",
+          authorName: DEFAULT_EDITORIAL_AUTHOR.name,
+          imageUrl: media.heroImage.src,
+        })}
+      />
       <PageHero
         title={guide.title}
         description={guide.summary}
@@ -107,6 +124,8 @@ export default async function GuideDetailPage({ params }: PageProps) {
         description="Share your city or area, photos and priorities. We will confirm whether measurement can be scheduled and outline a site-specific recommendation."
         whatsappMessage={`Hello, I read the ${guide.title} and would like guidance for my site in Andhra Pradesh.`}
       />
+
+      <AuthorByline updatedAt="2026-01-15" />
     </>
   );
 }

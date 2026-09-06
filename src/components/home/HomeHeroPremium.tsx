@@ -32,6 +32,7 @@ export function HomeHeroPremium() {
         fill
         priority
         sizes="100vw"
+        quality={75}
         className="object-cover opacity-70"
       />
       <div
@@ -39,7 +40,7 @@ export function HomeHeroPremium() {
         aria-hidden
       />
 
-      <div className="relative mx-auto flex min-h-[78vh] max-w-[var(--container)] flex-col justify-end px-4 pb-14 pt-28 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex min-h-[78vh] max-w-[var(--shell)] flex-col justify-end px-4 pb-14 pt-28 sm:px-6 lg:px-8">
         <p className="font-display text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent-300)]">
           {BUSINESS_CONFIG.name}
         </p>

@@ -76,6 +76,8 @@ describe("availability + gates + privacy (§88–91)", () => {
   it("builds matrix and enforces gates/privacy", () => {
     const matrix = buildAvailabilityMatrix({ includeLocalities: false });
     expect(matrix.length).toBeGreaterThan(0);
+    const withAreas = buildAvailabilityMatrix();
+    expect(withAreas.length).toBeGreaterThan(matrix.length);
     expect(isMatrixCellIndexable(matrix[0]!)).toBe(
       matrix[0]!.available && matrix[0]!.status !== "draft",
     );
