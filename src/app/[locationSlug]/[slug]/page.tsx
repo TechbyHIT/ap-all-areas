@@ -13,7 +13,6 @@ import { PillarPageView } from "@/components/sections/PillarPageView";
 import { SeoEncyclopediaSections } from "@/components/sections/SeoEncyclopediaSections";
 import { FaqJsonLd } from "@/components/seo/FaqJsonLd";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 import {
   listLocationServices,
   resolveLocationService,
@@ -47,7 +46,6 @@ import {
 } from "@/lib/seo/content-word-count";
 import { BUSINESS_CONFIG } from "@/config/business";
 import {
-  LOCATION_SERVICE_SLUGS,
   STATE_NAME,
   STATE_SLUG,
 } from "@/config/geo";
@@ -79,12 +77,9 @@ function toProcessSteps(items: readonly string[]) {
 }
 
 export async function generateStaticParams() {
-  return HIGH_PRIORITY_CITY_AREAS.flatMap((city) =>
-    LOCATION_SERVICE_SLUGS.map((slug) => ({
-      locationSlug: city.citySlug,
-      slug,
-    })),
-  );
+  // Public city×service URLs are prerendered on the silo wrappers.
+  // Legacy `/{city}/{service}/` 308s onto the silo and must not SSG.
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

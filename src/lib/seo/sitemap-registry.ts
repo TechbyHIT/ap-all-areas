@@ -1,25 +1,15 @@
 import type { MetadataRoute } from "next";
 import { SEO_CONFIG } from "@/config/seo";
 import { P0_MONEY_CITY_SLUGS } from "@/data/city-local-profiles";
-import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
 import { INITIAL_SERVICES } from "@/data/initial-services";
-import { PLACEHOLDER_BLOG_POSTS } from "@/data/placeholder-content";
-import { PROBLEMS } from "@/data/problems";
-import { PROPERTY_TYPES } from "@/data/property-types";
-import { SUB_SERVICE_SLUGS } from "@/data/sub-services";
-import { SERVICE_FAMILY_SLUGS } from "@/data/service-families";
-import { listPublishedProjects } from "@/data/projects";
-import { SERVICE_COMPARISON_SLUGS } from "@/data/comparisons";
 import { INSTALLATION_PHOTOS } from "@/config/installation-photos";
-import { ROUTES } from "@/config/routes";
 import { matchLegacySiloRedirect } from "@/lib/routing/location-silo";
-import { listLocationServices } from "@/lib/data/location-catalog";
-import { STATE_SLUG } from "@/config/geo";
-import { getAreaLocalFact } from "@/data/area-local-facts";
-import { shouldGeneratePage, canPublishProgrammaticPage } from "@/lib/seo/page-decision";
-import { SITEMAP_ALL_CURATED_AREA_SERVICES } from "@/config/programmatic-scale";
 import { buildCanonicalUrl, buildFileUrl } from "@/lib/routing/paths";
 import { listKeywordSitemapFileNames } from "@/lib/seo/sitemap-scale";
+import {
+  listIndexableSeoPages,
+  type SeoMatrixKind,
+} from "@/lib/seo/seo-page-matrix";
 
 /** Keep each sitemap file under Search Console / config limits. */
 export const SITEMAP_CHUNK_SIZE = Math.min(
@@ -97,275 +87,84 @@ export function isSitemapRedirectPath(path: string): boolean {
   return matchLegacySiloRedirect(path) !== null;
 }
 
-function buildPageEntries(): SitemapRegistryEntry[] {
-  const corePaths: Array<{ path: string; priority: number; freq?: ChangeFrequency }> =
-    [
-      { path: "/", priority: 1, freq: "daily" },
-      { path: "/about/", priority: 0.7 },
-      { path: "/contact/", priority: 0.7 },
-      { path: "/solutions/", priority: 0.7 },
-      { path: "/faq/", priority: 0.7 },
-      { path: "/gallery/", priority: 0.65 },
-      { path: "/testimonials/", priority: 0.6 },
-      { path: "/pricing-guide/", priority: 0.7 },
-      { path: "/materials-guide/", priority: 0.7 },
-      { path: "/installation-process/", priority: 0.7 },
-      { path: "/safety-guide/", priority: 0.7 },
-      { path: "/privacy-policy/", priority: 0.3 },
-      { path: "/terms-and-conditions/", priority: 0.3 },
-      { path: "/disclaimer/", priority: 0.3 },
-    ];
+const HUB_KINDS = new Set<SeoMatrixKind>([
+  "home",
+  "static",
+  "state",
+  "city",
+  "service",
+  "sub-service",
+  "service-family",
+  "solution",
+  "guide",
+  "blog",
+  "project",
+  "comparison",
+  "property-type",
+]);
 
-  const entries: SitemapRegistryEntry[] = corePaths.map((row) =>
-    makeEntry(row.path, row.priority, {
-      changeFrequency: row.freq ?? "weekly",
-      kind: "hub",
-    }),
-  );
-
-  for (const problem of PROBLEMS) {
-    if (problem.publicationStatus !== "published" || !problem.allowIndexing) {
-      continue;
-    }
-    entries.push(
-      makeEntry(ROUTES.solution(problem.slug), 0.68, { kind: "hub" }),
+function entriesForKinds(kinds: SeoMatrixKind[]): SitemapRegistryEntry[] {
+  const allow = new Set<SeoMatrixKind>(kinds);
+  return listIndexableSeoPages()
+    .filter((page) => allow.has(page.kind))
+    .map((page) =>
+      makeEntry(page.path, page.priority, {
+        changeFrequency: page.path === "/" ? "daily" : "weekly",
+        kind: HUB_KINDS.has(page.kind) ? "hub" : "money",
+      }),
     );
-  }
-
-  return entries;
 }
 
 function buildServiceEntries(): SitemapRegistryEntry[] {
-  const entries: SitemapRegistryEntry[] = [
-    makeEntry("/services/", 0.75, { kind: "hub" }),
-  ];
-
-  for (const service of INITIAL_SERVICES) {
-    if (!service.allowIndexing) continue;
-    entries.push(
-      makeEntry(`/services/${service.slug}/`, 0.85, { kind: "hub" }),
-    );
-  }
-
-  for (const slug of SUB_SERVICE_SLUGS) {
-    entries.push(makeEntry(`/services/${slug}/`, 0.78, { kind: "hub" }));
-  }
-
-  for (const slug of SERVICE_FAMILY_SLUGS) {
-    entries.push(makeEntry(`/services/${slug}/`, 0.82, { kind: "hub" }));
-  }
-
-  return entries;
-}
-
-function buildGuideEntries(): SitemapRegistryEntry[] {
-  const entries: SitemapRegistryEntry[] = [
-    makeEntry("/guides/", 0.65, { kind: "hub" }),
-  ];
-  for (const slug of [
-    "invisible-grills-buying-guide",
-    "safety-nets-installation-guide",
-    "choosing-cloth-drying-hangers",
-  ]) {
-    entries.push(makeEntry(`/guides/${slug}/`, 0.7, { kind: "hub" }));
-  }
-  return entries;
-}
-
-function buildLocationHubEntries(): SitemapRegistryEntry[] {
-  return [makeEntry("/locations/", 0.75, { kind: "hub" })];
-}
-
-function buildBlogEntries(): SitemapRegistryEntry[] {
-  const entries: SitemapRegistryEntry[] = [
-    makeEntry("/blog/", 0.65, { kind: "hub" }),
-  ];
-  for (const post of PLACEHOLDER_BLOG_POSTS) {
-    entries.push(
-      makeEntry(`/blog/${post.slug}/`, 0.65, {
-        kind: "hub",
-        lastModified: parseIsoDay(post.publishedAt),
-      }),
-    );
-  }
-  return entries;
-}
-
-function buildProjectEntries(): SitemapRegistryEntry[] {
-  const entries: SitemapRegistryEntry[] = [
-    makeEntry("/projects/", 0.65, { kind: "hub" }),
-  ];
-  for (const project of listPublishedProjects()) {
-    entries.push(makeEntry(`/projects/${project.slug}/`, 0.55, { kind: "hub" }));
-  }
-  return entries;
-}
-
-function buildComparisonEntries(): SitemapRegistryEntry[] {
-  const entries: SitemapRegistryEntry[] = [
-    makeEntry("/comparisons/", 0.7, { kind: "hub" }),
-  ];
-  for (const slug of SERVICE_COMPARISON_SLUGS) {
-    entries.push(makeEntry(`/comparisons/${slug}/`, 0.72, { kind: "hub" }));
-  }
-  return entries;
-}
-
-function buildStateEntries(): SitemapRegistryEntry[] {
-  return [makeEntry(ROUTES.state, 0.8, { kind: "hub" })];
-}
-
-function siloCities() {
-  return HIGH_PRIORITY_CITY_AREAS.filter((city) => P0_CITY_SET.has(city.citySlug));
-}
-
-function buildCityEntries(): SitemapRegistryEntry[] {
-  return siloCities()
-    .filter((city) =>
-      shouldGeneratePage({
-        kind: "city",
-        stateSlug: STATE_SLUG,
-        citySlug: city.citySlug,
-      }).generate,
-    )
-    .map((city) =>
-      makeEntry(ROUTES.location(city.citySlug), 0.75, { kind: "hub" }),
-    );
-}
-
-function buildAreaEntries(): SitemapRegistryEntry[] {
-  const entries: SitemapRegistryEntry[] = [];
-  for (const city of siloCities()) {
-    for (const area of city.areas) {
-      if (
-        !shouldGeneratePage({
-          kind: "area",
-          stateSlug: STATE_SLUG,
-          citySlug: city.citySlug,
-          areaSlug: area.slug,
-        }).generate
-      ) {
-        continue;
-      }
-      entries.push(
-        makeEntry(ROUTES.area(city.citySlug, area.slug), 0.6, {
-          kind: "money",
-        }),
-      );
-    }
-  }
-  return entries;
+  return entriesForKinds(["static", "service", "sub-service", "service-family"]).filter(
+    (entry) =>
+      entry.path === "/services/" || entry.path.startsWith("/services/"),
+  );
 }
 
 function buildCityServiceEntries(): SitemapRegistryEntry[] {
-  const entries: SitemapRegistryEntry[] = [];
-  for (const city of siloCities()) {
-    for (const service of listLocationServices()) {
-      if (
-        !shouldGeneratePage({
-          kind: "city-service",
-          stateSlug: STATE_SLUG,
-          citySlug: city.citySlug,
-          serviceSlug: service.slug,
-        }).generate
-      ) {
-        continue;
-      }
-      entries.push(
-        makeEntry(ROUTES.cityService(city.citySlug, service.slug), 0.8, {
-          kind: "money",
-        }),
-      );
-    }
-  }
-  return entries;
+  return entriesForKinds(["city-service"]);
+}
+
+function buildAreaEntries(): SitemapRegistryEntry[] {
+  return entriesForKinds(["area"]);
 }
 
 function buildAreaServiceEntries(): SitemapRegistryEntry[] {
-  const entries: SitemapRegistryEntry[] = [];
-  for (const city of siloCities()) {
-    for (const area of city.areas) {
-      const areaFact = getAreaLocalFact(city.citySlug, area.slug);
-      // Full curated area × service grid is the P0 money set, and "service"
-      // now means every variation, not only the four core hubs.
-      // Unique local facts improve copy; they are not a sitemap filter.
-      if (!SITEMAP_ALL_CURATED_AREA_SERVICES && !areaFact) continue;
-
-      for (const service of listLocationServices()) {
-        const candidatePath = ROUTES.areaService(
-          city.citySlug,
-          area.slug,
-          service.slug,
-        );
-        if (
-          !shouldGeneratePage({
-            kind: "area-service",
-            stateSlug: STATE_SLUG,
-            citySlug: city.citySlug,
-            areaSlug: area.slug,
-            serviceSlug: service.slug,
-          }).generate
-        ) {
-          continue;
-        }
-
-        const gate = canPublishProgrammaticPage({
-          decision: {
-            kind: "area-service",
-            stateSlug: STATE_SLUG,
-            citySlug: city.citySlug,
-            areaSlug: area.slug,
-            serviceSlug: service.slug,
-          },
-          candidatePath,
-          kind: "area-service",
-          hasUniqueLocalFacts: Boolean(areaFact),
-          isCuratedCatalog: true,
-        });
-        if (!gate.index) continue;
-
-        entries.push(makeEntry(candidatePath, 0.72, { kind: "money" }));
-      }
-    }
-  }
-  return entries;
+  return entriesForKinds(["area-service"]);
 }
 
 function buildSocietyEntries(): SitemapRegistryEntry[] {
-  const entries: SitemapRegistryEntry[] = [
-    makeEntry("/property-types/", 0.7, { kind: "hub" }),
-  ];
-  for (const propertyType of PROPERTY_TYPES) {
-    if (
-      propertyType.publicationStatus !== "published" ||
-      !propertyType.allowIndexing
-    ) {
-      continue;
-    }
-    for (const serviceSlug of propertyType.suitableServices) {
-      entries.push(
-        makeEntry(
-          ROUTES.propertyTypeService(propertyType.slug, serviceSlug),
-          0.66,
-          { kind: "hub" },
-        ),
-      );
-    }
-  }
-  return entries;
+  return entriesForKinds(["static", "property-type"]).filter(
+    (entry) =>
+      entry.path === "/property-types/" ||
+      entry.path.startsWith("/property-types/"),
+  );
 }
 
 function buildCoreEntries(): SitemapRegistryEntry[] {
-  return [
-    ...buildPageEntries(),
-    ...buildLocationHubEntries(),
-    ...buildStateEntries(),
-    ...buildCityEntries(),
-    ...buildBlogEntries(),
-    ...buildProjectEntries(),
-    ...buildComparisonEntries(),
-    ...buildGuideEntries(),
-  ];
+  return entriesForKinds([
+    "home",
+    "static",
+    "state",
+    "city",
+    "solution",
+    "guide",
+    "blog",
+    "project",
+    "comparison",
+  ]).filter((entry) => {
+    if (entry.path === "/services/" || entry.path.startsWith("/services/")) {
+      return false;
+    }
+    if (
+      entry.path === "/property-types/" ||
+      entry.path.startsWith("/property-types/")
+    ) {
+      return false;
+    }
+    return true;
+  });
 }
 
 function xmlEscape(value: string): string {

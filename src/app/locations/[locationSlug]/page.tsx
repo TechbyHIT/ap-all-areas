@@ -55,9 +55,9 @@ type PageProps = {
 };
 
 export async function generateStaticParams() {
-  return HIGH_PRIORITY_CITY_AREAS.map((c) => ({
-    locationSlug: c.citySlug,
-  }));
+  // Public city hubs are prerendered on `/locations/andhra-pradesh/[citySlug]`.
+  // This module still renders via ISR if a rewrite hits it.
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

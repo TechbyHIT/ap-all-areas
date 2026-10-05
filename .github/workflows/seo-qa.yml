@@ -25,5 +25,8 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: SEO page matrix audit
+        run: npm run seo:audit
+
       - name: GFG organic SEO audit (strict)
         run: SEO_QA_STRICT=1 npm run seo:organic

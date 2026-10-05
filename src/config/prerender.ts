@@ -51,3 +51,10 @@ export function prerenderAreas(city: PrerenderCity) {
   if (PRERENDER_AREA_LIMIT === 0) return [];
   return city.areas.slice(0, PRERENDER_AREA_LIMIT);
 }
+
+/** True when this locality is in the build-time SSG seed. */
+export function shouldPrerenderArea(citySlug: string, areaSlug: string): boolean {
+  const city = prerenderCities().find((row) => row.citySlug === citySlug);
+  if (!city) return false;
+  return prerenderAreas(city).some((area) => area.slug === areaSlug);
+}

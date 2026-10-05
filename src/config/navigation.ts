@@ -31,8 +31,6 @@ export const NAV_LOCATIONS = [
   { label: "Nellore", href: ROUTES.location("nellore") },
   { label: "Kurnool", href: ROUTES.location("kurnool") },
   { label: "Anantapur", href: ROUTES.location("anantapur") },
-  { label: "Eluru", href: "/locations/eluru/" },
-  { label: "Vizianagaram", href: "/locations/vizianagaram/" },
   { label: "Andhra Pradesh hub", href: ROUTES.state },
   { label: "View All Locations", href: ROUTES.locations },
 ] as const;

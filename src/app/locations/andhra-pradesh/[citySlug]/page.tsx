@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { SILO_CITY_SLUGS } from "@/config/geo";
 import { canonicalCitySlug } from "@/lib/routing/location-silo";
+import { prerenderSiloCityParams } from "@/lib/seo/seo-page-matrix";
 import LocationDetailPage, {
   generateMetadata as generateCityMetadata,
 } from "../../[locationSlug]/page";
@@ -14,7 +14,7 @@ type PageProps = {
 };
 
 export function generateStaticParams() {
-  return SILO_CITY_SLUGS.map((citySlug) => ({ citySlug }));
+  return prerenderSiloCityParams();
 }
 
 export async function generateMetadata({

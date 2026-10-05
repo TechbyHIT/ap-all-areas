@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getServiceMedia } from "@/config/design";
 import { ROUTES } from "@/config/routes";
 import {
-  LOCATION_SERVICE_SLUGS,
   STATE_NAME,
   STATE_SLUG,
 } from "@/config/geo";
@@ -20,7 +19,6 @@ import {
   listLocationServices,
   resolveLocationService,
 } from "@/lib/data/location-catalog";
-import { prerenderAreas, prerenderCities } from "@/config/prerender";
 import { getAreaLocalFact } from "@/data/area-local-facts";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
 import { buildAreaServiceContent } from "@/data/location-page-content";
@@ -74,19 +72,11 @@ function toProcessSteps(items: readonly string[]) {
 }
 
 /**
- * Seed only — full matrix stays live via `dynamicParams` + ISR.
- * Uncapped SSG of area×service is what balloons standalone to multi-GB.
+ * Public area×service URLs are prerendered on the silo wrappers.
+ * This internal module stays reachable through `dynamicParams` + ISR.
  */
 export async function generateStaticParams() {
-  return prerenderCities().flatMap((city) =>
-    prerenderAreas(city).flatMap((area) =>
-      LOCATION_SERVICE_SLUGS.map((serviceSlug) => ({
-        locationSlug: city.citySlug,
-        slug: area.slug,
-        serviceSlug,
-      })),
-    ),
-  );
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

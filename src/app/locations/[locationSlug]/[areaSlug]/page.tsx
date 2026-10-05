@@ -6,7 +6,6 @@ import { AreaServicesMatrix } from "@/components/sections/AreaServicesMatrix";
 import { SeoEncyclopediaSections } from "@/components/sections/SeoEncyclopediaSections";
 import { LandingPage } from "@/components/landing/LandingPage";
 import { listLocationServices } from "@/lib/data/location-catalog";
-import { prerenderAreas, prerenderCities } from "@/config/prerender";
 import { buildAreaPageContent } from "@/data/location-page-content";
 import { getAreaLocalFact } from "@/data/area-local-facts";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
@@ -44,12 +43,8 @@ type PageProps = {
 };
 
 export async function generateStaticParams() {
-  return prerenderCities().flatMap((city) =>
-    prerenderAreas(city).map((area) => ({
-      locationSlug: city.citySlug,
-      areaSlug: area.slug,
-    })),
-  );
+  // Public area hubs are prerendered on the silo wrappers.
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

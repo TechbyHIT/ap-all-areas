@@ -167,6 +167,12 @@ export function canPublishProgrammaticPage(input: {
   });
   reasons.push(`quality:${quality.total}:${quality.action}`);
 
+  // Curated catalog pages are approved SEO URLs. Quality scoring is recorded
+  // for ops, but must not noindex / skip a valid service + location page.
+  if (input.isCuratedCatalog) {
+    return { publish: true, index: decision.index, reasons };
+  }
+
   if (quality.band === "noindex" || quality.band === "rewrite") {
     return { publish: decision.generate, index: false, reasons };
   }

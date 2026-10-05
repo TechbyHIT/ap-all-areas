@@ -10,8 +10,8 @@ import { HubBreadcrumbs } from "@/components/seo/HubBreadcrumbs";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { getCityLocalProfile } from "@/data/city-local-profiles";
-import { AP_DISTRICTS, HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
-import { INITIAL_SERVICES } from "@/data/initial-services";
+import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
+import { listLocationServices } from "@/lib/data/location-catalog";
 import { buildCanonicalUrl } from "@/lib/routing/paths";
 import { generatePageMetadata } from "@/lib/seo/generate-page-metadata";
 import { staticPageIndexability } from "@/lib/seo/page-indexability";
@@ -26,6 +26,7 @@ export const metadata: Metadata = generatePageMetadata({
 });
 
 export default function LocationsPage() {
+  const locationServices = listLocationServices();
   const priorityCities = HIGH_PRIORITY_CITY_AREAS.map((city) => {
     const profile = getCityLocalProfile(city.citySlug);
     return {
@@ -35,17 +36,9 @@ export default function LocationsPage() {
       description:
         profile?.climateLead ??
         `Installation service is available in ${city.cityName} subject to site measurements, accessibility and technician availability.`,
-      serviceCount: 4,
+      serviceCount: locationServices.length,
     };
   });
-
-  const districts = AP_DISTRICTS.map((district) => ({
-    name: district.name,
-    href: ROUTES.location(district.slug),
-    parentLabel: "District",
-    description:
-      "District-level coverage planning across Andhra Pradesh. Individual towns and sites are confirmed after enquiry.",
-  }));
 
   return (
     <>
@@ -77,7 +70,7 @@ export default function LocationsPage() {
 
       <LocationCards
         title="Major cities across Andhra Pradesh"
-        description="Nine priority hubs with area-level pages for high-probability local searches—safety nets, invisible grills, sports nets and cloth hangers."
+        description="Nine priority hubs with area-level pages for every published installation type—safety nets, specialist nets, invisible grills and cloth hangers."
         locations={priorityCities}
         variant="muted"
       />
@@ -97,7 +90,7 @@ export default function LocationsPage() {
                   {city.cityName}
                 </h3>
                 <ul className="mt-2 space-y-1 text-sm">
-                  {INITIAL_SERVICES.map((service) => (
+                  {locationServices.map((service) => (
                     <li key={`${city.citySlug}-${service.slug}`}>
                       <Link
                         href={ROUTES.cityService(city.citySlug, service.slug)}
@@ -128,12 +121,6 @@ export default function LocationsPage() {
           </div>
         </Container>
       </Section>
-
-      <LocationCards
-        title="Districts"
-        description="District groupings help with statewide planning. Town-level feasibility is reviewed per enquiry."
-        locations={districts}
-      />
 
       <FinalCTA
         title="Need coverage confirmation for your Andhra Pradesh area?"

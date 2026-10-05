@@ -1,61 +1,18 @@
 import Link from "next/link";
 import { ROUTES } from "@/config/routes";
-import {
-  AP_DISTRICTS,
-  HIGH_PRIORITY_CITY_AREAS,
-} from "@/data/initial-locations";
-import { INITIAL_SERVICES } from "@/data/initial-services";
-
-const CORE_SERVICES = INITIAL_SERVICES.map((service) => ({
-  slug: service.slug,
-  name: service.shortName,
-}));
+import { HIGH_PRIORITY_CITY_AREAS } from "@/data/initial-locations";
+import { listLocationServices } from "@/lib/data/location-catalog";
 
 /** Areas shown per city on the homepage matrix. Full lists live on city hubs. */
 const AREAS_PER_CITY = 6;
 
-/** Extra district cities shown on home (no curated area money matrix yet). */
-const EXTRA_DISTRICT_CITIES = [
-  "eluru",
-  "vizianagaram",
-  "srikakulam",
-] as const;
-
-function serviceShortLabel(slug: string): string {
-  if (slug === "cloth-drying-hangers") return "Cloth Hangers";
-  if (slug === "invisible-grills") return "Invisible Grills";
-  if (slug === "safety-nets") return "Safety Nets";
-  if (slug === "sports-nets") return "Sports Nets";
-  return slug;
-}
-
 /**
- * Homepage location band. Uncapped, this rendered every curated area × 4
- * services × every P0 keyword — tens of thousands of anchors — and blew the
- * prerendered home HTML past 3 MB. Cap areas per city; keyword×area matrices
- * stay on city / area hubs and the sitemap.
+ * Homepage location band. City cards link every published location service
+ * (cores + specialists) so Google and visitors can reach money URLs from home.
+ * Full area × service grids stay on city hubs — not dumped onto `/`.
  */
 export function HomeLocations() {
-  const extraCities = EXTRA_DISTRICT_CITIES.flatMap((slug) => {
-    for (const district of AP_DISTRICTS) {
-      const place = district.places.find((p) => p.slug === slug);
-      if (place) {
-        return [
-          {
-            slug: place.slug,
-            name: place.name,
-            towns: district.places.filter(
-              (p) =>
-                p.slug !== place.slug &&
-                (p.locationType === "town" || p.locationType === "city"),
-            ),
-          },
-        ];
-      }
-    }
-    return [];
-  });
-
+  const services = listLocationServices();
   const totalAreas = HIGH_PRIORITY_CITY_AREAS.reduce(
     (sum, city) => sum + city.areas.length,
     0,
@@ -70,7 +27,7 @@ export function HomeLocations() {
             Every service across cities &amp; areas in Andhra Pradesh
           </h2>
           <p className="home-lead">
-            Coverage for {CORE_SERVICES.length} core services across{" "}
+            Coverage for {services.length} installation types across{" "}
             {HIGH_PRIORITY_CITY_AREAS.length} cities and {totalAreas} curated
             areas. Each city hub lists every locality; key areas are previewed
             below. Visits are arranged after site confirmation—not invented
@@ -90,19 +47,19 @@ export function HomeLocations() {
                   </Link>
                 </h3>
                 <p>
-                  All four core services across {city.areas.length} curated
-                  areas in {city.cityName}.
+                  All {services.length} published services across{" "}
+                  {city.areas.length} curated areas in {city.cityName}.
                 </p>
                 <ul
                   className="home-city-services"
                   aria-label={`${city.cityName} services`}
                 >
-                  {CORE_SERVICES.map((service) => (
+                  {services.map((service) => (
                     <li key={`${city.citySlug}-${service.slug}`}>
                       <Link
                         href={ROUTES.cityService(city.citySlug, service.slug)}
                       >
-                        {serviceShortLabel(service.slug)}
+                        {service.shortName ?? service.name}
                       </Link>
                     </li>
                   ))}
@@ -134,42 +91,12 @@ export function HomeLocations() {
           })}
         </div>
 
-        {extraCities.length > 0 ? (
-          <div className="home-geo-extra">
-            <h3 className="home-h2" style={{ fontSize: "1.25rem" }}>
-              Additional service-area cities
-            </h3>
-            <p className="home-lead">
-              Installation support in these districts is arranged after site
-              confirmation. Browse nearby towns below.
-            </p>
-            <div className="home-geo-extra-grid">
-              {extraCities.map((city) => (
-                <article key={city.slug} className="home-city-card">
-                  <h3>{city.name}</h3>
-                  <ul className="home-city-services">
-                    {CORE_SERVICES.map((service) => (
-                      <li key={`${city.slug}-${service.slug}`}>
-                        <Link href={ROUTES.location(city.slug)}>
-                          {serviceShortLabel(service.slug)}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                  <ul className="home-city-areas">
-                    {city.towns.slice(0, AREAS_PER_CITY).map((town) => (
-                      <li key={town.slug}>
-                        <Link href={ROUTES.location(town.slug)}>
-                          {town.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              ))}
-            </div>
-          </div>
-        ) : null}
+        <p className="home-lead" style={{ marginTop: "1.5rem" }}>
+          Other Andhra Pradesh towns are reviewed after a site request — start
+          from the{" "}
+          <Link href={ROUTES.state}>Andhra Pradesh hub</Link>, not a separate
+          city page we have not published.
+        </p>
 
         <nav className="home-dir-links" aria-label="Location directories">
           <Link href={ROUTES.locations}>View all locations</Link>

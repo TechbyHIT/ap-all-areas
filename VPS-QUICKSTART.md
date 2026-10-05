@@ -121,10 +121,19 @@ loop — read it with `pm2 logs hiranaya-enterprises --lines 100`.
 
 ## Later
 
-Deploying a change:
+Deploying a change from `seo/andhra-pradesh-full-index` (the live SEO branch):
 
 ```bash
-cd /root/ap-all-areas && git pull
+# 1. Confirm the site registry tracks this branch
+grep BRANCH /etc/ap-sites/sites.d/hiranaya-enterprises.env
+# If it is not seo/andhra-pradesh-full-index:
+#   sed -i 's|^BRANCH=.*|BRANCH=seo/andhra-pradesh-full-index|' \
+#     /etc/ap-sites/sites.d/hiranaya-enterprises.env
+
+cd /root/ap-all-areas
+git fetch origin
+git checkout seo/andhra-pradesh-full-index
+git pull --ff-only origin seo/andhra-pradesh-full-index
 bash deploy/site-deploy.sh hiranaya-enterprises
 ```
 

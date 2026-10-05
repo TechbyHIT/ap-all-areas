@@ -7,6 +7,7 @@ import {
   locationServiceSlug,
   siloAreaServicePath,
 } from "@/lib/routing/location-silo";
+import { prerenderSiloAreaServiceParams } from "@/lib/seo/seo-page-matrix";
 import AreaServicePage, {
   generateMetadata as generateAreaServiceMetadata,
 } from "../../../../../[locationSlug]/[slug]/[serviceSlug]/page";
@@ -16,6 +17,10 @@ import AreaMoneyLandingPage, {
 
 export const dynamicParams = true;
 export const revalidate = 86400;
+
+export function generateStaticParams() {
+  return prerenderSiloAreaServiceParams();
+}
 
 type PageProps = {
   params: Promise<{
