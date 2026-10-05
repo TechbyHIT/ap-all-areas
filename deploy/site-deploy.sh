@@ -233,12 +233,8 @@ mv -Tf "$CURRENT.tmp" "$CURRENT"
 ECO="$(ecosystem_path)"
 [ -f "$ECO" ] || die "PM2 ecosystem not found at $ECO — run deploy/server-setup.sh"
 
-log "Reloading PM2 from $ECO"
-if pm2_app_exists "$SLUG"; then
-  pm2 reload "$ECO" --only "$SLUG" --update-env
-else
-  pm2 start "$ECO" --only "$SLUG"
-fi
+log "Starting PM2 from $ECO (hard start so cwd follows current/)"
+pm2_start_fresh "$SLUG" "$ECO"
 pm2 save >/dev/null 2>&1 || warn "pm2 save failed"
 
 # Keep nginx able to reach Next on whichever loopback family it bound, without
@@ -292,11 +288,22 @@ if [ "$HEALTHY" = 0 ]; then
     warn "rolling back to $PREVIOUS"
     ln -sfn "$PREVIOUS" "$CURRENT.tmp"
     mv -Tf "$CURRENT.tmp" "$CURRENT"
-    pm2 reload "$ECO" --only "$SLUG" --update-env || true
+    pm2_start_fresh "$SLUG" "$ECO" || true
     rm -rf "$RELEASE"
   fi
   info "logs: pm2 logs $SLUG --lines 100"
   exit 1
+fi
+
+log "Confirming the new release is the process on port $PORT"
+SITEMAP_HEAD="$(curl -fsS -m 8 "http://localhost:$PORT/sitemap.xml" 2>/dev/null | head -c 400 || true)"
+if printf '%s' "$SITEMAP_HEAD" | grep -q '<sitemapindex'; then
+  info "sitemap index is live"
+else
+  warn "sitemap is still a urlset — this process is an old release"
+  info "pm2 resolved cwd (should end in /current or the new stamp):"
+  pm2 show "$SLUG" 2>/dev/null | grep -i cwd | sed 's/^/      /' || true
+  info "symlink: $(readlink -f "$CURRENT" 2>/dev/null || true)"
 fi
 
 # ----------------------------------------------- post-health sitemap HTTP sample

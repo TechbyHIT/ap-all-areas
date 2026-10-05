@@ -201,6 +201,22 @@ PY
 
 pm2_app_exists() { pm2 describe "$1" >/dev/null 2>&1; }
 
+# `pm2 reload` keeps the cwd that was resolved when the process first started.
+# After `current` is retargeted at a new release, reload keeps serving the old
+# folder — sitemap and money URLs stay on the previous build. Delete + start
+# re-reads cwd from the ecosystem (`.../current`).
+pm2_start_fresh() {
+  local slug="$1"
+  local eco="$2"
+  if pm2_app_exists "$slug"; then
+    log "Hard-starting PM2 $slug so cwd follows current/"
+    pm2 delete "$slug" >/dev/null 2>&1 || true
+  else
+    log "Starting PM2 $slug"
+  fi
+  pm2 start "$eco" --only "$slug"
+}
+
 # The default branch of a remote, e.g. "master". Hardcoding "main" makes the
 # first clone fail on any repo that predates that convention.
 detect_default_branch() {

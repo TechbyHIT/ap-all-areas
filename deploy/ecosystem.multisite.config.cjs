@@ -19,7 +19,7 @@
  * Adding a site is therefore one new file — this config never needs editing.
  *
  *   pm2 start  /etc/ap-sites/ecosystem.multisite.config.cjs
- *   pm2 reload /etc/ap-sites/ecosystem.multisite.config.cjs --only <slug> --update-env
+ *   # After retargeting current/, delete+start — reload keeps the old cwd.
  */
 const fs = require("node:fs");
 const path = require("node:path");
