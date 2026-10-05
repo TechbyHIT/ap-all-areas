@@ -257,7 +257,11 @@ nginx -t 2>/dev/null && systemctl reload nginx 2>/dev/null && info "reloaded" ||
 hr "RESULT"
 for port in $(seq 3000 3010); do
   ss -ltnH "sport = :$port" 2>/dev/null | grep -q . || continue
-  if curl -fsS -o /dev/null -m 5 "http://127.0.0.1:$port/"; then
+  # HOSTNAME=localhost often binds [::1] only. 127.0.0.1 then fails even when
+  # nginx (which lists both loopback families) is serving the site fine.
+  if curl -fsS -o /dev/null -m 5 "http://localhost:$port/" 2>/dev/null ||
+    curl -fsS -o /dev/null -m 5 "http://127.0.0.1:$port/" 2>/dev/null ||
+    curl -g -fsS -o /dev/null -m 5 "http://[::1]:$port/" 2>/dev/null; then
     printf '    port %s  OK\n' "$port"
   else
     printf '    port %s  still failing\n' "$port"

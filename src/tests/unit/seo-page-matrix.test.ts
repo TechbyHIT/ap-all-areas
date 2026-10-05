@@ -86,6 +86,17 @@ describe("authoritative SEO page matrix", () => {
     ).toBe(true);
   });
 
+  it("includes specialist city URLs that used to 404 as unknown areas", () => {
+    const page = resolveSeoPage(
+      "/locations/andhra-pradesh/visakhapatnam/children-safety-nets/",
+    );
+    expect(page).toMatchObject({
+      kind: "city-service",
+      indexable: true,
+      prerender: true,
+    });
+  });
+
   it("does not promote unpublished city URLs in primary navigation", () => {
     const hrefs = NAV_LOCATIONS.map((item) => item.href);
     expect(hrefs).not.toContain("/locations/eluru/");

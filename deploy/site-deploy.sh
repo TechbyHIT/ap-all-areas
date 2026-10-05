@@ -216,10 +216,12 @@ else
 fi
 
 # ------------------------------------------------------------- wire up release
-# Runtime cache lives outside the release so it survives deploys and can be
-# pruned in one place.
+# Runtime cache lives outside the release so image optimization can survive
+# deploys. Fetch/ISR entries must NOT survive: an old `notFound()` is stored
+# as a 404 and would keep serving 404 after we add the URL.
 rm -rf "$RELEASE/.next/cache"
-mkdir -p "$RELEASE/.next"
+mkdir -p "$RELEASE/.next" "$SHARED/cache"
+rm -rf "$SHARED/cache/fetch-cache"
 ln -sfn "$SHARED/cache" "$RELEASE/.next/cache"
 ln -sfn "$SHARED/.env" "$RELEASE/.env"
 
